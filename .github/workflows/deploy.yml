@@ -33,6 +33,9 @@ jobs:
       - name: Generate static files
         run: npx hexo generate
 
+      - name: Create CNAME for custom domain
+        run: echo 'cd-cd.top' > ./public/CNAME
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
