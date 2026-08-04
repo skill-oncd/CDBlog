@@ -2,6 +2,8 @@
 title: About CD
 date: 2026-08-04 14:24:07
 type: about
+description: Combat designer crafting ARPG gameplay across Unreal & Unity. Skills, hit feel, frame data, and the numbers behind the fun. CoolDownSpace — a game development playground.
+keywords: combat design,gameplay programmer,unreal engine,unity,ARPG,game developer portfolio,C++
 comments: true
 ---
 
