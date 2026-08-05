@@ -1,6 +1,238 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</title>
+    <url>/2026/08/05/crunch-ue-gamplay-ability-system-and-network-sync/</url>
+    <content><![CDATA[<h2 id="项目概览"><a href="#项目概览" class="headerlink" title="项目概览"></a>项目概览</h2><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>引擎</strong></td>
+<td>Unreal Engine 5.4</td>
+</tr>
+<tr>
+<td><strong>类型</strong></td>
+<td>第三人称动作 RPG &#x2F; MOBA 风格</td>
+</tr>
+<tr>
+<td><strong>角色资源</strong></td>
+<td>Epic Paragon（Crunch + Minions）</td>
+</tr>
+<tr>
+<td><strong>源码规模</strong></td>
+<td>~80 个 C++ 文件，覆盖 GAS &#x2F; AI &#x2F; UI &#x2F; Inventory</td>
+</tr>
+<tr>
+<td><strong>核心标签</strong></td>
+<td><code>GAS</code> <code>Network Replication</code> <code>Combo System</code> <code>RPG Attributes</code> <code>Enhanced Input</code></td>
+</tr>
+</tbody></table>
+<p>一个从零搭建的 Unreal 动作游戏 Demo。角色是 Paragon 的 Crunch——一个近战拳击手，核心战斗围绕<strong>轻击连招、浮空 UpperCut、地面 AOE 轰炸</strong>展开。底层完全基于 <strong>Gameplay Ability System</strong> 搭建，”服务器权威”模型做网络同步。</p>
+<iframe src="//player.bilibili.com/player.html?bvid=BV1DfMC6cELg" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" width="100%" height="480"></iframe>
+
+<blockquote>
+<p>📦 <strong>高清下载</strong>: <a href="https://easylink.cc/f409p2">EasyLink云链</a></p>
+</blockquote>
+<hr>
+<h2 id="一、为什么选-GAS？架构总览"><a href="#一、为什么选-GAS？架构总览" class="headerlink" title="一、为什么选 GAS？架构总览"></a>一、为什么选 GAS？架构总览</h2><h3 id="1-1-决策背景"><a href="#1-1-决策背景" class="headerlink" title="1.1 决策背景"></a>1.1 决策背景</h3><p>做动作游戏 Demo 时，技能系统有几种常见路线：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>痛点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>手写状态机</strong></td>
+<td>完全可控，无黑盒</td>
+<td>技能一多，状态爆炸；Buff&#x2F;Debuff 要自己写一套</td>
+</tr>
+<tr>
+<td><strong>插件&#x2F;中间件</strong></td>
+<td>开箱即用</td>
+<td>文档质量参差不齐，升级引擎时可能被 break</td>
+</tr>
+<tr>
+<td><strong>Epic GAS</strong></td>
+<td>为多人游戏设计，内置网络同步，与引擎深度集成</td>
+<td>学习曲线陡峭，纯 C++ 开发，没有蓝图节点面板</td>
+</tr>
+</tbody></table>
+<p>选 GAS 的核心原因：<strong>网络同步是”内置”的，不是”后加”的</strong>。</p>
+<p>做技能系统时，如果你的 Actor 需要 <code>HasAuthority()</code> → 做伤害 → 再手动 <code>Client_RPC</code> 去播特效，这个模式写三五个技能还行，写到第十个的时候一定会出问题——要么忘了权限判断导致作弊，要么忘了客户端回调导致特效不播。</p>
+<p>GAS 把”技能激活 → 伤害计算 → 效果应用 → 状态同步”这条链路标准化了。网络同步发生在 <strong>GameplayEffect</strong> 和 <strong>GameplayTag</strong> 这两个层级，而这些是 GAS 自动帮你处理的。你不用在每个技能里写 RPC。</p>
+<h3 id="1-2-整体架构"><a href="#1-2-整体架构" class="headerlink" title="1.2 整体架构"></a>1.2 整体架构</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────┐</span><br><span class="line">│                     ACPlayerCharacter                     │</span><br><span class="line">│  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │</span><br><span class="line">│  │ Enhanced    │  │ Camera +     │  │ Inventory      │  │</span><br><span class="line">│  │ Input       │  │ SpringArm    │  │ Component      │  │</span><br><span class="line">│  └──────┬──────┘  └──────────────┘  └────────────────┘  │</span><br><span class="line">│         │                                                │</span><br><span class="line">│  ┌──────▼──────────────────────────────────────────────┐ │</span><br><span class="line">│  │            UCAbilitySystemComponent (ASC)            │ │</span><br><span class="line">│  │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │ │</span><br><span class="line">│  │  │ Abilities│  │ Basic    │  │ Passive          │  │ │</span><br><span class="line">│  │  │ (技能)   │  │ Abilities│  │ Abilities        │  │ │</span><br><span class="line">│  │  └──────────┘  └──────────┘  └──────────────────┘  │ │</span><br><span class="line">│  │  ┌──────────────────────────────────────────────┐   │ │</span><br><span class="line">│  │  │               AttributeSets                  │   │ │</span><br><span class="line">│  │  │  UCAttributeSet     │  UCHeroAttributeSet    │   │ │</span><br><span class="line">│  │  │  Health / Mana      │  Level / Exp / Intel   │   │ │</span><br><span class="line">│  │  │  AttackDamage / Def │  Strength / Gold       │   │ │</span><br><span class="line">│  │  └──────────────────────────────────────────────┘   │ │</span><br><span class="line">│  └─────────────────────────────────────────────────────┘ │</span><br><span class="line">└─────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>双层 AttributeSet 设计</strong>是这个项目的一个关键架构决策：</p>
+<ul>
+<li><strong><code>UCAttributeSet</code></strong> — 战斗属性：Health、Mana、AttackDamage、Armor、MoveSpeed。所有角色共用，包括 AI 小兵。</li>
+<li><strong><code>UCHeroAttributeSet</code></strong> — 英雄属性：Level、Experience、Intelligence、Strength、Gold、UpgradePoint。只挂在玩家角色上。</li>
+</ul>
+<p>这样做的原因是：AI 小兵不需要等级和金币系统。如果全部塞进一个 AttributeSet，每个 Minion 身上都会挂着无意义的 <code>Gold</code> 和 <code>Experience</code> 属性——浪费网络带宽，也污染语义。</p>
+<hr>
+<h2 id="二、GAS-核心实现"><a href="#二、GAS-核心实现" class="headerlink" title="二、GAS 核心实现"></a>二、GAS 核心实现</h2><h3 id="2-1-自定义-ASC：ServerSideInit-ClientSideInit"><a href="#2-1-自定义-ASC：ServerSideInit-ClientSideInit" class="headerlink" title="2.1 自定义 ASC：ServerSideInit &#x2F; ClientSideInit"></a>2.1 自定义 ASC：ServerSideInit &#x2F; ClientSideInit</h3><p>这是整个项目最关键的网络架构模式。看一下 <code>CCharacter</code> 的初始化流程：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ── 服务器端：PossessedBy 时调用（AI 角色在服务器被接管）</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ACCharacter::PossessedBy</span><span class="params">(AController* NewController)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Super::<span class="built_in">PossessedBy</span>(NewController);</span><br><span class="line">    <span class="keyword">if</span> (NewController &amp;&amp; !NewController-&gt;<span class="built_in">IsPlayerController</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">ServerSideInit</span>();  <span class="comment">// AI 角色走这条路</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ── 客户端：PostNetInit 时调用（复制体到达客户端后）</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ACCharacter::PostNetInit</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Super::<span class="built_in">PostNetInit</span>();</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">GetLocalRole</span>() != ROLE_Authority)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">ClientSideInit</span>();  <span class="comment">// 客户端复制体走这条路</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ServerSideInit()</code> 做了三件事：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAbilitySystemComponent::ServerSideInit</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">InitializeBaseAttributes</span>();  <span class="comment">// ① 从 DataTable 读取基础属性</span></span><br><span class="line">    <span class="built_in">ApplyInitialEffects</span>();       <span class="comment">// ② 应用初始 GameplayEffect（满血满蓝）</span></span><br><span class="line">    <span class="built_in">GiveInitialAbilities</span>();      <span class="comment">// ③ 授予技能</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ClientSideInit()</code> 只做一件事：调用 <code>InitAbilityActorInfo(this, this)</code>，把 ASC 的 ActorInfo 绑定好，这样客户端才能收到属性复制和 GameplayTag 更新。</p>
+<blockquote>
+<p><strong>关键设计原则：服务器初始化”数据”，客户端只初始化”连接”</strong>。服务器拥有权威数据（属性、技能列表、效果），客户端通过 GAS 内置的属性复制机制自动同步，不需要手动 RPC 把属性一个个发过去。</p>
+</blockquote>
+<h3 id="2-2-自定义-GameplayAbility-基类"><a href="#2-2-自定义-GameplayAbility-基类" class="headerlink" title="2.2 自定义 GameplayAbility 基类"></a>2.2 自定义 GameplayAbility 基类</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UCLASS</span>()</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">UCGameplayAbility</span> : <span class="keyword">public</span> UGameplayAbility</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ── 通用工具方法，所有技能继承</span></span><br><span class="line">    <span class="function">TArray&lt;FHitResult&gt; <span class="title">GetHitResultsFromSweepLocationTargetData</span><span class="params">(...)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">PushTarget</span><span class="params">(AActor* InTarget, <span class="type">const</span> FVector&amp; InVelocity)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">PushTargets</span><span class="params">(<span class="type">const</span> TArray&lt;AActor*&gt;&amp; InTargets, <span class="type">const</span> FVector&amp; PushVelocity)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">ApplyGameplayEffectToHitResultActor</span><span class="params">(<span class="type">const</span> FHitResult&amp; Hit, ...)</span></span>;</span><br><span class="line">    <span class="function">ACharacter* <span class="title">GetOwningAvatarCharacter</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>每个技能都需要的操作——从 TargetData 取命中结果、对命中目标施加击退、对命中目标施加 GE——封装到基类里。实际技能只需要关注自己的逻辑。</p>
+<h3 id="2-3-Combo-连招系统"><a href="#2-3-Combo-连招系统" class="headerlink" title="2.3 Combo 连招系统"></a>2.3 Combo 连招系统</h3><p>Combo 是这个项目最复杂的技能逻辑，核心思路是 <strong>GameplayEvent 链式驱动</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">玩家按下攻击键</span><br><span class="line">    → GA_Combo::ActivateAbility()</span><br><span class="line">    → 播放 ComboMontage（动画）</span><br><span class="line">    → AnimNotifier 在特定帧触发 ComboChangedEvent</span><br><span class="line">    → ComboChangedEventReceived() 切换 Combo 段位</span><br><span class="line">    → AnimNotifier 在伤害判定帧触发 ComboTargetEvent</span><br><span class="line">    → DoDamage() 对扇形范围内的敌人施加对应段位的 GE</span><br><span class="line">    → 等待下一次按键输入 → TryCommitCombo() 进入下一段</span><br></pre></td></tr></table></figure>
+
+<p>关键代码——按键等待与 Combo 切换：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_Combo::SetupWaitComboInputPress</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 等待玩家在窗口期内再次按下攻击键</span></span><br><span class="line">    <span class="built_in">WaitInputPress</span>(HandleInputPressed, ...);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_Combo::HandleInputPressed</span><span class="params">(<span class="type">float</span> TimeWaited)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">TryCommitCombo</span>();  <span class="comment">// 进入下一段 Combo</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_Combo::ComboChangedEventReceived</span><span class="params">(FGameplayEventData Data)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    NextComboName = Data.EventMagnitude &gt; <span class="number">0</span> </span><br><span class="line">        ? <span class="built_in">FName</span>(*FString::<span class="built_in">Printf</span>(<span class="built_in">TEXT</span>(<span class="string">&quot;Combo%d&quot;</span>), (<span class="type">int</span>)Data.EventMagnitude))</span><br><span class="line">        : NAME_None;</span><br><span class="line">    <span class="built_in">SetupWaitComboInputPress</span>();  <span class="comment">// 继续等待下一段输入</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>不同 Combo 段位施加不同的 GameplayEffect（伤害系数不同），通过 <code>DamageEffectMap</code> 配置：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(EditDefaultsOnly)</span><br><span class="line">TMap&lt;FName, TSubclassOf&lt;UGameplayEffect&gt;&gt; DamageEffectMap;</span><br><span class="line"><span class="comment">// &quot;Combo1&quot; → GE_Combo1_Damage</span></span><br><span class="line"><span class="comment">// &quot;Combo2&quot; → GE_Combo2_Damage  (伤害递增)</span></span><br><span class="line"><span class="comment">// &quot;Combo3&quot; → GE_Combo3_Damage  (终结段最大伤害)</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-4-UpperCut-浮空-Combo-整合"><a href="#2-4-UpperCut-浮空-Combo-整合" class="headerlink" title="2.4 UpperCut 浮空 + Combo 整合"></a>2.4 UpperCut 浮空 + Combo 整合</h3><p>UpperCut 不仅是一个独立技能，它还能<strong>接入 Combo 系统</strong>——在 Combo 的任意段位之后接 UpperCut，伤害系数随 Combo 段位变化：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(EditDefaultsOnly, Category=<span class="string">&quot;Combo&quot;</span>)</span><br><span class="line">TMap&lt;FName, FGenericDamageEffectDef&gt; ComboDamageMap;</span><br><span class="line"><span class="comment">// 从 Combo1/Combo2/Combo3 接 UpperCut → 不同的伤害值</span></span><br></pre></td></tr></table></figure>
+
+<p>UpperCut 的浮空效果通过 <code>LaunchDamageEffect</code>（一个 GE）实现——给目标施加一个向上的速度：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(EditDefaultsOnly, Category=<span class="string">&quot;Launch&quot;</span>)</span><br><span class="line"><span class="type">float</span> UpperCutLaunchSpeed = <span class="number">1000.f</span>;     <span class="comment">// 浮空初速度</span></span><br><span class="line"><span class="type">float</span> UpperCutComboHoldSpeed = <span class="number">0.f</span>;     <span class="comment">// 后续段减速→滞空</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-5-Ground-Blast-地面-AOE"><a href="#2-5-Ground-Blast-地面-AOE" class="headerlink" title="2.5 Ground Blast 地面 AOE"></a>2.5 Ground Blast 地面 AOE</h3><p>这个技能展示了 GAS 的 <strong>TargetActor</strong> 机制——先用 GroundPick TargetActor 在地面上选点，确认后再释放：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_GroundBlast::ActivateAbility</span><span class="params">(...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ① 生成 TargetActor，玩家通过光标/摇杆在地面选点</span></span><br><span class="line">    <span class="comment">// ② TargetActor 返回 TargetData（包含选中位置）</span></span><br><span class="line">    <span class="comment">// ③ TargetConfirmed() → 在目标位置播放 GameplayCue（特效）→ 施加伤害</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三、网络同步模型"><a href="#三、网络同步模型" class="headerlink" title="三、网络同步模型"></a>三、网络同步模型</h2><h3 id="3-1-核心原则：Server-Authoritative"><a href="#3-1-核心原则：Server-Authoritative" class="headerlink" title="3.1 核心原则：Server Authoritative"></a>3.1 核心原则：Server Authoritative</h3><p>整个项目的网络模型遵循 UE 的标准 Server-Authoritative 模型：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌──────────────────────┐         ┌──────────────────────┐</span><br><span class="line">│        SERVER         │         │        CLIENT         │</span><br><span class="line">│  ┌────────────────┐   │  Replicate  │  ┌────────────────┐  │</span><br><span class="line">│  │ AttributeSet   │───┼───────────→│  │ AttributeSet   │  │</span><br><span class="line">│  │ (权威数据)     │   │  OnRep     │  │ (只读副本)     │  │</span><br><span class="line">│  └────────────────┘   │            │  └────────────────┘  │</span><br><span class="line">│  ┌────────────────┐   │            │  ┌────────────────┐  │</span><br><span class="line">│  │ GameplayTags   │───┼───────────→│  │ GameplayTags   │  │</span><br><span class="line">│  │ (权威状态)     │   │  Replicate │  │ (只读副本)     │  │</span><br><span class="line">│  └────────────────┘   │            │  └────────────────┘  │</span><br><span class="line">│         ▲              │            │         │             │</span><br><span class="line">│         │              │            │         │             │</span><br><span class="line">│  Server RPC ◄──────────┼────────────┼─────────┘             │</span><br><span class="line">│  (技能升级/购买)       │   Client→  │   (按键输入)          │</span><br><span class="line">│                         │   Server   │                       │</span><br><span class="line">└──────────────────────┘         └──────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>伤害计算、死亡判定、等级提升全部发生在服务器</strong>。客户端只负责：</p>
+<ol>
+<li>发送输入（通过 Enhanced Input → Ability Input Tag）</li>
+<li>接收属性同步（OnRep 回调驱动 UI）</li>
+<li>接收 GameplayCue（特效&#x2F;音效在客户端本地播放）</li>
+</ol>
+<h3 id="3-2-属性同步：OnRep-驱动-UI"><a href="#3-2-属性同步：OnRep-驱动-UI" class="headerlink" title="3.2 属性同步：OnRep 驱动 UI"></a>3.2 属性同步：OnRep 驱动 UI</h3><p>每个复制的属性都声明了 <code>ReplicatedUsing</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(ReplicatedUsing = OnRep_Health)</span><br><span class="line">FGameplayAttributeData Health;</span><br><span class="line"></span><br><span class="line"><span class="built_in">UFUNCTION</span>()</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">OnRep_Health</span><span class="params">(<span class="type">const</span> FGameplayAttributeData&amp; OldValue)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>当客户端收到属性同步时，GAS 自动触发 <code>OnRep_*</code>，然后广播 <code>AttributeValueChangeDelegate</code>。UI Widget 通过绑定这个 Delegate 自动更新——不需要手动调用任何刷新函数。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UI 绑定：一行代码完成</span></span><br><span class="line">AbilitySystemComponent-&gt;<span class="built_in">GetGameplayAttributeValueChangeDelegate</span>(</span><br><span class="line">    UCAttributeSet::<span class="built_in">GetHealthAttribute</span>()</span><br><span class="line">).<span class="built_in">AddUObject</span>(<span class="keyword">this</span>, &amp;UStatsGauge::OnHealthChanged);</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-关键权限判断模式"><a href="#3-3-关键权限判断模式" class="headerlink" title="3.3 关键权限判断模式"></a>3.3 关键权限判断模式</h3><p>代码中有大量 <code>HasAuthority()</code> 判断，确保逻辑只在正确的端执行：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ✅ 经验升级——只在服务器计算</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAbilitySystemComponent::OnExperienceUpdated</span><span class="params">(<span class="type">const</span> FOnAttributeChangeData&amp; ChangeData)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">GetOwner</span>() || !<span class="built_in">GetOwner</span>()-&gt;<span class="built_in">HasAuthority</span>())</span><br><span class="line">        <span class="keyword">return</span>;  <span class="comment">// 客户端直接返回，不做升级计算</span></span><br><span class="line">    <span class="comment">// ...曲线查表、升级逻辑...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ✅ 死亡触发——只在服务器判定</span></span><br><span class="line"><span class="keyword">if</span> (ChangeData.NewValue &lt;= <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 施加 Death GE → 发送 Dead Event → 触发死亡序列</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ✅ 技能升级——客户端 RPC → 服务器执行 → 客户端回调</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAbilitySystemComponent::Server_UpgradeAbilityWithID_Implementation</span><span class="params">(ECAbilityInputID InputID)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 服务器：检查升级点数 → 提升技能等级 → MarkAbilitySpecDirty</span></span><br><span class="line">    <span class="built_in">Client_AbilitySpecLevelUpdated</span>(AbilitySpec-&gt;Handle, AbilitySpec-&gt;Level);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-完全不用手动-RPC-的地方"><a href="#3-4-完全不用手动-RPC-的地方" class="headerlink" title="3.4 完全不用手动 RPC 的地方"></a>3.4 完全不用手动 RPC 的地方</h3><p>以下流程<strong>完全由 GAS 自动处理</strong>，不需要写一行 RPC：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>GAS 机制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>技能激活&#x2F;取消</td>
+<td>Ability Spec 的 <code>IsActive</code> 通过 ASC 同步</td>
+</tr>
+<tr>
+<td>属性变化</td>
+<td>AttributeSet 的 <code>ReplicatedUsing</code> → OnRep → Delegate</td>
+</tr>
+<tr>
+<td>状态变化（死亡&#x2F;眩晕）</td>
+<td>GameplayTag 复制 → <code>RegisterGameplayTagEvent</code> 回调</td>
+</tr>
+<tr>
+<td>技能冷却</td>
+<td><code>FGameplayAbilitySpec</code> 内置 Cooldown 计时，自动同步</td>
+</tr>
+<tr>
+<td>伤害数字&#x2F;特效</td>
+<td>GameplayCue 在客户端本地触发（非 RPC）</td>
+</tr>
+</tbody></table>
+<h3 id="3-5-一个反例：GameplayCue-的-RPC-优化"><a href="#3-5-一个反例：GameplayCue-的-RPC-优化" class="headerlink" title="3.5 一个反例：GameplayCue 的 RPC 优化"></a>3.5 一个反例：GameplayCue 的 RPC 优化</h3><p>Git 记录里有一条很说明问题的 commit：</p>
+<blockquote>
+<p><code>Optimize the Overflow RPC cues, move it locally, and fix the camera shaking bug</code></p>
+</blockquote>
+<p>GameplayCue 在 UE5 中默认是 RPC 方式发送的（<code>AddGameplayCueToOwner</code>），在连招频繁触发伤害判定时，多个 Cue 的 RPC 会堆积。这条 commit 把 Cue 改为本地触发——既然 Cue 不涉及 Gameplay 逻辑，完全可以在客户端本地播放，不需要绕服务器一圈。</p>
+<blockquote>
+<p><strong>教训：GAS 的默认设置不一定适合你的场景</strong>。GameplayCue 默认走 RPC 是为了保证服务器也能”看见” Cue 做后续逻辑，但如果你的 Cue 纯视觉，local 就足够了。</p>
+</blockquote>
+<hr>
+<h2 id="四、关键踩坑记录"><a href="#四、关键踩坑记录" class="headerlink" title="四、关键踩坑记录"></a>四、关键踩坑记录</h2><h3 id="5-1-GAS-的”纯-C-”代价"><a href="#5-1-GAS-的”纯-C-”代价" class="headerlink" title="5.1 GAS 的”纯 C++”代价"></a>5.1 GAS 的”纯 C++”代价</h3><p>GAS 不像很多 UE 系统那样有蓝图面板。技能激活逻辑、GE 效果计算、属性变化回调——全部在 C++ 里。好处是代码可读、可调试、可 diff；坏处是每改一个伤害公式都要重新编译。</p>
+<blockquote>
+<p>平衡策略：<strong>逻辑写 C++，配置写蓝图&#x2F;DataAsset</strong>。技能的 <code>EditDefaultsOnly</code> 属性（伤害系数、动画蒙太奇、GE 映射表）都暴露给蓝图，策划配置不需要动 C++。</p>
+</blockquote>
+<h3 id="5-2-属性同步的”抖动”问题"><a href="#5-2-属性同步的”抖动”问题" class="headerlink" title="5.2 属性同步的”抖动”问题"></a>5.2 属性同步的”抖动”问题</h3><p><code>PreAttributeChange</code> 是实现属性 Clamp 的地方（Health &#x3D; Clamp(NewValue, 0, MaxHealth)），但文档写得很清楚：<strong>不要在这里触发 Gameplay 逻辑</strong>。因为 <code>PreAttributeChange</code> 可能在属性复制的中间状态被调用，此时 MaxHealth 可能还没同步过来。</p>
+<p>正确做法：在 <code>PostGameplayEffectExecute</code> 里做逻辑响应（死亡判定、UI 更新）。</p>
+<h3 id="5-3-死亡状态机与-GAS-的配合"><a href="#5-3-死亡状态机与-GAS-的配合" class="headerlink" title="5.3 死亡状态机与 GAS 的配合"></a>5.3 死亡状态机与 GAS 的配合</h3><p>死亡不是”Health ≤ 0 → 播死亡动画”这么简单。这里涉及：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Health ≤ 0</span><br><span class="line">  → AddLooseGameplayTag(Dead)       // 标记死亡</span><br><span class="line">  → Apply GE_Death (Infinite)        // 施加无限时长死亡 GE（阻止所有技能）</span><br><span class="line">  → SendGameplayEvent(Dead)          // 广播死亡事件</span><br><span class="line">  → DeathTagUpdated()                // GameplayTag 回调</span><br><span class="line">      → CancelAllAbilities()         // 取消所有进行中的技能</span><br><span class="line">      → PlayDeathAnimation()         // 播放死亡蒙太奇</span><br><span class="line">      → SetRagdollEnabled(true)      // 开始 Ragdoll 物理</span><br></pre></td></tr></table></figure>
+
+<p>复活时倒序执行，并且<strong>只在服务器</strong>移除死亡 GE、重置位置到 StartSpot。</p>
+<hr>
+<h2 id="五、架构可改进点"><a href="#五、架构可改进点" class="headerlink" title="五、架构可改进点"></a>五、架构可改进点</h2><p>写给自己看的反思，也是给面试官展示”我知道哪里还不够好”：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>改进方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>技能配置分散</strong> — DataTable + DataAsset + 蓝图各自管一部分</td>
+<td>统一用 DataAsset 做技能定义，一个 DA 描述一个技能的全部参数</td>
+</tr>
+<tr>
+<td><strong>缺少 GameplayAbility 的蓝图层</strong> — 所有 GA 都是 C++ 子类</td>
+<td>用 <code>UGameplayAbility</code> 基类 + <code>AbilityTask</code> 可以在蓝图中组装大部分技能</td>
+</tr>
+<tr>
+<td><strong>没有 GAS 的单元测试</strong></td>
+<td>利用 UE 的 Functional Test + Gauntlet 对技能效果做自动化验证</td>
+</tr>
+<tr>
+<td><strong>Inventory 不应该和 GAS 紧耦合</strong></td>
+<td>把库存系统抽象为独立模块，通过事件系统和 GAS 通信</td>
+</tr>
+<tr>
+<td><strong>Combo 系统缺少”取消窗口”</strong></td>
+<td>参考格斗游戏的 Cancel Window 设计，让连招手感和响应更灵敏</td>
+</tr>
+<tr>
+<td><strong>GameplayCue 参数传递混乱</strong> — 有些走 EventData，有些走 TargetData</td>
+<td>统一 Cue 参数规范，全部用 <code>FGameplayCueParameters</code> 的标准化字段</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="后续计划"><a href="#后续计划" class="headerlink" title="后续计划"></a>后续计划</h2><p>Crunch 是一个”做给自己看”的 Demo——验证 GAS 架构思路，踩一遍网络同步的坑。下一个项目计划侧重：</p>
+<ul>
+<li><strong>联网多人战斗</strong> — Crunch 目前只有一个本地玩家，联网的实际体验还没验证</li>
+<li><strong>更完整的 Combat Loop</strong> — 受击反馈、屏幕震动、HitStop、取消窗口</li>
+<li><strong>技能配置工程化</strong> — 从”写 C++ 子类”迁移到”DataAsset 驱动 + 蓝图组装”</li>
+</ul>
+<hr>
+<blockquote>
+<p><strong>如果你也在做 UE 动作游戏，或对 GAS 感兴趣</strong>——欢迎交流。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Portfolio</category>
+      </categories>
+      <tags>
+        <tag>Unreal</tag>
+        <tag>GAS</tag>
+        <tag>GameplayAbilitySystem</tag>
+        <tag>NetworkReplication</tag>
+        <tag>CombatDesign</tag>
+        <tag>ARPG</tag>
+        <tag>Portfolio</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Welcome to CoolDownSpace — 欢迎来到我的战斗设计自留地</title>
     <url>/2026/08/04/welcome-to-cooldown-space/</url>
     <content><![CDATA[<h2 id="为什么是-CoolDownSpace？"><a href="#为什么是-CoolDownSpace？" class="headerlink" title="为什么是 CoolDownSpace？"></a>为什么是 CoolDownSpace？</h2><p>🎮 我是 CD，一个正在游戏行业摸爬滚打的 <strong>Combat Designer</strong>（战斗策划）。</p>
