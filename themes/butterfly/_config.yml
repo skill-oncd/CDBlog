@@ -46,7 +46,8 @@ code_blocks:
 # Formal:
 #   icon: link || the description || color
 social:
-  fab fa-github: https://github.com/skill-oncd || GitHub || '#24292e'
+  fas fa-envelope: mailto:thoroughthinker@outlook.com || Email || '#1a1a1a'
+  fas fa-phone: tel:+8616621602880 || Phone || '#1a1a1a'
 
 # --------------------------------------
 # Image Settings
@@ -283,7 +284,7 @@ aside:
     category: true
   card_author:
     enable: true
-    description: Combat Designer · ARPG · Unreal & Unity
+    description: Combat Designer<br>ARPG · Unreal & Unity
     button:
       enable: true
       icon: fab fa-github
@@ -291,7 +292,7 @@ aside:
       link: https://github.com/skill-oncd
   card_announcement:
     enable: true
-    content: ⚔️ Thinking in cooldowns, shipping on countdowns.
+    content: 📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>⚔️ Thinking in cooldowns, shipping on countdowns.
   card_recent_post:
     enable: true
     # If set 0 will show all
