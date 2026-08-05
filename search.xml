@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Welcome to CoolDownSpace — 欢迎来到我的战斗设计自留地</title>
+    <url>/2026/08/04/welcome-to-cooldown-space/</url>
+    <content><![CDATA[<h2 id="为什么是-CoolDownSpace？"><a href="#为什么是-CoolDownSpace？" class="headerlink" title="为什么是 CoolDownSpace？"></a>为什么是 CoolDownSpace？</h2><p>🎮 我是 CD，一个正在游戏行业摸爬滚打的 <strong>Combat Designer</strong>（战斗策划）。</p>
+<p>这个博客的名字是个双关：</p>
+<ul>
+<li><strong>CoolDown</strong> — 技能冷却。我每天的工作就是调整技能的 CD 时间，直到战斗手感<em>对了</em>为止</li>
+<li><strong>CountDown</strong> — 倒计时。因为项目的 ship date 永远在倒数</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 我的人生状态机</span></span><br><span class="line"><span class="keyword">while</span> (Alive)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">DesignCombat</span>();</span><br><span class="line">    Skill.OnCooldown = <span class="literal">true</span>; <span class="comment">// 暂时的——下次迭代又不一样了</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="这里会有什么？"><a href="#这里会有什么？" class="headerlink" title="这里会有什么？"></a>这里会有什么？</h2><table>
+<thead>
+<tr>
+<th>栏目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>⚔️ <strong>战斗设计拆解</strong></td>
+<td>拆经典 ARPG 的战斗系统——技能机制、受击反馈、帧数据</td>
+</tr>
+<tr>
+<td>🛠️ <strong>工程实践</strong></td>
+<td>Unreal GAS &#x2F; Unity 技能系统踩坑记录</td>
+</tr>
+<tr>
+<td>💡 <strong>设计思考</strong></td>
+<td>为什么有些战斗”爽”，有些就是不对味</td>
+</tr>
+<tr>
+<td>🎯 <strong>求职复盘</strong></td>
+<td>面试题、作品集思路、行业洞察</td>
+</tr>
+</tbody></table>
+<p>没有通稿式的”技术分享”，只有一线开发者的真实记录。</p>
+<h2 id="当前进度"><a href="#当前进度" class="headerlink" title="当前进度"></a>当前进度</h2><blockquote>
+<p><strong>正在做：</strong> 一款 ARPG 的战斗 &amp; 技能系统</p>
+<p><strong>引擎：</strong> Unreal (C++ &#x2F; Blueprint) · Unity (C#)</p>
+<p><strong>日常关键词：</strong> 技能配置表 → GAS → 受击框 → 帧数据对齐 → 数值调优 → 开会 → 重做 → 继续调</p>
+</blockquote>
+<h2 id="Why-write"><a href="#Why-write" class="headerlink" title="Why write?"></a>Why write?</h2><p>三个原因：</p>
+<ol>
+<li><strong>记录成长。</strong> 踩过的坑、想通的道理，写下来才不容易忘</li>
+<li><strong>建立信号。</strong> 对于招聘方来说，公开的技术博客是最诚实的简历</li>
+<li><strong>连接同类。</strong> 如果你也在做类似的事情，希望这些内容对你有用</li>
+</ol>
+<blockquote>
+<p><code>skill.cooldown = 0</code> — CD 转好了，开始干活 🚀</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Career</category>
+      </categories>
+      <tags>
+        <tag>portfolio</tag>
+        <tag>game-design</tag>
+        <tag>career</tag>
+      </tags>
+  </entry>
+</search>

@@ -438,6 +438,13 @@ canvas:not(#ribbon-canvas),
   -ms-animation: scroll-down-effect 1.5s infinite;
   animation: scroll-down-effect 1.5s infinite;
 }
+.avatar-img {
+  -webkit-animation: avatar_turn_around 2s linear infinite;
+  -moz-animation: avatar_turn_around 2s linear infinite;
+  -o-animation: avatar_turn_around 2s linear infinite;
+  -ms-animation: avatar_turn_around 2s linear infinite;
+  animation: avatar_turn_around 2s linear infinite;
+}
 .reward-main {
   -webkit-animation: donate_effcet 0.3s 0.1s ease both;
   -moz-animation: donate_effcet 0.3s 0.1s ease both;
@@ -7824,6 +7831,20 @@ blockquote.pullquote.right {
   -o-animation: spin 1s linear infinite;
   -ms-animation: spin 1s linear infinite;
   animation: spin 1s linear infinite;
+}
+@media screen and (max-width: 768px) {
+  #local-search .search-dialog .search-result-list {
+    max-height: calc(var(--search-height) - 200px) !important;
+  }
+}
+#local-search #local-search-stats .search-result-stats {
+  text-align: left;
+}
+#local-search .search-keyword {
+  font-weight: 600;
+}
+#local-search #loading-database ~ * {
+  visibility: hidden;
 }
 @-moz-keyframes spin {
   to {
