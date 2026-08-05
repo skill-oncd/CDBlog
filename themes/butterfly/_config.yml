@@ -18,10 +18,10 @@ nav:
   fixed: false
 
 menu:
-  # Home: / || fas fa-home
-  # List||fas fa-list:
-  #   Music: /music/ || fas fa-music
-  #   Movie: /movies/ || fas fa-video
+  Home: / || fas fa-home
+  About: /about/ || fas fa-user
+  Archives: /archives/ || fas fa-archive
+  Categories: /categories/ || fas fa-folder
 
 # --------------------------------------
 # Code Blocks Settings
@@ -46,18 +46,17 @@ code_blocks:
 # Formal:
 #   icon: link || the description || color
 social:
-  # fab fa-github: https://github.com/xxxxx || Github || '#24292e'
-  # fas fa-envelope: mailto:xxxxxx@gmail.com || Email || '#4a7dbe'
+  fab fa-github: https://github.com/skill-oncd || GitHub || '#24292e'
 
 # --------------------------------------
 # Image Settings
 # --------------------------------------
 
-favicon: /img/favicon.png
+favicon: /img/favicon.svg
 
 avatar:
-  img: /img/butterfly-icon.png
-  effect: false
+  img: /img/avatar.jpg
+  effect: true
 
 # Disable all banner images
 disable_top_img: false
@@ -284,15 +283,15 @@ aside:
     category: true
   card_author:
     enable: true
-    description:
+    description: Combat Designer · ARPG · Unreal & Unity
     button:
       enable: true
       icon: fab fa-github
-      text: Follow Me
-      link: https://github.com/xxxxxx
+      text: GitHub
+      link: https://github.com/skill-oncd
   card_announcement:
     enable: true
-    content: This is my Blog
+    content: ⚔️ Thinking in cooldowns, shipping on countdowns.
   card_recent_post:
     enable: true
     # If set 0 will show all
@@ -474,8 +473,8 @@ math:
 search:
   # Choose: algolia_search / local_search / docsearch
   # leave it empty if you don't need search
-  use:
-  placeholder:
+  use: local_search
+  placeholder: Search
 
   # Algolia Search
   algolia_search:
