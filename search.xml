@@ -1,6 +1,296 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Welcome to CoolDownSpace — 欢迎来到我的战斗设计自留地</title>
+    <url>/2026/08/04/welcome-to-cooldown-space/</url>
+    <content><![CDATA[<h2 id="为什么是-CoolDownSpace？"><a href="#为什么是-CoolDownSpace？" class="headerlink" title="为什么是 CoolDownSpace？"></a>为什么是 CoolDownSpace？</h2><p>🎮 我是 CD，一个正在游戏行业摸爬滚打的 <strong>Combat Designer</strong>（战斗策划）。</p>
+<p>这个博客的名字是个双关：</p>
+<ul>
+<li><strong>CoolDown</strong> — 技能冷却。我每天的工作就是调整技能的 CD 时间，直到战斗手感<em>对了</em>为止</li>
+<li><strong>CountDown</strong> — 倒计时。因为项目的 ship date 永远在倒数</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 我的人生状态机</span></span><br><span class="line"><span class="keyword">while</span> (Alive)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">DesignCombat</span>();</span><br><span class="line">    Skill.OnCooldown = <span class="literal">true</span>; <span class="comment">// 暂时的——下次迭代又不一样了</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="这里会有什么？"><a href="#这里会有什么？" class="headerlink" title="这里会有什么？"></a>这里会有什么？</h2><table>
+<thead>
+<tr>
+<th>栏目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>⚔️ <strong>战斗设计拆解</strong></td>
+<td>拆经典 ARPG 的战斗系统——技能机制、受击反馈、帧数据</td>
+</tr>
+<tr>
+<td>🛠️ <strong>工程实践</strong></td>
+<td>Unreal GAS &#x2F; Unity 技能系统踩坑记录</td>
+</tr>
+<tr>
+<td>💡 <strong>设计思考</strong></td>
+<td>为什么有些战斗”爽”，有些就是不对味</td>
+</tr>
+<tr>
+<td>🎯 <strong>求职复盘</strong></td>
+<td>面试题、作品集思路、行业洞察</td>
+</tr>
+</tbody></table>
+<p>没有通稿式的”技术分享”，只有一线开发者的真实记录。</p>
+<h2 id="当前进度"><a href="#当前进度" class="headerlink" title="当前进度"></a>当前进度</h2><blockquote>
+<p><strong>正在做：</strong> 一款 ARPG 的战斗 &amp; 技能系统</p>
+<p><strong>引擎：</strong> Unreal (C++ &#x2F; Blueprint) · Unity (C#)</p>
+<p><strong>日常关键词：</strong> 技能配置表 → GAS → 受击框 → 帧数据对齐 → 数值调优 → 开会 → 重做 → 继续调</p>
+</blockquote>
+<h2 id="Why-write"><a href="#Why-write" class="headerlink" title="Why write?"></a>Why write?</h2><p>三个原因：</p>
+<ol>
+<li><strong>记录成长。</strong> 踩过的坑、想通的道理，写下来才不容易忘</li>
+<li><strong>建立信号。</strong> 对于招聘方来说，公开的技术博客是最诚实的简历</li>
+<li><strong>连接同类。</strong> 如果你也在做类似的事情，希望这些内容对你有用</li>
+</ol>
+<blockquote>
+<p><code>skill.cooldown = 0</code> — CD 转好了，开始干活 🚀</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Career</category>
+      </categories>
+      <tags>
+        <tag>portfolio</tag>
+        <tag>game-design</tag>
+        <tag>career</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</title>
+    <url>/2026/08/06/ArcaneRush-UE5-Blueprint-Portfolio/</url>
+    <content><![CDATA[<h2 id="项目概览"><a href="#项目概览" class="headerlink" title="项目概览"></a>项目概览</h2><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>引擎</strong></td>
+<td>Unreal Engine 5.6</td>
+</tr>
+<tr>
+<td><strong>类型</strong></td>
+<td>3D Tower Defense（塔防）</td>
+</tr>
+<tr>
+<td><strong>开发周期</strong></td>
+<td>约 5 个月（2025 年 6 月 — 11 月），21 次提交</td>
+</tr>
+<tr>
+<td><strong>核心标签</strong></td>
+<td>C++, Blueprint, DataTable, Behavior Tree, UMG, Spline</td>
+</tr>
+<tr>
+<td><strong>代码规模</strong></td>
+<td>~500 行 C++，8 个类，蓝图总量 150+</td>
+</tr>
+</tbody></table>
+<p>这是我的第一个独立 UE 项目。目标是<strong>把引擎核心功能跑通一遍</strong> —— 从 C++ 基类设计到大规模蓝图逻辑编排，从 Behavior Tree AI 到 UMG 局内外完整 UI。核心定位是”会用 UE 做完整游戏”，而非追求某一技术点的极限深度。</p>
+<iframe src="//player.bilibili.com/player.html?bvid=BV1uxuJ68Ept" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="width:100%;height:480px;"></iframe>
+
+<p>📦 高清下载: <a href="https://easylink.cc/wuspmt">EasyLink云链</a></p>
+<hr>
+<h2 id="一、架构总览"><a href="#一、架构总览" class="headerlink" title="一、架构总览"></a>一、架构总览</h2><h3 id="1-1-设计思路：C-管数据，蓝图管逻辑"><a href="#1-1-设计思路：C-管数据，蓝图管逻辑" class="headerlink" title="1.1 设计思路：C++ 管数据，蓝图管逻辑"></a>1.1 设计思路：C++ 管数据，蓝图管逻辑</h3><p>初学时面临一个关键选择：逻辑写 C++ 还是蓝图？最终选择 <strong>C++ 定义基类和数据结构 + 蓝图实现全部游戏逻辑</strong>：</p>
+<ul>
+<li><strong>C++ 层</strong>：类继承体系 + DataTable 结构体 + 伤害公式 + Buff 子系统 + 工具函数</li>
+<li><strong>蓝图层</strong>：塔攻击流程、敌人 AI、Hero 技能、HUD 交互、波次调度、存档读取</li>
+</ul>
+<p>这样分工的好处是：数据结构和性能敏感的计算在 C++ 中类型安全且可断点调试，而频繁迭代的游戏逻辑在蓝图中可视化和快速调整。</p>
+<h3 id="1-2-类继承体系"><a href="#1-2-类继承体系" class="headerlink" title="1.2 类继承体系"></a>1.2 类继承体系</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ACharacter</span><br><span class="line">  └── ABaseCharacter      ← 所有角色基类（血量/伤害/护甲/Buff 管理）</span><br><span class="line">        ├── ABaseEnemy     ← 敌人（Spline 寻路 + Behavior Tree AI）</span><br><span class="line">        ├── ABaseHero      ← 英雄（技能 + 复活机制）</span><br><span class="line">        └── ABaseSoldier   ← 兵营士兵（复活 + 独立动画）</span><br><span class="line"></span><br><span class="line">AActor</span><br><span class="line">  └── ABaseTower          ← 塔（多级升级 + 投射物 + 范围检测）</span><br></pre></td></tr></table></figure>
+
+<p>关键设计决策：</p>
+<ul>
+<li><strong>塔继承 AActor 而非 ACharacter</strong>：塔不需要 CharacterMovementComponent，轻量级 Actor 更合适</li>
+<li><strong>DataTable 属性嵌入到每个子类的专用结构体</strong>：敌人的 <code>FEnemyProperty</code> 里嵌套 <code>FCharacterBaseProperty</code>，每个子类只暴露自己需要的额外字段</li>
+</ul>
+<h3 id="1-3-DataTable-数据驱动"><a href="#1-3-DataTable-数据驱动" class="headerlink" title="1.3 DataTable 数据驱动"></a>1.3 DataTable 数据驱动</h3><p>所有角色属性通过 DataTable 配置，不写在蓝图里。以英雄数据为例：</p>
+<p><img src="/images/portfolio-td/DataTable.jpg" alt="DataTable 结构"></p>
+<p>塔的属性表则更进一步——升级相关的字段全部用<strong>数组索引</strong>存储：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 塔的属性——每个字段都是按等级索引的数组</span></span><br><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FTowerProperty</span> : <span class="keyword">public</span> FTableRowBase &#123;</span><br><span class="line">    TArray&lt;<span class="type">float</span>&gt; AttackRange;       <span class="comment">// [600, 650, 720, 800]</span></span><br><span class="line">    TArray&lt;int32&gt; DamageMin;         <span class="comment">// [20, 28, 38, 50]</span></span><br><span class="line">    TArray&lt;int32&gt; DamageMax;         <span class="comment">// [30, 40, 55, 70]</span></span><br><span class="line">    TArray&lt;int32&gt; Cost;              <span class="comment">// [100, 150, 220, 0]  // 0 = 满级</span></span><br><span class="line">    TArray&lt;UStaticMesh*&gt; StaticMeshes;  <span class="comment">// 每级不同外观</span></span><br><span class="line">    int32 MaxLevel;                  <span class="comment">// 动态配置等级上限</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>设计意图：新增塔类型只需在 DataTable 加一行，蓝图和代码零改动。</p>
+<hr>
+<h2 id="二、核心系统：塔的攻击流程"><a href="#二、核心系统：塔的攻击流程" class="headerlink" title="二、核心系统：塔的攻击流程"></a>二、核心系统：塔的攻击流程</h2><p>这是项目中最复杂、最完整的蓝图链路。完整流程分三层：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Tick 层      →  每帧检查攻击条件</span><br><span class="line">探测层       →  Sphere Trace 找到范围内的敌人</span><br><span class="line">攻击执行层   →  随机伤害 + 生成投射物</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-1-定时探测（Timer-Tick-双线程）"><a href="#2-1-定时探测（Timer-Tick-双线程）" class="headerlink" title="2.1 定时探测（Timer + Tick 双线程）"></a>2.1 定时探测（Timer + Tick 双线程）</h3><p><img src="/images/portfolio-td/TowerTick.jpg" alt="TowerTick——定时器与攻击条件"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Event BeginPlay → Set Timer by Function Name:</span><br><span class="line">    Function: &quot;Detect&quot;</span><br><span class="line">    Time: 0.5s, Looping: true</span><br><span class="line"></span><br><span class="line">Event Tick:</span><br><span class="line">    IS NOT EMPTY(DetectedEnemies) AND CanAttack?</span><br><span class="line">      True → Cast To AttackTower → Attack → Set CanAttack = false</span><br></pre></td></tr></table></figure>
+
+<p>设计考量：</p>
+<ul>
+<li><strong>0.5s 定时探测</strong>而非每帧 Trace——减少物理查询开销，塔防对实时精度要求不高</li>
+<li><strong>CanAttack bool 锁</strong>：防止同一帧内多次触发攻击，配合 <code>AttackCooldownTime</code> 在攻击完成后重置</li>
+</ul>
+<h3 id="2-2-Sphere-Trace-范围检测"><a href="#2-2-Sphere-Trace-范围检测" class="headerlink" title="2.2 Sphere Trace 范围检测"></a>2.2 Sphere Trace 范围检测</h3><p><img src="/images/portfolio-td/Detection1.jpg" alt="Detection——多球体追踪"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Detect Event:</span><br><span class="line">    Get Actor Location (self) → Start &amp; End (同一点)</span><br><span class="line">    Get Attack Range → Radius</span><br><span class="line">    Make Array(Object Type: &quot;Enemy&quot;)</span><br><span class="line">    Multi Sphere Trace For Objects:</span><br><span class="line">        Ignore Self: true</span><br><span class="line">    Out Hits → SET DetectedEnemies</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>Multi Sphere Trace For Objects</code> 而非 <code>GetAllActorsOfClass</code>：</p>
+<ul>
+<li><strong>性能</strong>：物理查询比遍历 Actor 列表快，尤其在敌人数量多时</li>
+<li><strong>灵活性</strong>：<code>Object Type</code> 过滤 + <code>Ignore Self</code>，后续可扩展为锥形&#x2F;扇形</li>
+</ul>
+<p>实际用 C++ 封装了命中后的有效性验证：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ABaseTower::IsEnemyAttackable</span><span class="params">(ABaseEnemy* Enemy)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Enemy &amp;&amp; !Enemy-&gt;<span class="built_in">IsDead</span>() &amp;&amp;</span><br><span class="line">        (<span class="built_in">GetAttackRange</span>() &gt;= (Enemy-&gt;<span class="built_in">GetActorLocation</span>() - <span class="built_in">GetActorLocation</span>()).<span class="built_in">Length</span>()))</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-攻击执行：随机伤害-投射物生成"><a href="#2-3-攻击执行：随机伤害-投射物生成" class="headerlink" title="2.3 攻击执行：随机伤害 + 投射物生成"></a>2.3 攻击执行：随机伤害 + 投射物生成</h3><p><img src="/images/portfolio-td/Attack1.jpg" alt="Attack——Spawn Bullet"></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AttackSingleEnemy:</span><br><span class="line">    Branch(Condition) → True:</span><br><span class="line">        Get World Location(FirePoint)</span><br><span class="line">        Get Closed Enemy(DetectedEnemies) → Enemy</span><br><span class="line">        Get Projectile Speed → Speed</span><br><span class="line">        Random Damage → Damage</span><br><span class="line">        SpawnActor(Bullet Class, Transform, Owner, Target, Speed, Damage)</span><br></pre></td></tr></table></figure>
+
+<p>C++ 中的随机伤害与护甲减伤：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 随机伤害（在范围内取随机值）</span></span><br><span class="line"><span class="function">int32 <span class="title">ABaseCharacter::RandomDamage</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> FMath::<span class="built_in">RandRange</span>(<span class="built_in">GetDamageMin</span>(), <span class="built_in">GetDamageMax</span>());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 核心伤害公式</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ABaseCharacter::LoseHealth</span><span class="params">(int32 Damage, EDamageType DamageType)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (bIsDead) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">switch</span> (DamageType) &#123;</span><br><span class="line">        <span class="keyword">case</span> Physical:</span><br><span class="line">            Health -= Damage * (<span class="number">1</span> - CharacterData.PhysicalArmor * <span class="number">0.15f</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> Magical:</span><br><span class="line">            Health -= Damage * (<span class="number">1</span> - CharacterData.MagicalArmor);  <span class="comment">// 魔抗全效率</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    OnHealthChange.<span class="built_in">Broadcast</span>();  <span class="comment">// 通知 UI 更新血条</span></span><br><span class="line">    <span class="keyword">if</span> (Health &lt;= <span class="number">0</span>) &#123; bIsDead = <span class="literal">true</span>; <span class="built_in">Dead</span>(); &#125;</span><br><span class="line">    <span class="keyword">return</span> Health &lt;= <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>物抗每点减 15% × 护甲值点数的物理伤害，魔抗每点减 100% × 护甲值点数——<strong>物理护甲比魔抗”软”</strong>，这引导玩家对不同敌人选择不同塔类型。</p>
+<hr>
+<h2 id="三、敌人系统：Spline-Behavior-Tree"><a href="#三、敌人系统：Spline-Behavior-Tree" class="headerlink" title="三、敌人系统：Spline + Behavior Tree"></a>三、敌人系统：Spline + Behavior Tree</h2><p><img src="/images/portfolio-td/EnemyBase.jpg" alt="EnemyBase——攻击动画与状态处理"></p>
+<p>敌人通过 Behavior Tree 驱动三件事：</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>实现方式</th>
+<th>关键点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>沿路径移动</strong></td>
+<td>Spline + <code>BTTask_GetNextPoint</code></td>
+<td>从 DataTable 读取移动速度</td>
+</tr>
+<tr>
+<td><strong>攻击终点</strong></td>
+<td><code>BTTask_EnemyAttack</code></td>
+<td>调用 <code>OnAttackAnimNotify</code> → Play Montage → 伤害事件</td>
+</tr>
+<tr>
+<td><strong>被击杀</strong></td>
+<td><code>OnTakeDamage</code> → 血量检查 → <code>Dead()</code></td>
+<td><code>BlueprintImplementableEvent</code>，蓝图中播死亡动画 + 延迟销毁</td>
+</tr>
+</tbody></table>
+<p>Spline 路径还有一个有趣的应用——<strong>投射物贝塞尔曲线</strong>。塔生成的子弹不是直线飞行，而是沿 Bezier 曲线移动，增强了视觉表现力。</p>
+<hr>
+<h2 id="四、Buff-子系统：WorldSubsystem-工厂模式"><a href="#四、Buff-子系统：WorldSubsystem-工厂模式" class="headerlink" title="四、Buff 子系统：WorldSubsystem + 工厂模式"></a>四、Buff 子系统：WorldSubsystem + 工厂模式</h2><p>这是项目中 C++ 架构最完整的一个系统：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UMyBuffSubsystem (UWorldSubsystem)</span><br><span class="line">  └── CreateBuff(EBuffType, Rate, Duration) → UBuff*</span><br><span class="line">        ├── USpeedBuff::Attach()     → MaxWalkSpeed *= Rate</span><br><span class="line">        ├── UAttackSpeedBuff::Attach() → AttackCoolDownTime *= Rate</span><br><span class="line">        └── UShieldBuff::Attach()    → PhysicalArmor/MagicalArmor *= Rate</span><br></pre></td></tr></table></figure>
+
+<p>核心设计：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 基类——Timer 管理生命周期</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UBuff::Attach</span><span class="params">(ABaseCharacter* C)</span> </span>&#123;</span><br><span class="line">    Character = C;</span><br><span class="line">    Character-&gt;<span class="built_in">AttachBuff</span>(<span class="keyword">this</span>);</span><br><span class="line">    <span class="built_in">GetWorld</span>()-&gt;<span class="built_in">GetTimerManager</span>().<span class="built_in">SetTimer</span>(Timer, <span class="keyword">this</span>, &amp;UBuff::Detach, Duration);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UBuff::Detach</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Character-&gt;<span class="built_in">RemoveBuff</span>(<span class="keyword">this</span>);</span><br><span class="line">    <span class="built_in">GetWorld</span>()-&gt;<span class="built_in">GetTimerManager</span>().<span class="built_in">ClearTimer</span>(Timer);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 子类只覆写效果数值变更</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">USpeedBuff::Attach</span><span class="params">(ABaseCharacter* C)</span> </span>&#123;</span><br><span class="line">    Super::<span class="built_in">Attach</span>(C);</span><br><span class="line">    C-&gt;<span class="built_in">GetCharacterMovement</span>()-&gt;MaxWalkSpeed *= Rate;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">USpeedBuff::Detach</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Super::<span class="built_in">Detach</span>();</span><br><span class="line">    Character-&gt;<span class="built_in">GetCharacterMovement</span>()-&gt;MaxWalkSpeed /= Rate;  <span class="comment">// 恢复</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>选 <code>UWorldSubsystem</code> 而非 Component 的原因：Buff 是跨对象的全局能力——Hero 技能给全体敌人上减速、塔的攻击触发护盾——放在 World 级别自然符合其作用域。</p>
+<hr>
+<h2 id="五、UI-与交互"><a href="#五、UI-与交互" class="headerlink" title="五、UI 与交互"></a>五、UI 与交互</h2><p><img src="/images/portfolio-td/BuildPanel.jpg" alt="建造面板按钮点击"></p>
+<p>整个 UI 分两层：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>主要 Widget</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>局内</strong></td>
+<td><code>WBP_GameHUD</code>, <code>WBP_BuildPanel</code>, <code>WBP_HealthBar_Info</code>, <code>WBP_SkillPanel</code>, <code>WBP_NextWaveBTN</code></td>
+<td>实时血量、防御塔建造、技能释放、波次推进</td>
+</tr>
+<tr>
+<td><strong>局外</strong></td>
+<td><code>WBP_StartPanel</code>, <code>WBP_MenuPanel</code>, <code>WBP_HeroPanel</code>, <code>WBP_TowerPanel1</code>, <code>WBP_LoadPanel</code></td>
+<td>关卡选择、英雄&#x2F;塔图鉴、存档加载</td>
+</tr>
+</tbody></table>
+<p>UI 数据绑定流程：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GameState(金币变化) → OnHealthChange Delegate → WBP_GameStatePanel(更新文字)</span><br><span class="line">Character(血量变化) → OnHealthChange Delegate → WBP_HealthBar_Info(ProgressBar)</span><br></pre></td></tr></table></figure>
+
+<p>C++ 中声明的事件委托：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">DECLARE_DYNAMIC_MULTICAST_DELEGATE</span>(FOnHealthChangedDelegate);</span><br><span class="line"></span><br><span class="line"><span class="built_in">UPROPERTY</span>(BlueprintAssignable)</span><br><span class="line">FOnHealthChangedDelegate OnHealthChange;</span><br></pre></td></tr></table></figure>
+
+<p>所有 Widget 通过 <code>Event Construct</code> → <code>Get Game Instance</code> → <code>Cast</code> → 获取数据 → <code>ForEachLoop</code> 遍历子控件来初始化，构成一个从 GameState → HUD → 子控件的单向数据流。</p>
+<hr>
+<h2 id="六、波次管理系统"><a href="#六、波次管理系统" class="headerlink" title="六、波次管理系统"></a>六、波次管理系统</h2><p><img src="/images/portfolio-td/WaveSystem.jpg" alt="波次切换流程"></p>
+<p>波次数据同样走 DataTable：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">USTRUCT</span>()</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FEnemyWave</span> : <span class="keyword">public</span> FTableRowBase &#123;</span><br><span class="line">    TArray&lt;FEnemyNumTime&gt; WaveEnemies;   <span class="comment">// 本波敌人列表（名称+数量+间隔+路线）</span></span><br><span class="line">    int32 WaveCoolDownTime;              <span class="comment">// 波间冷却</span></span><br><span class="line">    FString WaveEvent;                   <span class="comment">// 波次事件描述</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">USTRUCT</span>()</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FGameData</span> : <span class="keyword">public</span> FTableRowBase &#123;</span><br><span class="line">    TArray&lt;FEnemyWave&gt; Waves;            <span class="comment">// 全部波次</span></span><br><span class="line">    int32 Coins, Health;                 <span class="comment">// 起始金币、生命</span></span><br><span class="line">    TSoftObjectPtr&lt;UWorld&gt; Level;        <span class="comment">// 关卡地图</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>波次调度流程：<code>OnGameStart</code> → 读 DT_GameData → <code>CreateEnemySpawner</code> → 按 <code>CoolDownTime</code> 间隔生成 → 最后一波 &amp; 敌人清空 → 胜利。</p>
+<p>GameMode 每 Tick 检查胜利条件：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Event Tick:</span><br><span class="line">    Is Last Wave? AND Generated Enemies IS EMPTY?</span><br><span class="line">        True → Victory → Open WinPanel</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="七、踩坑记录"><a href="#七、踩坑记录" class="headerlink" title="七、踩坑记录"></a>七、踩坑记录</h2><h3 id="1-Behavior-Tree-Task-Finish-必须手动标记-Success"><a href="#1-Behavior-Tree-Task-Finish-必须手动标记-Success" class="headerlink" title="1. Behavior Tree Task Finish 必须手动标记 Success"></a>1. Behavior Tree Task Finish 必须手动标记 Success</h3><p><strong>现象</strong>：AI 走到第一个路径点后停止不动。</p>
+<p><strong>原因</strong>：<code>BTTask_GetNextPoint</code> 的 <code>Finish Execute</code> 节点没有勾选 <code>Success</code>，导致 BT 认为 Task 仍在运行中。这是 UE Behavior Tree 最常见的坑——Task 不返回 Success，后续节点永远不会执行。</p>
+<p><strong>Git 记录</strong>：</p>
+<blockquote>
+<p><code>paramove to spline and random spawn point, fix ai malfunction (in task finish, success unchecked)</code></p>
+</blockquote>
+<h3 id="2-碰撞预设导致的检测失效"><a href="#2-碰撞预设导致的检测失效" class="headerlink" title="2. 碰撞预设导致的检测失效"></a>2. 碰撞预设导致的检测失效</h3><p><strong>现象</strong>：<code>Multi Sphere Trace For Objects</code> 永远返回空数组。</p>
+<p><strong>原因</strong>：敌人角色的 Collision Preset 中 <code>Object Type</code> 不是 “Enemy” 通道。在 Project Settings 创建了自定义 Object Channel 后，忘记在 Enemy 蓝图上设置 Collision Preset。</p>
+<p><strong>教训</strong>：自定义物理通道需要在每个相关 Actor 上确认 Collision 设置，不能只在代码中写过滤逻辑就假设能工作。</p>
+<h3 id="3-移动端构建错误"><a href="#3-移动端构建错误" class="headerlink" title="3. 移动端构建错误"></a>3. 移动端构建错误</h3><p><strong>现象</strong>：<code>Makefile error</code>，项目无法编译。</p>
+<p><strong>原因</strong>：引擎版本从 5.5 升级到 5.6 后，<code>.uproject</code> 中残留了一个已禁用的插件引用（<code>&quot;Cargo&quot;: {&quot;Enabled&quot;: false}</code>），UBT 在处理时产生兼容性问题。</p>
+<p><strong>解决</strong>：清理 <code>.uproject</code> 中无效的插件声明即可。</p>
+<hr>
+<h2 id="八、架构可改进点"><a href="#八、架构可改进点" class="headerlink" title="八、架构可改进点"></a>八、架构可改进点</h2><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>当前做法</th>
+<th>改进方向</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>等级数组越界</strong></td>
+<td><code>TowerData.DamageMin[Level-1]</code> 无边界检查</td>
+<td>封装 <code>GetValueAtLevel()</code> 加 <code>check()</code> 断言</td>
+</tr>
+<tr>
+<td><strong>BaseCharacter 不必要地继承 ACharacter</strong></td>
+<td>所有角色继承 <code>ACharacter</code>，塔防不需要 SkeletalMesh 和物理</td>
+<td>轻量级角色可改为继承 <code>APawn</code> 或自定义 <code>UObject</code></td>
+</tr>
+<tr>
+<td><strong>Buff 直接修改 CharacterData</strong></td>
+<td><code>AttackSpeedBuff</code> 直接改了 <code>CharacterData.AttackCoolDownTime</code>，如果多个 Buff 叠加可能出错</td>
+<td>引入属性快照机制，Buff 修改前保存原始值</td>
+</tr>
+<tr>
+<td><strong>缺少网络同步</strong></td>
+<td>单机项目，未考虑 RPC 和属性复制</td>
+<td>如需多人模式，需要在 GameMode 加 Server RPC，GameState 加 Replicated 属性</td>
+</tr>
+<tr>
+<td><strong>波次系统耦合在 GameMode 蓝图中</strong></td>
+<td>波次逻辑、敌人创建、UI 更新全部在一个蓝图里</td>
+<td>拆分为独立的 <code>WaveManager</code> Component</td>
+</tr>
+<tr>
+<td><strong>DataTable Init 传原始指针</strong></td>
+<td><code>Init(FName, UDataTable*)</code> 无空指针检查</td>
+<td>用 <code>TObjectPtr&lt;UDataTable&gt;</code> + <code>ensure()</code></td>
+</tr>
+</tbody></table>
+<hr>
+<blockquote>
+<p>这是我学习 UE 过程中的第一个完整项目，很多设计决策是在边学边做的过程中形成的。如果对塔防、蓝图架构或 UE 任何方面有讨论兴趣，欢迎交流。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Portfolio</category>
+      </categories>
+      <tags>
+        <tag>Unreal Engine</tag>
+        <tag>Blueprint</tag>
+        <tag>UE5</tag>
+        <tag>Tower Defense</tag>
+        <tag>Gameplay Programming</tag>
+        <tag>DataTable</tag>
+        <tag>塔防</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</title>
     <url>/2026/08/05/crunch-ue-gamplay-ability-system-and-network-sync/</url>
     <content><![CDATA[<h2 id="项目概览"><a href="#项目概览" class="headerlink" title="项目概览"></a>项目概览</h2><table>
@@ -230,66 +520,6 @@
         <tag>CombatDesign</tag>
         <tag>ARPG</tag>
         <tag>Portfolio</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Welcome to CoolDownSpace — 欢迎来到我的战斗设计自留地</title>
-    <url>/2026/08/04/welcome-to-cooldown-space/</url>
-    <content><![CDATA[<h2 id="为什么是-CoolDownSpace？"><a href="#为什么是-CoolDownSpace？" class="headerlink" title="为什么是 CoolDownSpace？"></a>为什么是 CoolDownSpace？</h2><p>🎮 我是 CD，一个正在游戏行业摸爬滚打的 <strong>Combat Designer</strong>（战斗策划）。</p>
-<p>这个博客的名字是个双关：</p>
-<ul>
-<li><strong>CoolDown</strong> — 技能冷却。我每天的工作就是调整技能的 CD 时间，直到战斗手感<em>对了</em>为止</li>
-<li><strong>CountDown</strong> — 倒计时。因为项目的 ship date 永远在倒数</li>
-</ul>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 我的人生状态机</span></span><br><span class="line"><span class="keyword">while</span> (Alive)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">DesignCombat</span>();</span><br><span class="line">    Skill.OnCooldown = <span class="literal">true</span>; <span class="comment">// 暂时的——下次迭代又不一样了</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="这里会有什么？"><a href="#这里会有什么？" class="headerlink" title="这里会有什么？"></a>这里会有什么？</h2><table>
-<thead>
-<tr>
-<th>栏目</th>
-<th>内容</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>⚔️ <strong>战斗设计拆解</strong></td>
-<td>拆经典 ARPG 的战斗系统——技能机制、受击反馈、帧数据</td>
-</tr>
-<tr>
-<td>🛠️ <strong>工程实践</strong></td>
-<td>Unreal GAS &#x2F; Unity 技能系统踩坑记录</td>
-</tr>
-<tr>
-<td>💡 <strong>设计思考</strong></td>
-<td>为什么有些战斗”爽”，有些就是不对味</td>
-</tr>
-<tr>
-<td>🎯 <strong>求职复盘</strong></td>
-<td>面试题、作品集思路、行业洞察</td>
-</tr>
-</tbody></table>
-<p>没有通稿式的”技术分享”，只有一线开发者的真实记录。</p>
-<h2 id="当前进度"><a href="#当前进度" class="headerlink" title="当前进度"></a>当前进度</h2><blockquote>
-<p><strong>正在做：</strong> 一款 ARPG 的战斗 &amp; 技能系统</p>
-<p><strong>引擎：</strong> Unreal (C++ &#x2F; Blueprint) · Unity (C#)</p>
-<p><strong>日常关键词：</strong> 技能配置表 → GAS → 受击框 → 帧数据对齐 → 数值调优 → 开会 → 重做 → 继续调</p>
-</blockquote>
-<h2 id="Why-write"><a href="#Why-write" class="headerlink" title="Why write?"></a>Why write?</h2><p>三个原因：</p>
-<ol>
-<li><strong>记录成长。</strong> 踩过的坑、想通的道理，写下来才不容易忘</li>
-<li><strong>建立信号。</strong> 对于招聘方来说，公开的技术博客是最诚实的简历</li>
-<li><strong>连接同类。</strong> 如果你也在做类似的事情，希望这些内容对你有用</li>
-</ol>
-<blockquote>
-<p><code>skill.cooldown = 0</code> — CD 转好了，开始干活 🚀</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>Career</category>
-      </categories>
-      <tags>
-        <tag>portfolio</tag>
-        <tag>game-design</tag>
-        <tag>career</tag>
       </tags>
   </entry>
 </search>
