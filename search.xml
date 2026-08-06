@@ -291,6 +291,628 @@
       </tags>
   </entry>
   <entry>
+    <title>UE5 动画系统两种架构：TPS Blend Space 状态机 vs ARPG Montage + GAS 事件驱动</title>
+    <url>/2026/08/06/UE5%E5%8A%A8%E7%94%BB%E7%B3%BB%E7%BB%9F%E4%B8%A4%E7%A7%8D%E6%9E%B6%E6%9E%84-TPS%E4%B8%8EARPG%E5%AF%B9%E6%AF%94/</url>
+    <content><![CDATA[<h2 id="项目概览"><a href="#项目概览" class="headerlink" title="项目概览"></a>项目概览</h2><p>这两篇文章的上下文——一个侧重动画系统本身的学习，一个侧重 GAS 战斗系统的搭建。但放在一起看，它们的动画架构恰好代表了 UE5 的两条主流路线：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>TPS Tutorial</th>
+<th>Crunch</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>引擎版本</strong></td>
+<td>5.3</td>
+<td>5.4</td>
+</tr>
+<tr>
+<td><strong>类型</strong></td>
+<td>第三人称射击</td>
+<td>近战 ARPG &#x2F; MOBA</td>
+</tr>
+<tr>
+<td><strong>角色资源</strong></td>
+<td>Marketplace 侦探模型 + IK Retarget</td>
+<td>Paragon Crunch</td>
+</tr>
+<tr>
+<td><strong>动画资产规模</strong></td>
+<td>~200+ 序列帧</td>
+<td>~20 序列帧</td>
+</tr>
+<tr>
+<td><strong>Blend Space</strong></td>
+<td>7 个</td>
+<td>2 个</td>
+</tr>
+<tr>
+<td><strong>Animation Montage</strong></td>
+<td>4 个</td>
+<td>4 个（按技能组织）</td>
+</tr>
+<tr>
+<td><strong>C++ AnimInstance</strong></td>
+<td>无</td>
+<td>自定义 <code>UCAnimInstance</code></td>
+</tr>
+<tr>
+<td><strong>自定义 AnimNotify</strong></td>
+<td>无</td>
+<td><code>AN_SendGameplayEvent</code> + <code>AN_SendTargetGroup</code></td>
+</tr>
+<tr>
+<td><strong>核心驱动</strong></td>
+<td>Enhanced Input → CharacterMovement → AnimBP</td>
+<td>GAS AbilityTask → Montage → GameplayEvent</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一、核心差异：表现丰富度-vs-通信精度"><a href="#一、核心差异：表现丰富度-vs-通信精度" class="headerlink" title="一、核心差异：表现丰富度 vs 通信精度"></a>一、核心差异：表现丰富度 vs 通信精度</h2><p>两个项目的设计目标决定了它们走向了不同的动画架构：</p>
+<ul>
+<li><p><strong>TPS Tutorial</strong> 的目标是”学会 UE5 动画系统能做什么”——所以它把 Blend Space、状态机、AimOffset、Montage 全部搭了一遍。结果是<strong>动画表现极其丰富</strong>（八向移动 × 多种姿态 × 过渡动画），但 Gameplay 通信层很薄（一个 LineTrace 完事）。</p>
+</li>
+<li><p><strong>Crunch</strong> 的目标是”做出能联网的近战战斗”——所以它的动画资产很少（Paragon 自带），但 <strong>Gameplay 通信层极其精密</strong>：自定义 AnimNotify 在特定帧做 SphereTrace → 打包 TargetData → 发 GameplayEvent → GAS Ability 收到后施加 GE。</p>
+</li>
+</ul>
+<p>一句话概括：<strong>TPS 的动画系统是”展示型”的，Crunch 的动画系统是”功能型”的。</strong></p>
+<hr>
+<h2 id="二、同一功能，两种实现"><a href="#二、同一功能，两种实现" class="headerlink" title="二、同一功能，两种实现"></a>二、同一功能，两种实现</h2><h3 id="2-1-方向计算"><a href="#2-1-方向计算" class="headerlink" title="2.1 方向计算"></a>2.1 方向计算</h3><p><strong>TPS — AnimBP Event Graph 内置函数：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 在蓝图里一行搞定</span></span><br><span class="line">Direction = <span class="built_in">CalculateDirection</span>(Velocity, ActorRotation);  <span class="comment">// 返回 -180~180</span></span><br><span class="line">Speed = Velocity.<span class="built_in">Size</span>();</span><br></pre></td></tr></table></figure>
+
+<p><strong>Crunch — C++ 手动分解前后&#x2F;左右分量：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAnimInstance::NativeUpdateAnimation</span><span class="params">(<span class="type">float</span> DeltaSeconds)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    FVector Velocity = OwnerCharacter-&gt;<span class="built_in">GetVelocity</span>();</span><br><span class="line">    FRotator ControlRot = OwnerCharacter-&gt;<span class="built_in">GetBaseAimRotation</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分解为前后和左右两个独立分量</span></span><br><span class="line">    FwdSpeed   = Velocity.<span class="built_in">Dot</span>(ControlRot.<span class="built_in">Vector</span>());</span><br><span class="line">    RightSpeed = -Velocity.<span class="built_in">Dot</span>(ControlRot.<span class="built_in">Vector</span>().<span class="built_in">Cross</span>(FVector::UpVector));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 转向速度 + 平滑</span></span><br><span class="line">    FRotator BodyRotDelta = <span class="built_in">NormalizedDeltaRotator</span>(BodyRot, BodyPreviousRotation);</span><br><span class="line">    YawSpeed = BodyRotDelta.Yaw / DeltaSeconds;</span><br><span class="line">    SmoothedYawSpeed = <span class="built_in">FInterpTo</span>(SmoothedYawSpeed, YawSpeed, DeltaSeconds, <span class="number">1.f</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 瞄准偏移</span></span><br><span class="line">    LookRotOffset = <span class="built_in">NormalizedDeltaRotator</span>(ControlRot, BodyRot);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>TPS</th>
+<th>Crunch</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>方向表示</td>
+<td>单个 Direction 角度</td>
+<td>FwdSpeed + RightSpeed 双分量</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>前进后退对称的速度模型</td>
+<td>前进后退不对称（后退速度上限更低）</td>
+</tr>
+<tr>
+<td>转向处理</td>
+<td>无</td>
+<td>计算 YawSpeed + 平滑，驱动转身动画</td>
+</tr>
+<tr>
+<td>AimOffset</td>
+<td>在 AnimBP 中用 BlendSpace 处理</td>
+<td>C++ 中预计算 LookRotOffset，传入 BlendSpace</td>
+</tr>
+</tbody></table>
+<p>Crunch 的双分量设计更灵活：前进速度 600、后退速度 200 时，<code>FwdSpeed</code> 可以是负数（后退），而 <code>CalculateDirection</code> 只输出角度，丢失了”你在后退且速度受限”这个信息。</p>
+<h3 id="2-2-Animation-Montage-生命周期管理"><a href="#2-2-Animation-Montage-生命周期管理" class="headerlink" title="2.2 Animation Montage 生命周期管理"></a>2.2 Animation Montage 生命周期管理</h3><p>这是两个项目差距最大的设计决策。</p>
+<p><strong>TPS — 隐式管理，分两层：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">玩家按下左键</span><br><span class="line">  → C++ MyCharacter::Fire()</span><br><span class="line">    → 如果是第一次射击 → ICRRecoilInterface::StartShooting()</span><br><span class="line">    → BaseGun::GunFire()</span><br><span class="line">      → ShootOnce()            // LineTrace + 伤害</span><br><span class="line">      → PlayFireAnimation()    // 枪械自身 SkeletalMesh 动画</span><br><span class="line">      → CameraShake</span><br><span class="line">  → (同时) AnimBP 蓝图侧监听 &quot;正在开火&quot; 状态 → PlayMontage(AM_Fire)</span><br></pre></td></tr></table></figure>
+
+<p>Montage 的播放不是从 C++ 显式触发的，而是 AnimBP 蓝图中通过”检测到正在开火 → 播 AM_Fire”的间接逻辑。FP 枪械的动画和角色 Montage 在两条独立的轨道上，同步靠蓝图端的 Tick 判断。</p>
+<p><strong>Crunch — 显式管理，全在一个类内：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_Combo::ActivateAbility</span><span class="params">(...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ① Montage 播放由 AbilityTask 管理，不是手动 PlayMontage</span></span><br><span class="line">    UAbilityTask_PlayMontageAndWait* PlayTask =</span><br><span class="line">        UAbilityTask_PlayMontageAndWait::<span class="built_in">CreatePlayMontageAndWaitProxy</span>(</span><br><span class="line">            <span class="keyword">this</span>, NAME_None, ComboMontage);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ② 四个退出路径全部绑定 EndAbility —— Montage 结束 = 技能结束</span></span><br><span class="line">    PlayTask-&gt;OnBlendOut.<span class="built_in">AddDynamic</span>(<span class="keyword">this</span>, &amp;UGA_Combo::K2_EndAbility);</span><br><span class="line">    PlayTask-&gt;OnCancelled.<span class="built_in">AddDynamic</span>(<span class="keyword">this</span>, &amp;UGA_Combo::K2_EndAbility);</span><br><span class="line">    PlayTask-&gt;OnCompleted.<span class="built_in">AddDynamic</span>(<span class="keyword">this</span>, &amp;UGA_Combo::K2_EndAbility);</span><br><span class="line">    PlayTask-&gt;OnInterrupted.<span class="built_in">AddDynamic</span>(<span class="keyword">this</span>, &amp;UGA_Combo::K2_EndAbility);</span><br><span class="line">    PlayTask-&gt;<span class="built_in">ReadyForActivation</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ③ 同时等待 AnimNotify 发来的 GameplayEvent</span></span><br><span class="line">    UAbilityTask_WaitGameplayEvent* WaitTask =</span><br><span class="line">        UAbilityTask_WaitGameplayEvent::<span class="built_in">WaitGameplayEvent</span>(</span><br><span class="line">            <span class="keyword">this</span>, <span class="built_in">GetComboChangedEventTag</span>(), ...);</span><br><span class="line">    WaitTask-&gt;EventReceived.<span class="built_in">AddDynamic</span>(<span class="keyword">this</span>, &amp;UGA_Combo::ComboChangedEventReceived);</span><br><span class="line">    WaitTask-&gt;<span class="built_in">ReadyForActivation</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ④ 等待玩家下一段按键输入</span></span><br><span class="line">    <span class="built_in">SetupWaitComboInputPress</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Combo 段位切换：在动画中通过 AnimNotify 触发</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_Combo::ComboChangedEventReceived</span><span class="params">(FGameplayEventData Data)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    NextComboName = TagNames.<span class="built_in">Last</span>();      <span class="comment">// &quot;Combo1&quot; / &quot;Combo2&quot; / &quot;Combo3&quot;</span></span><br><span class="line">    <span class="built_in">SetupWaitComboInputPress</span>();           <span class="comment">// 继续等待输入 → HandleInputPressed → TryCommitCombo</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 下一段 Combo：用 Montage_SetNextSection 平滑过渡</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_Combo::TryCommitCombo</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UAnimInstance* OwnerAnimInst = <span class="built_in">GetOwnerAnimInstance</span>();</span><br><span class="line">    OwnerAnimInst-&gt;<span class="built_in">Montage_SetNextSection</span>(</span><br><span class="line">        OwnerAnimInst-&gt;<span class="built_in">Montage_GetCurrentSection</span>(ComboMontage),</span><br><span class="line">        NextComboName, ComboMontage);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>TPS</th>
+<th>Crunch</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Montage 触发</td>
+<td>AnimBP 蓝图间接触发</td>
+<td>C++ GAS AbilityTask 显式管理</td>
+</tr>
+<tr>
+<td>结束回调</td>
+<td>依赖 AnimBP 状态机回退</td>
+<td><code>OnBlendOut</code> &#x2F; <code>OnCancelled</code> &#x2F; <code>OnInterrupted</code> 全部绑定</td>
+</tr>
+<tr>
+<td>技能-动画关系</td>
+<td>松散耦合（各管各）</td>
+<td>强内聚（一个 GA 对象管理一切）</td>
+</tr>
+<tr>
+<td>Combo 段位切换</td>
+<td>无</td>
+<td><code>Montage_SetNextSection</code> 无缝衔接</td>
+</tr>
+<tr>
+<td>可调试性</td>
+<td>需要在 AnimBP 和 C++ 之间跳转</td>
+<td>全部在一个 <code>.cpp</code> 文件中</td>
+</tr>
+</tbody></table>
+<p>Crunch 方式的核心优势：<strong>一个 Combo 技能的全部逻辑（动画播放 → 等待输入 → AnimNotify 事件 → 段位切换 → 伤害施加 → 技能结束）都在一个 <code>UGA_Combo</code> 类里</strong>。审阅或调试时不需要在 AnimBP 蓝图和 C++ 之间来回跳。</p>
+<h3 id="2-3-伤害判定时机"><a href="#2-3-伤害判定时机" class="headerlink" title="2.3 伤害判定时机"></a>2.3 伤害判定时机</h3><p>这是被 Gameplay 类型决定的差异——不是”谁做得更好”，而是”谁更适合自己做的事”。</p>
+<p><strong>TPS — 即时命中（Hitscan）：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ABaseGun::ShootOnce</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 按下扳机的同一帧 → LineTrace → 伤害</span></span><br><span class="line">    FVector StartLoc = CameraManager-&gt;<span class="built_in">GetCameraLocation</span>();</span><br><span class="line">    FVector EndLoc = StartLoc + SpreadRotator.<span class="built_in">RotateVector</span>(</span><br><span class="line">        CameraManager-&gt;<span class="built_in">GetActorForwardVector</span>()) * <span class="number">2000</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">bool</span> bHit = <span class="built_in">GetWorld</span>()-&gt;<span class="built_in">LineTraceSingleByChannel</span>(</span><br><span class="line">        Hit, StartLoc, EndLoc, ECC_Visibility, Params);</span><br><span class="line">    <span class="keyword">if</span> (bHit)</span><br><span class="line">        MyCharacter-&gt;<span class="built_in">OnGunHit</span>(Hit, <span class="keyword">this</span>);  <span class="comment">// → 蓝图事件</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Crunch — 动画帧判定（Frame-accurate）：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// AN_SendTargetGroup::Notify() — 挂在 ComboMontage 的&quot;拳头命中帧&quot;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UAN_SendTargetGroup::Notify</span><span class="params">(...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 在动画特定帧做 SphereTrace</span></span><br><span class="line">    UKismetSystemLibrary::<span class="built_in">SphereTraceMultiForObjects</span>(</span><br><span class="line">        MeshComp, StartLoc, EndLoc, SphereSweepRadius, ...);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 打包命中结果 → TargetData → GameplayEvent → GAS</span></span><br><span class="line">    FGameplayAbilityTargetData_SingleTargetHit* TargetHit =</span><br><span class="line">        <span class="keyword">new</span> <span class="built_in">FGameplayAbilityTargetData_SingleTargetHit</span>(HitResult);</span><br><span class="line">    Data.TargetData.<span class="built_in">Add</span>(TargetHit);</span><br><span class="line"></span><br><span class="line">    UAbilitySystemBlueprintLibrary::<span class="built_in">SendGameplayEventToActor</span>(</span><br><span class="line">        MeshComp-&gt;<span class="built_in">GetOwner</span>(), EventTag, Data);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// GA_Combo::DoDamage() — 收到事件后施加伤害</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_Combo::DoDamage</span><span class="params">(FGameplayEventData Data)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; HitResultCount; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        FHitResult Hit = <span class="built_in">GetHitResultFromTargetData</span>(Data.TargetData, i);</span><br><span class="line">        <span class="built_in">ApplyGameplayEffectToHitResultActor</span>(Hit, <span class="built_in">GetDamageEffectForCurrentCombo</span>(), ...);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>TPS</th>
+<th>Crunch</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>判定时机</td>
+<td>输入帧（按下扳机那一刻）</td>
+<td>动画帧（拳头到达最远点的那一帧）</td>
+</tr>
+<tr>
+<td>判定方式</td>
+<td>LineTrace（射线）</td>
+<td>SphereTrace（球体扫描）</td>
+</tr>
+<tr>
+<td>适合类型</td>
+<td>射击——子弹瞬间到达</td>
+<td>近战——武器轨迹扫过敌人</td>
+</tr>
+<tr>
+<td>伤害可变性</td>
+<td>固定（枪的伤害值）</td>
+<td>动态（Combo 段位不同 → GE 不同）</td>
+</tr>
+<tr>
+<td>判定失败的影响</td>
+<td>打不中（手感差）</td>
+<td>视觉上打中了但没伤害（手感更差）</td>
+</tr>
+</tbody></table>
+<p>TPS 的 LineTrace 在开枪那一帧执行——开火动画刚起手，子弹已经判定完毕。这对射击游戏来说是正常体验，但如果你把枪口火焰动画和实际 Trace 时间对齐，会发现 Trace 比枪口火花早了 2-3 帧。Crunch 的 AnimNotify 方案把 Trace 精确放在动画帧上——如果是近战游戏，这个精确度直接影响手感。</p>
+<h3 id="2-4-Gameplay-状态-→-动画状态的数据通道"><a href="#2-4-Gameplay-状态-→-动画状态的数据通道" class="headerlink" title="2.4 Gameplay 状态 → 动画状态的数据通道"></a>2.4 Gameplay 状态 → 动画状态的数据通道</h3><p><strong>TPS</strong> 使用最简单直接的路径：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">CharacterMovement (bIsCrouching, IsFalling)</span><br><span class="line">    → AnimBP Event Graph 直接读取</span><br><span class="line">    → 驱动 State Machine 转换</span><br></pre></td></tr></table></figure>
+
+<p><strong>Crunch</strong> 使用 GameplayTag 作为中间层：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 初始化时注册 GameplayTag 监听</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAnimInstance::NativeInitializeAnimation</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UAbilitySystemComponent* OwnerASC =</span><br><span class="line">        UAbilitySystemBlueprintLibrary::<span class="built_in">GetAbilitySystemComponent</span>(<span class="built_in">TryGetPawnOwner</span>());</span><br><span class="line">    <span class="keyword">if</span> (OwnerASC)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Aim 状态通过 GameplayTag 同步</span></span><br><span class="line">        OwnerASC-&gt;<span class="built_in">RegisterGameplayTagEvent</span>(</span><br><span class="line">            UCAbilitySystemStatics::<span class="built_in">GetAimStatsTag</span>()</span><br><span class="line">        ).<span class="built_in">AddUObject</span>(<span class="keyword">this</span>, &amp;UCAnimInstance::OwnerAimTagChanged);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Tag 变化 → 动画状态</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAnimInstance::OwnerAimTagChanged</span><span class="params">(<span class="type">const</span> FGameplayTag Tag, int32 NewCount)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    bIsAiming = NewCount != <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么 Crunch 需要这一层？</strong></p>
+<p>因为 Crunch 的角色状态（瞄准&#x2F;死亡&#x2F;眩晕&#x2F;无敌）不是简单的 <code>bool</code>，而是 GAS 的 <code>FGameplayTag</code> ——一个角色可以同时持有多个 Tag，且这些 Tag 通过网络自动复制。<code>bIsAiming</code> 在客户端和服务端通过同一个机制同步，不需要额外的手动 RPC。</p>
+<p>TPS 不需要这层间接——它不做网络同步，<code>bIsCrouching</code> 本身就是 CharacterMovement 的同步属性。</p>
+<hr>
+<h2 id="三、线程模型：AnimBP-游戏线程-vs-C-工作线程"><a href="#三、线程模型：AnimBP-游戏线程-vs-C-工作线程" class="headerlink" title="三、线程模型：AnimBP 游戏线程 vs C++ 工作线程"></a>三、线程模型：AnimBP 游戏线程 vs C++ 工作线程</h2><p>Crunch 的 <code>CAnimInstance</code> 明确区分了两个更新函数：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// NativeUpdateAnimation — 游戏线程</span></span><br><span class="line"><span class="comment">// 只做数据收集：读 Velocity、算 Speed、算 Yaw</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">NativeUpdateAnimation</span><span class="params">(<span class="type">float</span> DeltaSeconds)</span> <span class="keyword">override</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NativeThreadSafeUpdateAnimation — 工作线程</span></span><br><span class="line"><span class="comment">// 在 Anim Graph 更新前执行，可以做混合计算</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">NativeThreadSafeUpdateAnimation</span><span class="params">(<span class="type">float</span> DeltaSeconds)</span> <span class="keyword">override</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>TPS 因为完全在 AnimBP 的 Event Graph 中做计算，所有 Update 都在游戏线程的 Blueprint 虚拟机上执行——没有利用 UE5 的动画工作线程。</p>
+<p><strong>什么时候这个区别重要？</strong></p>
+<p>当场景中有 50+ 个角色同时播放动画时，游戏线程的 AnimBP 计算会成为瓶颈。把数据收集放在游戏线程、混合计算放在工作线程，是 UE5 推荐的做法。但对于单机 Demo 来说，这个优化是过早的。</p>
+<hr>
+<h2 id="四、AnimNotify：TPS-没有，Crunch-有"><a href="#四、AnimNotify：TPS-没有，Crunch-有" class="headerlink" title="四、AnimNotify：TPS 没有，Crunch 有"></a>四、AnimNotify：TPS 没有，Crunch 有</h2><p>TPS 不需要自定义 AnimNotify——它的 Montage 不向 Gameplay 系统发送信息。开火是 C++ 端主动触发的，换弹也是 C++ 端的 Timer 管理，动画只需要”看起来对”。</p>
+<p>Crunch 有两个自定义 AnimNotify，它们是动画系统和 GAS 之间的桥梁：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// AN_SendGameplayEvent：在动画特定帧向 ASC 发送 GameplayEvent</span></span><br><span class="line"><span class="comment">// 用于 Combo 段位切换（&quot;Combo1 → Combo2&quot;的切换帧）</span></span><br><span class="line">UAN_SendGameplayEvent::<span class="built_in">Notify</span>(...) &#123;</span><br><span class="line">    UAbilitySystemBlueprintLibrary::<span class="built_in">SendGameplayEventToActor</span>(</span><br><span class="line">        MeshComp-&gt;<span class="built_in">GetOwner</span>(), GameplayEventTag, <span class="built_in">FGameplayEventData</span>());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AN_SendTargetGroup：在动画特定帧做伤害判定</span></span><br><span class="line"><span class="comment">// 用于 Combo 伤害帧（&quot;拳头命中&quot;那一帧）</span></span><br><span class="line">UAN_SendTargetGroup::<span class="built_in">Notify</span>(...) &#123;</span><br><span class="line">    <span class="comment">// SphereTrace → 筛选敌对阵营 → 发送 GameplayEvent + GameplayCue</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>设计原则：AnimNotify 不做 Gameplay 逻辑，它只负责”在正确的时刻发消息”。</strong> 收到消息后怎么做——伤害多少、施加什么 GE——全部在 GAS Ability 中决定。这意味着同一个 AnimNotify 可以用在不同的技能里，伤害逻辑由各自的 Ability 处理。</p>
+<hr>
+<h2 id="五、动画资产组织"><a href="#五、动画资产组织" class="headerlink" title="五、动画资产组织"></a>五、动画资产组织</h2><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>TPS</th>
+<th>Crunch</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>移动动画</td>
+<td>按状态 × 方向 × 姿态分层：Walk × 8 + Run × 8 + Crouch × 8 + Aim × 8 + Equip × 8</td>
+<td>Paragon 自带 Jog&#x2F;Idle，用 Blend Space 混合</td>
+</tr>
+<tr>
+<td>动作动画</td>
+<td>按武器类型分：Pistol&#x2F;AR 各一套 Fire&#x2F;Reload</td>
+<td>按技能分：Combo &#x2F; UpperCut &#x2F; GroundBlast</td>
+</tr>
+<tr>
+<td>Montage 组织</td>
+<td>按动作类型分：<code>AM_Fire</code> &#x2F; <code>AM_Reload</code> &#x2F; <code>AM_Dodge</code> &#x2F; <code>AM_Punch</code></td>
+<td>按技能分：<code>AM_Combo</code> &#x2F; <code>AM_UpperCut</code> &#x2F; <code>AM_GroundBlast</code></td>
+</tr>
+<tr>
+<td>过渡动画</td>
+<td>非常全：Idle→Walk (8 dir) &#x2F; Idle→Run (8 dir) &#x2F; WalkStop &#x2F; RunStop (L&#x2F;R foot)</td>
+<td>依赖 Root Motion</td>
+</tr>
+<tr>
+<td>IK</td>
+<td>Control Rig Foot IK + PostProcess ABP</td>
+<td>Control Rig Foot IK (<code>CR_Crunch_IKFoot</code>)</td>
+</tr>
+</tbody></table>
+<p>TPS 的动画组织是”从下往上”——从最基本的移动动画开始，一层层叠加（Additive AimOffset → LayeredBlendPerBone 武器姿态 → Montage 插播）。Crunch 是”从上往下”——从技能设计开始（Combo 要有 3 段 → 每段一个 Section → Section 之间用 AnimNotify 桥接），移动动画只是技能的”默认背景层”。</p>
+<hr>
+<h2 id="六、适用场景与选择建议"><a href="#六、适用场景与选择建议" class="headerlink" title="六、适用场景与选择建议"></a>六、适用场景与选择建议</h2><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐方向</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>学习动画系统本身</td>
+<td><strong>TPS 方式</strong></td>
+<td>手搭 Blend Space + 状态机 + Montage 全流程</td>
+</tr>
+<tr>
+<td>射击游戏（Hitscan）</td>
+<td><strong>TPS 方式</strong></td>
+<td>C++ LineTrace，动画只管表现</td>
+</tr>
+<tr>
+<td>近战动作游戏</td>
+<td><strong>Crunch 方式</strong></td>
+<td>AnimNotify 帧判定 + GAS 管理技能生命周期</td>
+</tr>
+<tr>
+<td>需要联网多人</td>
+<td><strong>Crunch 方式</strong></td>
+<td>GAS 的 Tag&#x2F;Attribute 自动复制，AnimNotify 发 Event</td>
+</tr>
+<tr>
+<td>团队以蓝图为主</td>
+<td><strong>TPS 方式</strong></td>
+<td>AnimBP Event Graph 承担大部分工作</td>
+</tr>
+<tr>
+<td>技能需要复杂逻辑</td>
+<td><strong>Crunch 方式</strong></td>
+<td>自定义 C++ AnimInstance + AbilityTask 管理一切</td>
+</tr>
+<tr>
+<td>大量 AI 角色同时存在</td>
+<td><strong>Crunch 方式</strong></td>
+<td>工作线程 Update + 少量 Blend Space → 性能更好</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="七、为什么两套方案不矛盾"><a href="#七、为什么两套方案不矛盾" class="headerlink" title="七、为什么两套方案不矛盾"></a>七、为什么两套方案不矛盾</h2><p>做实际项目时，你不会只选一种——你会把两者的优势结合起来：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">项目动画系统 = TPS 的 Blend Space 移动层</span><br><span class="line">              + Crunch 的 GAS + AnimNotify 技能层</span><br><span class="line">              + 自定义 C++ AnimInstance 数据层</span><br></pre></td></tr></table></figure>
+
+<p>具体来说：</p>
+<ul>
+<li><strong>移动系统</strong>用 TPS 的方案：状态机驱动 + 丰富的 Blend Space 过渡</li>
+<li><strong>战斗技能</strong>用 Crunch 的方案：GAS AbilityTask 管理 Montage 生命周期 + AnimNotify 发 GameplayEvent 做帧判定</li>
+<li><strong>数据层</strong>统一在 C++ AnimInstance 中计算，GameplayTag 监听 Gameplay 状态</li>
+</ul>
+<p>两个项目合在一起，覆盖了 UE5 角色动画的三大支柱：<strong>Blend Space 状态机</strong>（表现力）、<strong>Montage + AnimNotify 事件系统</strong>（功能性）、<strong>C++ AnimInstance + GameplayTag</strong>（数据通信）。</p>
+<hr>
+<blockquote>
+<p>如果你也在用 UE5 搭建角色动画系统，或者对这两种架构有自己的实践经验，欢迎交流。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Portfolio</category>
+      </categories>
+      <tags>
+        <tag>UE5</tag>
+        <tag>Unreal</tag>
+        <tag>Animation</tag>
+        <tag>AnimationBlueprint</tag>
+        <tag>BlendSpace</tag>
+        <tag>Montage</tag>
+        <tag>GAS</tag>
+        <tag>GameplayAbilitySystem</tag>
+        <tag>Portfolio</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</title>
+    <url>/2026/08/06/TPS%E5%8A%A8%E7%94%BB%E7%B3%BB%E7%BB%9F%E5%AE%9E%E8%B7%B5-ABP-%E5%85%AB%E5%90%91%E7%A7%BB%E5%8A%A8-Montage/</url>
+    <content><![CDATA[<h2 id="项目概览"><a href="#项目概览" class="headerlink" title="项目概览"></a>项目概览</h2><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>引擎</strong></td>
+<td>Unreal Engine 5.3</td>
+</tr>
+<tr>
+<td><strong>类型</strong></td>
+<td>第三人称射击（TPS）动画系统 Demo</td>
+</tr>
+<tr>
+<td><strong>核心标签</strong></td>
+<td>Animation Blueprint · Blend Space · Montage · IK Retargeting · Enhanced Input</td>
+</tr>
+</tbody></table>
+<p>一个聚焦 UE5 动画系统的 TPS 角色 Demo。核心产物是一个完整的 <strong>Animation Blueprint</strong>（ABP_MyCharacter），包含完整的移动状态机、7 个 Blend Space、4 个 Animation Montage，配合 IK Retargeter 将 Mannequin 动画重定向到自定义角色模型。</p>
+<hr>
+<h2 id="一、Animation-Blueprint-总体架构"><a href="#一、Animation-Blueprint-总体架构" class="headerlink" title="一、Animation Blueprint 总体架构"></a>一、Animation Blueprint 总体架构</h2><p>ABP 是 UE 动画系统的枢纽。本项目的 ABP_MyCharacter 设计分三层：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ABP_MyCharacter</span><br><span class="line">├── Event Graph          ← 每帧从 C++ / BP 拿数据，更新动画变量</span><br><span class="line">├── Anim Graph (主输出)</span><br><span class="line">│   ├── Locomotion State Machine  ← 移动状态机</span><br><span class="line">│   │   ├── Idle ──→ Walk ──→ Run</span><br><span class="line">│   │   ├── Idle ──→ Crouch</span><br><span class="line">│   │   ├── Idle ──→ Jump ──→ Fall ──→ Land</span><br><span class="line">│   │   └── TurnInPlace</span><br><span class="line">│   └── Layered Blend Per Bone    ← 上半身 Montage 叠加</span><br><span class="line">│       ├── Base (Locomotion)</span><br><span class="line">│       └── Upper Body Slot (Fire/Reload/Punch)</span><br><span class="line">└── Post Process Anim BP          ← Control Rig Foot IK</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据来源：C-→-Anim-BP"><a href="#数据来源：C-→-Anim-BP" class="headerlink" title="数据来源：C++ → Anim BP"></a>数据来源：C++ → Anim BP</h3><p>动画蓝图本身不持有数据，依赖 C++ Character 层每帧计算后传入：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// MyCharacter 中，Enhanced Input 每帧驱动 CharacterMovement</span></span><br><span class="line"><span class="comment">// AnimBP 通过 GetVelocity() / GetActorRotation() 等原生接口取值</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// BaseGun 中暴露武器动画类型</span></span><br><span class="line"><span class="function">TEnumAsByte&lt;EWeaponAnimType&gt; <span class="title">GetWeaponType</span><span class="params">()</span></span>;  <span class="comment">// PistolAnim / RifleAnim</span></span><br></pre></td></tr></table></figure>
+
+<p>Anim BP 的 Event Graph 中做方向计算：</p>
+<ul>
+<li><strong>Speed</strong> &#x3D; <code>Velocity.Size()</code> — 区分 Idle &#x2F; Walk &#x2F; Run</li>
+<li><strong>Direction</strong> &#x3D; <code>CalculateDirection(Velocity, ActorRotation)</code> — Blend Space 的横轴</li>
+<li><strong>bIsCrouching</strong> &#x3D; <code>CharacterMovement.IsCrouching()</code></li>
+<li><strong>bIsInAir</strong> &#x3D; <code>CharacterMovement.IsFalling()</code></li>
+<li><strong>WeaponType</strong> &#x3D; 从 <code>BaseGun::GetWeaponType()</code> 取值，决定武器动画分支</li>
+</ul>
+<hr>
+<h2 id="二、八向移动的实现步骤"><a href="#二、八向移动的实现步骤" class="headerlink" title="二、八向移动的实现步骤"></a>二、八向移动的实现步骤</h2><p>八向移动的核心思路：<strong>用 Blend Space 把方向离散化，再用 Animation BP 的 State Machine 按速度分状态。</strong></p>
+<h3 id="Step-1：准备动画资产"><a href="#Step-1：准备动画资产" class="headerlink" title="Step 1：准备动画资产"></a>Step 1：准备动画资产</h3><p>为每个移动状态准备 8 个方向的动画序列：</p>
+<table>
+<thead>
+<tr>
+<th>方向</th>
+<th>角度</th>
+<th>Walk 示例</th>
+<th>Run 示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Forward</td>
+<td>0°</td>
+<td><code>anim_walk_forward</code></td>
+<td><code>anim_run_forward</code></td>
+</tr>
+<tr>
+<td>Forward-Right</td>
+<td>45°</td>
+<td><code>anim_walk_rightforward</code></td>
+<td><code>anim_run_rightforward</code></td>
+</tr>
+<tr>
+<td>Right</td>
+<td>90°</td>
+<td><code>anim_walk_right</code></td>
+<td><code>anim_run_right</code></td>
+</tr>
+<tr>
+<td>Backward-Right</td>
+<td>135°</td>
+<td><code>anim_walk_rightbackward</code></td>
+<td><code>anim_run_rightbackward</code></td>
+</tr>
+<tr>
+<td>Backward</td>
+<td>180°&#x2F;-180°</td>
+<td><code>anim_walk_backward</code></td>
+<td><code>anim_run_backward</code></td>
+</tr>
+<tr>
+<td>Backward-Left</td>
+<td>-135°</td>
+<td><code>anim_walk_leftbackward</code></td>
+<td><code>anim_run_leftbackward</code></td>
+</tr>
+<tr>
+<td>Left</td>
+<td>-90°</td>
+<td><code>anim_walk_left</code></td>
+<td><code>anim_run_left</code></td>
+</tr>
+<tr>
+<td>Forward-Left</td>
+<td>-45°</td>
+<td><code>anim_walk_leftforward</code></td>
+<td><code>anim_run_leftforward</code></td>
+</tr>
+</tbody></table>
+<p>本项目为 8 方向的每个组合都做了独立动画（Walk × 8、Run × 8、Crouch × 8、WalkAim × 8、EquipWalk × 8 等），这是实现高质量八向移动的基础。</p>
+<h3 id="Step-2：创建-Blend-Space"><a href="#Step-2：创建-Blend-Space" class="headerlink" title="Step 2：创建 Blend Space"></a>Step 2：创建 Blend Space</h3><p>为每个移动模式创建 Blend Space（水平轴 &#x3D; Direction，范围 -180~180）：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">BS_Walk:  [ -180° | -135° | -90° | -45° | 0° | 45° | 90° | 135° | 180° ]</span><br><span class="line">BS_Run:   [ -180° | -135° | -90° | -45° | 0° | 45° | 90° | 135° | 180° ]</span><br><span class="line">BS_Crouch:[ -180° | -135° | -90° | -45° | 0° | 45° | 90° | 135° | 180° ]</span><br></pre></td></tr></table></figure>
+
+<p><strong>关键设置：</strong></p>
+<ul>
+<li>Interpolation Time：尽量小（0.1~0.2s），否则方向切换有”飘”感</li>
+<li>每个动画的权重区域不要过大，否则相邻动画会被错误激活</li>
+<li>建议开启 <code>Display Editor Vertices</code> → <code>Grid</code> 模式来可视化每个动画的权重区域</li>
+</ul>
+<h3 id="Step-3：过渡-Blend-Space"><a href="#Step-3：过渡-Blend-Space" class="headerlink" title="Step 3：过渡 Blend Space"></a>Step 3：过渡 Blend Space</h3><p>Idle 和 Move 之间不能直接切换——需要过渡动画：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">BS_IdleToWalk:   [ Idle → Walk (8 dir)  ]</span><br><span class="line">BS_IdleToRun:    [ Idle → Run (8 dir)   ]</span><br><span class="line">BS_IdleToCrouch: [ Idle → Crouch (8 dir)]</span><br></pre></td></tr></table></figure>
+
+<p>这些过渡 Blend Space 在 State Machine 中作为 <strong>Transition Rule 的 Blend 资产</strong> 使用——当状态切换时，过渡阶段播放它们而不是立刻切到目标 Blend Space。</p>
+<h3 id="Step-4：构建-State-Machine"><a href="#Step-4：构建-State-Machine" class="headerlink" title="Step 4：构建 State Machine"></a>Step 4：构建 State Machine</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">        ┌─────────────────────────────┐</span><br><span class="line">        │         Idle State          │</span><br><span class="line">        │   (BS_Idle, BS_Turn)        │</span><br><span class="line">        └──────┬──────────┬───────────┘</span><br><span class="line">    Speed&gt;150  │          │  Speed&gt;10,&lt;150</span><br><span class="line">               ▼          ▼</span><br><span class="line">┌──────────┐       ┌──────────────┐</span><br><span class="line">│ Run State│       │  Walk State   │</span><br><span class="line">│ (BS_Run) │       │ (BS_Walk)     │</span><br><span class="line">└────┬─────┘       └──────┬───────┘</span><br><span class="line">     │     Speed&lt;150     │</span><br><span class="line">     └───────────────────┘ Speed&lt;10</span><br><span class="line">               │</span><br><span class="line"> Speed&lt;10      ▼</span><br><span class="line">┌──────────────────────┐</span><br><span class="line">│  IdleToRun/WalkStop  │  ← Transition Blend Space</span><br><span class="line">└──────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>状态机设计要点：</strong></p>
+<ol>
+<li><strong>Idle 作为 Hub</strong>：所有移动状态最终都回到 Idle，避免状态爆炸</li>
+<li><strong>Speed 阈值驱动流转</strong>：<code>Speed &lt; 10</code> → Idle，<code>10 &lt; Speed &lt; 150</code> → Walk，<code>Speed &gt; 150</code> → Run</li>
+<li><strong>过渡使用 Blend Space 而非硬切</strong>：Transition 的 <code>Blend Logic</code> 设为 <code>BlendSpace</code> 类型，引用对应的 IdleToMove Blend Space</li>
+<li><strong>Crouch 独立子状态机</strong>：<code>bIsCrouching</code> 触发进入 Crouch 子树，避免和站立状态交叉污染</li>
+</ol>
+<h3 id="Step-5：叠加武器姿态"><a href="#Step-5：叠加武器姿态" class="headerlink" title="Step 5：叠加武器姿态"></a>Step 5：叠加武器姿态</h3><p>移动状态只管下半身。上半身的武器姿态通过 <strong>Layered Blend Per Bone</strong> 叠加：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Final Animation Pose</span><br><span class="line">├── Base Pose: Locomotion State Machine (全身)</span><br><span class="line">└── Blend Weight = 1.0, Bone Filter: Spine_01 ~ Head</span><br><span class="line">    └── Blend Poses by Enum (WeaponType)</span><br><span class="line">        ├── PistolAnim → AO_Aim_Pistol + anim_idle_aim</span><br><span class="line">        └── RifleAnim  → AO_Aim_Rifle + anim_idle_aimAR</span><br></pre></td></tr></table></figure>
+
+<p><strong>关键节点：</strong></p>
+<ul>
+<li><code>Layered Blend Per Bone (Branch Filter = Spine_01)</code> — 上半身叠加，不影响移动</li>
+<li><code>Blend Poses by Enum</code> — 按 <code>EWeaponAnimType</code> 枚举切换手枪&#x2F;步枪动画集</li>
+<li>每个武器分支内部再用 <code>BlendSpace (AimOffset)</code> 处理 9 方向瞄准</li>
+</ul>
+<h3 id="八向移动常见坑"><a href="#八向移动常见坑" class="headerlink" title="八向移动常见坑"></a>八向移动常见坑</h3><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>原因</th>
+<th>解决</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>方向切换有”吸附感”</td>
+<td>Blend Space Interpolation 过大</td>
+<td>设为 0.1~0.15</td>
+</tr>
+<tr>
+<td>后退时动画”反转”</td>
+<td>Root Motion 与方向不匹配</td>
+<td>检查动画的 Root Motion Rotation</td>
+</tr>
+<tr>
+<td>武器动画覆盖全身</td>
+<td>Layered Blend Bone Filter 设错</td>
+<td>确认只 Mask 上半身骨骼链</td>
+</tr>
+<tr>
+<td>停步瞬间脚滑步</td>
+<td>缺少 Stop 过渡动画</td>
+<td>添加 WalkStop&#x2F;RunStop 带左右脚变体</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、Animation-Montage-的搭建步骤"><a href="#三、Animation-Montage-的搭建步骤" class="headerlink" title="三、Animation Montage 的搭建步骤"></a>三、Animation Montage 的搭建步骤</h2><p>Montage 用于”一次性动作”——开火、换弹、闪避、近战。它是<strong>插播式</strong>的，播完自动退出，不会影响 Locomotion 状态机。</p>
+<h3 id="Step-1：创建-Montage-资产"><a href="#Step-1：创建-Montage-资产" class="headerlink" title="Step 1：创建 Montage 资产"></a>Step 1：创建 Montage 资产</h3><p>每个动作一个 Montage，设置 Slot：</p>
+<table>
+<thead>
+<tr>
+<th>Montage</th>
+<th>Slot Name</th>
+<th>用途</th>
+<th>Blend In</th>
+<th>Blend Out</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>AM_Fire</code></td>
+<td><code>UpperBody</code></td>
+<td>射击（只影响上半身）</td>
+<td>0.05s</td>
+<td>0.1s</td>
+</tr>
+<tr>
+<td><code>AM_Reload</code></td>
+<td><code>UpperBody</code></td>
+<td>换弹</td>
+<td>0.15s</td>
+<td>0.2s</td>
+</tr>
+<tr>
+<td><code>AM_Dodge</code></td>
+<td><code>FullBody</code></td>
+<td>翻滚闪避</td>
+<td>0.1s</td>
+<td>0.15s</td>
+</tr>
+<tr>
+<td><code>AM_Punch</code></td>
+<td><code>FullBody</code></td>
+<td>近战攻击</td>
+<td>0.1s</td>
+<td>0.15s</td>
+</tr>
+</tbody></table>
+<p><strong>Slot 设计方案：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DefaultGroup.UpperBody   ← 上半身动作（Fire / Reload），不打断移动</span><br><span class="line">DefaultGroup.FullBody    ← 全身动作（Dodge / Punch），覆盖移动</span><br></pre></td></tr></table></figure>
+
+<h3 id="Step-2：Anim-Graph-中配置-Slot-节点"><a href="#Step-2：Anim-Graph-中配置-Slot-节点" class="headerlink" title="Step 2：Anim Graph 中配置 Slot 节点"></a>Step 2：Anim Graph 中配置 Slot 节点</h3><p>在 Anim Graph 的输出 Pose 链路中插入 Slot 节点：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Locomotion State Machine (Output Pose)</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Slot &quot;UpperBody&quot; ──→ LayeredBlendPerBone (BoneFilter: Spine_01 ~ Head)</span><br><span class="line">    │                        │</span><br><span class="line">    │  Base Pose (full body) │  Blend Weight = Montage 激活时 → 1.0</span><br><span class="line">    │                        │</span><br><span class="line">    ▼                        ▼</span><br><span class="line">Slot &quot;FullBody&quot; ──→ BlendWeights = 1.0 (覆盖全身)</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Output Pose</span><br></pre></td></tr></table></figure>
+
+<p><strong>重点：</strong> <code>UpperBody</code> Slot 在 Layered Blend Per Bone 之后、输出之前接入——这样 Montage 播上半身动画时，下半身继续播 Locomotion Pose。而 <code>FullBody</code> Slot 直接覆盖整个输出链。</p>
+<h3 id="Step-3：在-Montage-中组织-Section"><a href="#Step-3：在-Montage-中组织-Section" class="headerlink" title="Step 3：在 Montage 中组织 Section"></a>Step 3：在 Montage 中组织 Section</h3><p>以 <code>AM_Fire</code> 为例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Section: &quot;FireStart&quot;  →  Section: &quot;FireLoop&quot;  →  Section: &quot;FireEnd&quot;</span><br><span class="line">    (举枪 0.1s)            (射击循环)              (收枪)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>连射武器：Loop Section，按下鼠标时循环”FireLoop”，松开时跳”FireEnd”</li>
+<li>单发武器：只播放 “FireStart” → “FireEnd”，不循环</li>
+</ul>
+<h3 id="Step-4：C-侧触发-Montage"><a href="#Step-4：C-侧触发-Montage" class="headerlink" title="Step 4：C++ 侧触发 Montage"></a>Step 4：C++ 侧触发 Montage</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// MyCharacter::Fire() — 简化版</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">AMyCharacter::Fire</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (CurrentGun &amp;&amp; !CurrentGun-&gt;<span class="built_in">NeedReload</span>() &amp;&amp; !CurrentGun-&gt;bIsReloading)</span><br><span class="line">    &#123;</span><br><span class="line">        CurrentGun-&gt;<span class="built_in">GunFire</span>();  <span class="comment">// 这会触发 PlayFireAnimation()</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// BaseGun::PlayFireAnimation() — 枪械自身动画</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ABaseGun::PlayFireAnimation</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    USkeletalMeshComponent* SKM = <span class="built_in">Cast</span>&lt;USkeletalMeshComponent&gt;(</span><br><span class="line">        <span class="built_in">GetComponentByClass</span>(USkeletalMeshComponent::<span class="built_in">StaticClass</span>()));</span><br><span class="line">    <span class="keyword">if</span> (SKM &amp;&amp; FireAnimationAsset)</span><br><span class="line">    &#123;</span><br><span class="line">        SKM-&gt;<span class="built_in">PlayAnimation</span>(FireAnimationAsset, <span class="literal">false</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里有两层动画：</p>
+<ol>
+<li><strong>角色 Montage</strong>（<code>AM_Fire</code>）— 在 Character 的 Animation BP 中播放，控制角色身体姿态</li>
+<li><strong>枪械动画</strong>（<code>FireAnimationAsset</code>）— 在 Gun 的 SkeletalMeshComponent 上播放，控制枪械自身的套筒&#x2F;弹匣运动</li>
+</ol>
+<p>两者通过 Anim BP 中的 Notify 或者 BP 端逻辑做同步。</p>
+<h3 id="Montage-常见坑"><a href="#Montage-常见坑" class="headerlink" title="Montage 常见坑"></a>Montage 常见坑</h3><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>原因</th>
+<th>解决</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Montage 播了但看不见</td>
+<td>Slot 节点没在 Anim Graph 中配置</td>
+<td>检查 Slot 节点连接顺序</td>
+</tr>
+<tr>
+<td>动作”卡”在最后一帧</td>
+<td>Montage 没有正确结束</td>
+<td>设置 <code>Blend Out Time</code> &gt; 0</td>
+</tr>
+<tr>
+<td>上半身动作影响了腿</td>
+<td>Slot 在 FullBody 层而非 UpperBody</td>
+<td>确认 Slot 名称匹配</td>
+</tr>
+<tr>
+<td>连发时 Montage 重新开始</td>
+<td>重复 <code>PlayMontage</code> 未检查已播放</td>
+<td>用 <code>Montage_IsPlaying()</code> 判断</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="四、整体数据流回顾"><a href="#四、整体数据流回顾" class="headerlink" title="四、整体数据流回顾"></a>四、整体数据流回顾</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Enhanced Input          C++ Character            Animation BP</span><br><span class="line">─────────────          ──────────────           ─────────────</span><br><span class="line">IA_MoveForward  ──→  AddMovementInput  ──→  Velocity</span><br><span class="line">IA_MoveRight                                          │</span><br><span class="line">IA_Run          ──→  MaxWalkSpeed=600          Speed ──→ State Machine</span><br><span class="line">IA_Crouch       ──→  Crouch()             bIsCrouching    │</span><br><span class="line">IA_Aim          ──→  (BP event)          bIsAiming        │</span><br><span class="line">IA_Fire         ──→  AMyCharacter::Fire()                  │</span><br><span class="line">                         │                                 ▼</span><br><span class="line">                    ABaseGun::GunFire()         Blend Space (Direction)</span><br><span class="line">                         │                           │</span><br><span class="line">                    PlayFireAnimation()        Locomotion Pose</span><br><span class="line">                    ICRRecoilInterface               │</span><br><span class="line">                         │                           ▼</span><br><span class="line">                    RecoilComponent          Slot &quot;UpperBody&quot;</span><br><span class="line">                    SpreadRecoilComponent    └── AM_Fire (Montage)</span><br><span class="line">                                                    │</span><br><span class="line">                                                    ▼</span><br><span class="line">                                            Layered Blend Per Bone</span><br><span class="line">                                                    │</span><br><span class="line">                                                    ▼</span><br><span class="line">                                              Output Pose</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="五、可改进点"><a href="#五、可改进点" class="headerlink" title="五、可改进点"></a>五、可改进点</h2><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>改进方向</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>所有移动动画都是手动导入的序列帧</td>
+<td>用 <strong>Motion Matching</strong>（UE 5.4+）替代手配 Blend Space，减少动画数量 + 提升表现</td>
+</tr>
+<tr>
+<td>Montage 和 C++ 之间靠 <code>bIsReloading</code> 等 bool 变量同步</td>
+<td>改用 <strong>Gameplay Tags</strong> 做动作状态标记，更解耦</td>
+</tr>
+<tr>
+<td>枪械动画和角色 Montage 分开播放，同步靠 BP 端 Tick</td>
+<td>用 <strong>Sync Group</strong> 或 <strong>Notify State</strong> 做精确帧同步</td>
+</tr>
+<tr>
+<td>Control Rig Foot IK 只用在后处理</td>
+<td>可以进一步用 Control Rig 做瞄准时的脊柱补偿（Spine Look At）</td>
+</tr>
+</tbody></table>
+<hr>
+<blockquote>
+<p>如果你也在用 UE5 搭建角色动画系统，欢迎交流。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Portfolio</category>
+      </categories>
+      <tags>
+        <tag>UE5</tag>
+        <tag>Unreal</tag>
+        <tag>Animation</tag>
+        <tag>AnimationBlueprint</tag>
+        <tag>BlendSpace</tag>
+        <tag>Montage</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</title>
     <url>/2026/08/05/crunch-ue-gamplay-ability-system-and-network-sync/</url>
     <content><![CDATA[<h2 id="项目概览"><a href="#项目概览" class="headerlink" title="项目概览"></a>项目概览</h2><table>
@@ -516,10 +1138,10 @@
         <tag>Unreal</tag>
         <tag>GAS</tag>
         <tag>GameplayAbilitySystem</tag>
+        <tag>Portfolio</tag>
         <tag>NetworkReplication</tag>
         <tag>CombatDesign</tag>
         <tag>ARPG</tag>
-        <tag>Portfolio</tag>
       </tags>
   </entry>
 </search>
