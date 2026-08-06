@@ -30,7 +30,7 @@ description: Lyra Character 的三位一体架构——薄 Actor（~500行）、
 
 ## 一句话
 
-**ALyraCharacter 不是一个"角色"，而是一个"插槽"**——它只做三件事：创建核心 Component、转发接口调用、初始化死亡流程。所有真正的游戏逻辑全部下沉到独立的 PawnComponent 中，由 GameplayTag 驱动的 InitState 状态机协调初始化顺序。
+ALyraCharacter 不是一个"角色"，而是一个"插槽"——它只做三件事：创建核心 Component、转发接口调用、初始化死亡流程。所有真正的游戏逻辑全部下沉到独立的 PawnComponent 中，由 GameplayTag 驱动的 InitState 状态机协调初始化顺序。
 
 ---
 
@@ -240,10 +240,10 @@ GameFeatureAction 通过 `AddExtensionHandler` 实现完全解耦的动态注入
 
 对于 TowerChallenge：
 
-1. **不要为 Character 创建 C++ 子类**——这是 Lyra 架构的核心约束。我们吃过亏：430 行 `ATowerCharacter` 全量返工，最终 ~90 行 Component 解决了同样的问题。
-2. **ASC 放 PlayerState 上**——这是 Lyra 的选择，不是标准 GAS 做法。优点：Respawn 不丢失 GAS 状态。缺点：`GetASC()` 需要经过 `PlayerState` 间接访问。
-3. **自定义 InitState 中间状态**——如果某个 Feature 需要等待 DLC 资产加载，定义 `InitState_DLC_AssetsLoaded` Tag，在 `CanChangeInitState` 中检查即可。
-4. **PawnData 的三级覆盖**：Experience.DefaultPawnData → ActionSet.PawnData → 运行时覆盖。设计师通过切换 DataAsset 实现不同爬塔阶段的角色配置。
+1. 为 Character 创建 C++ 子类在 Lyra 体系中通常是反模式——这是框架的核心约束。我们有过教训：430 行 `ATowerCharacter` 全量返工，最终 ~90 行 Component 解决了同样的问题。
+2. ASC 放 PlayerState 上——这是 Lyra 的选择，不是标准 GAS 做法。优点：Respawn 不丢失 GAS 状态。缺点：`GetASC()` 需要经过 `PlayerState` 间接访问。
+3. 自定义 InitState 中间状态——如果某个 Feature 需要等待 DLC 资产加载，定义 `InitState_DLC_AssetsLoaded` Tag，在 `CanChangeInitState` 中检查即可。
+4. PawnData 的三级覆盖：Experience.DefaultPawnData → ActionSet.PawnData → 运行时覆盖。设计师通过切换 DataAsset 实现不同爬塔阶段的角色配置。
 
 ---
 

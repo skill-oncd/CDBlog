@@ -225,9 +225,9 @@ GameFeatureAction 提供两种输入注入方式，解决不同的场景：
 
 对于 TowerChallenge：
 
-1. **不要给每个 Ability 创建专属 InputAction**——通过 InputTag 区分。攻击/格挡/弹反都用同一个按键（右键），但通过 ActivationGroup + 当前状态决定触发哪个 GA
-2. **NativeInputActions 保持最小**——只放移动（WASD）、视角（Mouse）、菜单。战斗全部走 AbilityInputActions
-3. **插件级输入配置放 GameFeature 内**——每个 GameFeature 定义自己的 IMC 和 InputConfig，不污染项目级配置
+1. 通过 InputTag 区分而非给每个 Ability 创建专属 InputAction。攻击/格挡/弹反都用同一个按键（右键），但通过 ActivationGroup + 当前状态决定触发哪个 GA
+2. NativeInputActions 保持最小——只放移动（WASD）、视角（Mouse）、菜单。战斗全部走 AbilityInputActions
+3. 插件级输入配置放 GameFeature 内——每个 GameFeature 定义自己的 IMC 和 InputConfig，不污染项目级配置
 
 ---
 

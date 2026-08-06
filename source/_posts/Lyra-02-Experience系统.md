@@ -30,7 +30,7 @@ description: 深度拆解 Lyra Experience 系统的三层结构（配方-原料-
 
 ## 一句话
 
-**Experience 是一张"玩法配方表"**——它用一个 DataAsset 回答了"这场游戏玩什么"：激活哪些 GameFeature 插件、执行哪些初始化动作、玩家用什么样的 Pawn。
+Experience 是一张"玩法配方表"——它用一个 DataAsset 回答了"这场游戏玩什么"：激活哪些 GameFeature 插件、执行哪些初始化动作、玩家用什么样的 Pawn。
 
 ---
 
@@ -211,12 +211,12 @@ Lyra 提供了三个具体的 Experience 定义，可以从它们看出"配方�
 
 ## 八，ARPG 落地要点
 
-对于 TowerChallenge（我们的 ARPG 项目），Experience 层的配置需要关注：
+对于 TowerChallenge（我们的 ARPG 项目），Experience 层的配置有一些值得关注的点：
 
-1. **`DefaultGame.ini` 的 AssetManager 扫描路径**：确保 `/TowerChallenge/Experiences` 在 `LyraExperienceDefinition` 的扫描列表中
-2. **ActionSet 复用策略**：将通用系统（输入绑定、基础 HUD）打包为 ActionSet，模式专属逻辑放 Experience 自身 Actions
-3. **GameFeature 按需加载**：塔层数/难度对应的内容放独立 GameFeature，高层才激活
-4. **PawnData 覆盖**：不同职业/爬塔阶段的 PawnData 可通过 Experience 或运行时覆盖
+1. `DefaultGame.ini` 的 AssetManager 扫描路径：确保 `/TowerChallenge/Experiences` 在 `LyraExperienceDefinition` 的扫描列表中
+2. ActionSet 复用策略：将通用系统（输入绑定、基础 HUD）打包为 ActionSet，模式专属逻辑放 Experience 自身 Actions
+3. GameFeature 按需加载：塔层数/难度对应的内容放独立 GameFeature，高层才激活
+4. PawnData 覆盖：不同职业/爬塔阶段的 PawnData 可通过 Experience 或运行时覆盖
 
 ---
 

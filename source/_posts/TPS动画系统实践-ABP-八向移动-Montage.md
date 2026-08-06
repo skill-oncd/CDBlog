@@ -21,7 +21,7 @@ description: 以 UE5.3 TPS 项目为例，拆解 Animation Blueprint 状态机�
 | **类型** | 第三人称射击（TPS）动画系统 Demo |
 | **核心标签** | Animation Blueprint · Blend Space · Montage · IK Retargeting · Enhanced Input |
 
-一个聚焦 UE5 动画系统的 TPS 角色 Demo。核心产物是一个完整的 **Animation Blueprint**（ABP_MyCharacter），包含完整的移动状态机、7 个 Blend Space、4 个 Animation Montage，配合 IK Retargeter 将 Mannequin 动画重定向到自定义角色模型。
+一个聚焦 UE5 动画系统的 TPS 角色 Demo。核心产物是一个完整的 Animation Blueprint（ABP_MyCharacter），包含完整的移动状态机、7 个 Blend Space、4 个 Animation Montage，配合 IK Retargeter 将 Mannequin 动画重定向到自定义角色模型。
 
 ---
 
@@ -57,17 +57,17 @@ TEnumAsByte<EWeaponAnimType> GetWeaponType();  // PistolAnim / RifleAnim
 ```
 
 Anim BP 的 Event Graph 中做方向计算：
-- **Speed** = `Velocity.Size()` — 区分 Idle / Walk / Run
-- **Direction** = `CalculateDirection(Velocity, ActorRotation)` — Blend Space 的横轴
-- **bIsCrouching** = `CharacterMovement.IsCrouching()`
-- **bIsInAir** = `CharacterMovement.IsFalling()`
-- **WeaponType** = 从 `BaseGun::GetWeaponType()` 取值，决定武器动画分支
+- Speed = `Velocity.Size()` — 区分 Idle / Walk / Run
+- Direction = `CalculateDirection(Velocity, ActorRotation)` — Blend Space 的横轴
+- bIsCrouching = `CharacterMovement.IsCrouching()`
+- bIsInAir = `CharacterMovement.IsFalling()`
+- WeaponType = 从 `BaseGun::GetWeaponType()` 取值，决定武器动画分支
 
 ---
 
 ## 二、八向移动的实现步骤
 
-八向移动的核心思路：**用 Blend Space 把方向离散化，再用 Animation BP 的 State Machine 按速度分状态。**
+八向移动的核心思路：用 Blend Space 把方向离散化，再用 Animation BP 的 State Machine 按速度分状态。
 
 ### Step 1：准备动画资产
 
@@ -96,7 +96,7 @@ BS_Run:   [ -180° | -135° | -90° | -45° | 0° | 45° | 90° | 135° | 180° 
 BS_Crouch:[ -180° | -135° | -90° | -45° | 0° | 45° | 90° | 135° | 180° ]
 ```
 
-**关键设置：**
+一些设置建议：
 - Interpolation Time：尽量小（0.1~0.2s），否则方向切换有"飘"感
 - 每个动画的权重区域不要过大，否则相邻动画会被错误激活
 - 建议开启 `Display Editor Vertices` → `Grid` 模式来可视化每个动画的权重区域
@@ -111,7 +111,7 @@ BS_IdleToRun:    [ Idle → Run (8 dir)   ]
 BS_IdleToCrouch: [ Idle → Crouch (8 dir)]
 ```
 
-这些过渡 Blend Space 在 State Machine 中作为 **Transition Rule 的 Blend 资产** 使用——当状态切换时，过渡阶段播放它们而不是立刻切到目标 Blend Space。
+这些过渡 Blend Space 在 State Machine 中作为 Transition Rule 的 Blend 资产使用——当状态切换时，过渡阶段播放它们而不是立刻切到目标 Blend Space。
 
 ### Step 4：构建 State Machine
 
@@ -135,16 +135,16 @@ BS_IdleToCrouch: [ Idle → Crouch (8 dir)]
               └──────────────────────┘
 ```
 
-**状态机设计要点：**
+状态机设计上注意几点：
 
-1. **Idle 作为 Hub**：所有移动状态最终都回到 Idle，避免状态爆炸
-2. **Speed 阈值驱动流转**：`Speed < 10` → Idle，`10 < Speed < 150` → Walk，`Speed > 150` → Run
-3. **过渡使用 Blend Space 而非硬切**：Transition 的 `Blend Logic` 设为 `BlendSpace` 类型，引用对应的 IdleToMove Blend Space
-4. **Crouch 独立子状态机**：`bIsCrouching` 触发进入 Crouch 子树，避免和站立状态交叉污染
+1. Idle 作为 Hub：所有移动状态最终都回到 Idle，避免状态爆炸
+2. Speed 阈值驱动流转：`Speed < 10` → Idle，`10 < Speed < 150` → Walk，`Speed > 150` → Run
+3. 过渡使用 Blend Space 而非硬切：Transition 的 `Blend Logic` 设为 `BlendSpace` 类型，引用对应的 IdleToMove Blend Space
+4. Crouch 独立子状态机：`bIsCrouching` 触发进入 Crouch 子树，避免和站立状态交叉污染
 
 ### Step 5：叠加武器姿态
 
-移动状态只管下半身。上半身的武器姿态通过 **Layered Blend Per Bone** 叠加：
+移动状态只管下半身。上半身的武器姿态通过 Layered Blend Per Bone 叠加：
 
 ```
 Final Animation Pose
@@ -155,12 +155,12 @@ Final Animation Pose
         └── RifleAnim  → AO_Aim_Rifle + anim_idle_aimAR
 ```
 
-**关键节点：**
+用到的关键节点：
 - `Layered Blend Per Bone (Branch Filter = Spine_01)` — 上半身叠加，不影响移动
 - `Blend Poses by Enum` — 按 `EWeaponAnimType` 枚举切换手枪/步枪动画集
 - 每个武器分支内部再用 `BlendSpace (AimOffset)` 处理 9 方向瞄准
 
-### 八向移动常见坑
+### 八向移动中遇到过的问题
 
 | 问题 | 原因 | 解决 |
 |------|------|------|
@@ -173,7 +173,7 @@ Final Animation Pose
 
 ## 三、Animation Montage 的搭建步骤
 
-Montage 用于"一次性动作"——开火、换弹、闪避、近战。它是**插播式**的，播完自动退出，不会影响 Locomotion 状态机。
+Montage 用于"一次性动作"——开火、换弹、闪避、近战。它是插播式的，播完自动退出，不会影响 Locomotion 状态机。
 
 ### Step 1：创建 Montage 资产
 
@@ -186,7 +186,7 @@ Montage 用于"一次性动作"——开火、换弹、闪避、近战。它是*
 | `AM_Dodge` | `FullBody` | 翻滚闪避 | 0.1s | 0.15s |
 | `AM_Punch` | `FullBody` | 近战攻击 | 0.1s | 0.15s |
 
-**Slot 设计方案：**
+Slot 设计方案：
 
 ```
 DefaultGroup.UpperBody   ← 上半身动作（Fire / Reload），不打断移动
@@ -212,7 +212,7 @@ Slot "FullBody" ──→ BlendWeights = 1.0 (覆盖全身)
 Output Pose
 ```
 
-**重点：** `UpperBody` Slot 在 Layered Blend Per Bone 之后、输出之前接入——这样 Montage 播上半身动画时，下半身继续播 Locomotion Pose。而 `FullBody` Slot 直接覆盖整个输出链。
+注意：`UpperBody` Slot 在 Layered Blend Per Bone 之后、输出之前接入——这样 Montage 播上半身动画时，下半身继续播 Locomotion Pose。而 `FullBody` Slot 直接覆盖整个输出链。
 
 ### Step 3：在 Montage 中组织 Section
 
@@ -251,12 +251,12 @@ void ABaseGun::PlayFireAnimation()
 ```
 
 这里有两层动画：
-1. **角色 Montage**（`AM_Fire`）— 在 Character 的 Animation BP 中播放，控制角色身体姿态
-2. **枪械动画**（`FireAnimationAsset`）— 在 Gun 的 SkeletalMeshComponent 上播放，控制枪械自身的套筒/弹匣运动
+1. 角色 Montage（`AM_Fire`）— 在 Character 的 Animation BP 中播放，控制角色身体姿态
+2. 枪械动画（`FireAnimationAsset`）— 在 Gun 的 SkeletalMeshComponent 上播放，控制枪械自身的套筒/弹匣运动
 
 两者通过 Anim BP 中的 Notify 或者 BP 端逻辑做同步。
 
-### Montage 常见坑
+### Montage 中遇到过的问题
 
 | 问题 | 原因 | 解决 |
 |------|------|------|
@@ -300,9 +300,9 @@ IA_Fire         ──→  AMyCharacter::Fire()                  │
 
 | 问题 | 改进方向 |
 |------|----------|
-| 所有移动动画都是手动导入的序列帧 | 用 **Motion Matching**（UE 5.4+）替代手配 Blend Space，减少动画数量 + 提升表现 |
-| Montage 和 C++ 之间靠 `bIsReloading` 等 bool 变量同步 | 改用 **Gameplay Tags** 做动作状态标记，更解耦 |
-| 枪械动画和角色 Montage 分开播放，同步靠 BP 端 Tick | 用 **Sync Group** 或 **Notify State** 做精确帧同步 |
+| 所有移动动画都是手动导入的序列帧 | 用 Motion Matching（UE 5.4+）替代手配 Blend Space，减少动画数量 + 提升表现 |
+| Montage 和 C++ 之间靠 `bIsReloading` 等 bool 变量同步 | 改用 Gameplay Tags 做动作状态标记，更解耦 |
+| 枪械动画和角色 Montage 分开播放，同步靠 BP 端 Tick | 用 Sync Group 或 Notify State 做精确帧同步 |
 | Control Rig Foot IK 只用在后处理 | 可以进一步用 Control Rig 做瞄准时的脊柱补偿（Spine Look At） |
 
 ---

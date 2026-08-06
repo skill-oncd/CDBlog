@@ -204,10 +204,10 @@ void RegisterASC(UAbilitySystemComponent* ASC) {
 
 对于 TowerChallenge 的 Souls-like 战斗系统，我们直接利用了这些 Lyra 封装：
 
-1. **每种武器 = 一个 AbilitySet**：装备时 GiveTo，卸下时 TakeFrom。武器的 GA（轻攻/重攻/战技）都在 AbilitySet 中
-2. **体力消耗用 GAS 原生 Cost GE**：而非在 GA 中手动检查属性。`UGameplayAbility::GetCostGameplayEffect()` 返回体力消耗 GE
-3. **弹反/处决用 ActivationGroup**：弹反 GA 设为 `Exclusive_Replaceable`（同一按键下不同窗口阶段自动切换），处决 GA 设为 `Exclusive_Blocking`（执行中不可打断）
-4. **不要创建 UTowerGameplayAbility**：直接继承 `ULyraGameplayAbility`。我们曾误判 MinimalAPI + UE_API virtual 的含义，以为不可跨模块子类化——实际上可以。踩坑详见 [Lyra-WarTower 复盘](/2026/08/06/Lyra-WarTower-Vibe-Coding-框架)。
+1. 每种武器 = 一个 AbilitySet：装备时 GiveTo，卸下时 TakeFrom。武器的 GA（轻攻/重攻/战技）都在 AbilitySet 中
+2. 体力消耗用 GAS 原生 Cost GE：而非在 GA 中手动检查属性。`UGameplayAbility::GetCostGameplayEffect()` 返回体力消耗 GE
+3. 弹反/处决用 ActivationGroup：弹反 GA 设为 `Exclusive_Replaceable`（同一按键下不同窗口阶段自动切换），处决 GA 设为 `Exclusive_Blocking`（执行中不可打断）
+4. 直接继承 `ULyraGameplayAbility` 而非创建 `UTowerGameplayAbility`。我们曾误判 MinimalAPI + UE_API virtual 的含义，以为不可跨模块子类化——实际上可以。踩坑详见 [Lyra-WarTower 复盘](/2026/08/06/Lyra-WarTower-Vibe-Coding-框架)。
 
 ---
 

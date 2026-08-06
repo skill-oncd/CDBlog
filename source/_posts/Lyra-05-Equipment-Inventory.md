@@ -31,7 +31,7 @@ description: 拆解 Lyra 的三段式装备/物品架构——Inventory（数据
 
 ## 一句话
 
-Lyra 的 Equipment/Inventory 系统用**三层分离架构**实现了"武器切换 = AbilitySet 的 GiveTo + TakeFrom"——Inventory 管"你拥有什么"，Equipment 管"你正装备什么"，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了"武器类膨胀到 5000 行"的噩梦。
+Lyra 的 Equipment/Inventory 系统用三层分离架构实现了"武器切换 = AbilitySet 的 GiveTo + TakeFrom"——Inventory 管"你拥有什么"，Equipment 管"你正装备什么"，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了"武器类膨胀到 5000 行"的问题。
 
 ---
 
@@ -153,7 +153,7 @@ SetActiveSlotIndex(NewSlotIndex) {
 
 ---
 
-## 五，SourceObject 反向引用链：被低估的设计
+## 五，SourceObject 反向引用链
 
 当 Ability 需要知道自己来自哪个装备时（例如：射击技能需要获取武器弹药信息），Lyra 不用全局 Manager 查找，而是用 GAS 原生的 `SourceObject` 字段：
 

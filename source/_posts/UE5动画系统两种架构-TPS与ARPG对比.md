@@ -38,11 +38,11 @@ description: 对比两个 UE5 项目的动画系统架构——TPS 教程的 Ble
 
 两个项目的设计目标决定了它们走向了不同的动画架构：
 
-- **TPS Tutorial** 的目标是"学会 UE5 动画系统能做什么"——所以它把 Blend Space、状态机、AimOffset、Montage 全部搭了一遍。结果是**动画表现极其丰富**（八向移动 × 多种姿态 × 过渡动画），但 Gameplay 通信层很薄（一个 LineTrace 完事）。
+- TPS Tutorial 的目标是"学会 UE5 动画系统能做什么"——所以它把 Blend Space、状态机、AimOffset、Montage 全部搭了一遍。结果是动画表现极其丰富（八向移动 × 多种姿态 × 过渡动画），但 Gameplay 通信层很薄（一个 LineTrace 完事）。
 
-- **Crunch** 的目标是"做出能联网的近战战斗"——所以它的动画资产很少（Paragon 自带），但 **Gameplay 通信层极其精密**：自定义 AnimNotify 在特定帧做 SphereTrace → 打包 TargetData → 发 GameplayEvent → GAS Ability 收到后施加 GE。
+- Crunch 的目标是"做出能联网的近战战斗"——所以它的动画资产很少（Paragon 自带），但 Gameplay 通信层极其精密：自定义 AnimNotify 在特定帧做 SphereTrace → 打包 TargetData → 发 GameplayEvent → GAS Ability 收到后施加 GE。
 
-一句话概括：**TPS 的动画系统是"展示型"的，Crunch 的动画系统是"功能型"的。**
+可以这样概括：TPS 的动画系统偏向"展示型"，Crunch 的动画系统偏向"功能型"。
 
 ---
 
@@ -161,7 +161,7 @@ void UGA_Combo::TryCommitCombo()
 | Combo 段位切换 | 无 | `Montage_SetNextSection` 无缝衔接 |
 | 可调试性 | 需要在 AnimBP 和 C++ 之间跳转 | 全部在一个 `.cpp` 文件中 |
 
-Crunch 方式的核心优势：**一个 Combo 技能的全部逻辑（动画播放 → 等待输入 → AnimNotify 事件 → 段位切换 → 伤害施加 → 技能结束）都在一个 `UGA_Combo` 类里**。审阅或调试时不需要在 AnimBP 蓝图和 C++ 之间来回跳。
+Crunch 方式的一个优势：一个 Combo 技能的全部逻辑（动画播放 → 等待输入 → AnimNotify 事件 → 段位切换 → 伤害施加 → 技能结束）都在一个 `UGA_Combo` 类里。审阅或调试时不需要在 AnimBP 蓝图和 C++ 之间来回跳。
 
 ### 2.3 伤害判定时机
 
@@ -258,9 +258,7 @@ void UCAnimInstance::OwnerAimTagChanged(const FGameplayTag Tag, int32 NewCount)
 }
 ```
 
-**为什么 Crunch 需要这一层？**
-
-因为 Crunch 的角色状态（瞄准/死亡/眩晕/无敌）不是简单的 `bool`，而是 GAS 的 `FGameplayTag` ——一个角色可以同时持有多个 Tag，且这些 Tag 通过网络自动复制。`bIsAiming` 在客户端和服务端通过同一个机制同步，不需要额外的手动 RPC。
+Crunch 选择这一层是因为角色状态（瞄准/死亡/眩晕/无敌）不是简单的 `bool`，而是 GAS 的 `FGameplayTag`——一个角色可以同时持有多个 Tag，且这些 Tag 通过网络自动复制。`bIsAiming` 在客户端和服务端通过同一个机制同步，不需要额外的手动 RPC。
 
 TPS 不需要这层间接——它不做网络同步，`bIsCrouching` 本身就是 CharacterMovement 的同步属性。
 
@@ -282,9 +280,7 @@ virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
 
 TPS 因为完全在 AnimBP 的 Event Graph 中做计算，所有 Update 都在游戏线程的 Blueprint 虚拟机上执行——没有利用 UE5 的动画工作线程。
 
-**什么时候这个区别重要？**
-
-当场景中有 50+ 个角色同时播放动画时，游戏线程的 AnimBP 计算会成为瓶颈。把数据收集放在游戏线程、混合计算放在工作线程，是 UE5 推荐的做法。但对于单机 Demo 来说，这个优化是过早的。
+什么时候这个区别开始重要？当场景中有 50+ 个角色同时播放动画时，游戏线程的 AnimBP 计算会成为瓶颈。把数据收集放在游戏线程、混合计算放在工作线程，是 UE5 推荐的做法。但对于单机 Demo 来说，这个优化是过早的。
 
 ---
 
@@ -309,7 +305,7 @@ UAN_SendTargetGroup::Notify(...) {
 }
 ```
 
-**设计原则：AnimNotify 不做 Gameplay 逻辑，它只负责"在正确的时刻发消息"。** 收到消息后怎么做——伤害多少、施加什么 GE——全部在 GAS Ability 中决定。这意味着同一个 AnimNotify 可以用在不同的技能里，伤害逻辑由各自的 Ability 处理。
+一个值得注意的设计：AnimNotify 不做 Gameplay 逻辑，它只负责"在正确的时刻发消息"。收到消息后怎么做——伤害多少、施加什么 GE——全部在 GAS Ability 中决定。这意味着同一个 AnimNotify 可以用在不同的技能里，伤害逻辑由各自的 Ability 处理。
 
 ---
 
@@ -327,23 +323,23 @@ TPS 的动画组织是"从下往上"——从最基本的移动动画开始，�
 
 ---
 
-## 六、适用场景与选择建议
+## 六、适用场景参考
 
-| 场景 | 推荐方向 | 原因 |
-|------|----------|------|
-| 学习动画系统本身 | **TPS 方式** | 手搭 Blend Space + 状态机 + Montage 全流程 |
-| 射击游戏（Hitscan） | **TPS 方式** | C++ LineTrace，动画只管表现 |
-| 近战动作游戏 | **Crunch 方式** | AnimNotify 帧判定 + GAS 管理技能生命周期 |
-| 需要联网多人 | **Crunch 方式** | GAS 的 Tag/Attribute 自动复制，AnimNotify 发 Event |
-| 团队以蓝图为主 | **TPS 方式** | AnimBP Event Graph 承担大部分工作 |
-| 技能需要复杂逻辑 | **Crunch 方式** | 自定义 C++ AnimInstance + AbilityTask 管理一切 |
-| 大量 AI 角色同时存在 | **Crunch 方式** | 工作线程 Update + 少量 Blend Space → 性能更好 |
+| 场景 | 倾向 | 原因 |
+|------|------|------|
+| 学习动画系统本身 | TPS 方式 | 手搭 Blend Space + 状态机 + Montage 全流程 |
+| 射击游戏（Hitscan） | TPS 方式 | C++ LineTrace，动画只管表现 |
+| 近战动作游戏 | Crunch 方式 | AnimNotify 帧判定 + GAS 管理技能生命周期 |
+| 需要联网多人 | Crunch 方式 | GAS 的 Tag/Attribute 自动复制，AnimNotify 发 Event |
+| 团队以蓝图为主 | TPS 方式 | AnimBP Event Graph 承担大部分工作 |
+| 技能需要复杂逻辑 | Crunch 方式 | 自定义 C++ AnimInstance + AbilityTask 管理一切 |
+| 大量 AI 角色同时存在 | Crunch 方式 | 工作线程 Update + 少量 Blend Space → 性能更好 |
 
 ---
 
 ## 七、为什么两套方案不矛盾
 
-做实际项目时，你不会只选一种——你会把两者的优势结合起来：
+做实际项目时，通常不会只选一种——而是把两者的优势结合起来：
 
 ```
 项目动画系统 = TPS 的 Blend Space 移动层
@@ -352,11 +348,11 @@ TPS 的动画组织是"从下往上"——从最基本的移动动画开始，�
 ```
 
 具体来说：
-- **移动系统**用 TPS 的方案：状态机驱动 + 丰富的 Blend Space 过渡
-- **战斗技能**用 Crunch 的方案：GAS AbilityTask 管理 Montage 生命周期 + AnimNotify 发 GameplayEvent 做帧判定
-- **数据层**统一在 C++ AnimInstance 中计算，GameplayTag 监听 Gameplay 状态
+- 移动系统用 TPS 的方案：状态机驱动 + 丰富的 Blend Space 过渡
+- 战斗技能用 Crunch 的方案：GAS AbilityTask 管理 Montage 生命周期 + AnimNotify 发 GameplayEvent 做帧判定
+- 数据层统一在 C++ AnimInstance 中计算，GameplayTag 监听 Gameplay 状态
 
-两个项目合在一起，覆盖了 UE5 角色动画的三大支柱：**Blend Space 状态机**（表现力）、**Montage + AnimNotify 事件系统**（功能性）、**C++ AnimInstance + GameplayTag**（数据通信）。
+两个项目合在一起，覆盖了 UE5 角色动画的三大支柱：Blend Space 状态机（表现力）、Montage + AnimNotify 事件系统（功能性）、C++ AnimInstance + GameplayTag（数据通信）。
 
 ---
 

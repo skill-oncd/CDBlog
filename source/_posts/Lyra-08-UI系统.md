@@ -30,7 +30,7 @@ description: 拆解 Lyra 的四层 UI 架构——CommonUI 输入路由→Common
 
 ## 一句话
 
-Lyra 的 UI 系统是一个**四层可组合架构**——其核心不是一个 `AHUD` 子类，而是一个 **GameplayTag 驱动的发布/订阅引擎**（`UUIExtensionSubsystem`）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在"多人分屏 + 跨平台输入"场景下的最佳实践参考。
+Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 `AHUD` 子类，而是一个 GameplayTag 驱动的发布/订阅引擎（`UUIExtensionSubsystem`）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在"多人分屏 + 跨平台输入"场景下的一个值得参考的实践。
 
 ---
 
@@ -172,7 +172,7 @@ ULyraIndicatorManagerComponent (挂载在 PlayerController)
               └── 在屏幕外 → Clamp + 旋转箭头指向屏幕外方向
 ```
 
-**为什么用纯 Slate 而非 UMG？**
+为什么用纯 Slate 而非 UMG？
 - 性能：ActorCanvas 每帧遍历所有指示器做 3D→2D 投影。如果用 UMG Widget，每个指示器一个 Widget 对象 → 大量创建/销毁开销
 - `FUserWidgetPool` 池化：即使只在 Slate 层，Widget 实例仍然从池中获取和归还
 - `SActorCanvas` 直接处理 Slate 绘制——无 UMG 开销
@@ -213,7 +213,7 @@ Widget 模式 = "这个 GameFeature 向现有 HUD 追加一个部件"（如 DLC 
 | 七 | 网络 | 分层解耦 + ReplicationGraph 默认禁用 + FastShared 独立带宽 |
 | 八 | UI | GameplayTag 发布/订阅 + CommonUI 多层级 Stack + 异步注入 |
 
-**Lyra 在所有这些系统中有同一个设计 DNA：数据驱动注入 + GameplayTag 中介 + 组合优于继承 + 异步不阻塞。** 理解这个 DNA，比记住任何具体类的 API 都重要。
+Lyra 在所有这些系统中有同一个设计 DNA：数据驱动注入 + GameplayTag 中介 + 组合优于继承 + 异步不阻塞。理解这个 DNA，比记住任何具体类的 API 都重要。
 
 ---
 

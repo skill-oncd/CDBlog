@@ -36,12 +36,12 @@ description: 基于 UE5.6 的 ArcaneRush，C++ 编写数据层 + 蓝图实现全
 
 ### 1.1 设计思路：C++ 管数据，蓝图管逻辑
 
-初学时面临一个关键选择：逻辑写 C++ 还是蓝图？最终选择 **C++ 定义基类和数据结构 + 蓝图实现全部游戏逻辑**：
+初学时面临一个选择：逻辑写 C++ 还是蓝图？最终选择了 C++ 定义基类和数据结构 + 蓝图实现全部游戏逻辑：
 
 - **C++ 层**：类继承体系 + DataTable 结构体 + 伤害公式 + Buff 子系统 + 工具函数
 - **蓝图层**：塔攻击流程、敌人 AI、Hero 技能、HUD 交互、波次调度、存档读取
 
-这样分工的好处是：数据结构和性能敏感的计算在 C++ 中类型安全且可断点调试，而频繁迭代的游戏逻辑在蓝图中可视化和快速调整。
+这样分工的好处：数据结构和性能敏感的计算在 C++ 中类型安全且可断点调试，而频繁迭代的游戏逻辑在蓝图中可视化和快速调整。
 
 ### 1.2 类继承体系
 
@@ -56,9 +56,9 @@ AActor
   └── ABaseTower          ← 塔（多级升级 + 投射物 + 范围检测）
 ```
 
-关键设计决策：
-- **塔继承 AActor 而非 ACharacter**：塔不需要 CharacterMovementComponent，轻量级 Actor 更合适
-- **DataTable 属性嵌入到每个子类的专用结构体**：敌人的 `FEnemyProperty` 里嵌套 `FCharacterBaseProperty`，每个子类只暴露自己需要的额外字段
+架构上的一些选择：
+- 塔继承 AActor 而非 ACharacter：塔不需要 CharacterMovementComponent，轻量级 Actor 更合适
+- DataTable 属性嵌入到每个子类的专用结构体：敌人的 `FEnemyProperty` 里嵌套 `FCharacterBaseProperty`，每个子类只暴露自己需要的额外字段
 
 ### 1.3 DataTable 数据驱动
 
@@ -66,7 +66,7 @@ AActor
 
 ![DataTable 结构](/images/portfolio-td/DataTable.jpg)
 
-塔的属性表则更进一步——升级相关的字段全部用**数组索引**存储：
+塔的属性表则更进一步——升级相关的字段全部用数组索引存储：
 
 ```cpp
 // 塔的属性——每个字段都是按等级索引的数组
@@ -110,8 +110,8 @@ Event Tick:
 ```
 
 设计考量：
-- **0.5s 定时探测**而非每帧 Trace——减少物理查询开销，塔防对实时精度要求不高
-- **CanAttack bool 锁**：防止同一帧内多次触发攻击，配合 `AttackCooldownTime` 在攻击完成后重置
+- 0.5s 定时探测而非每帧 Trace——减少物理查询开销，塔防对实时精度要求不高
+- CanAttack bool 锁：防止同一帧内多次触发攻击，配合 `AttackCooldownTime` 在攻击完成后重置
 
 ### 2.2 Sphere Trace 范围检测
 
@@ -128,8 +128,8 @@ Detect Event:
 ```
 
 使用 `Multi Sphere Trace For Objects` 而非 `GetAllActorsOfClass`：
-- **性能**：物理查询比遍历 Actor 列表快，尤其在敌人数量多时
-- **灵活性**：`Object Type` 过滤 + `Ignore Self`，后续可扩展为锥形/扇形
+- 性能：物理查询比遍历 Actor 列表快，尤其在敌人数量多时
+- 灵活性：`Object Type` 过滤 + `Ignore Self`，后续可扩展为锥形/扇形
 
 实际用 C++ 封装了命中后的有效性验证：
 
@@ -181,7 +181,7 @@ bool ABaseCharacter::LoseHealth(int32 Damage, EDamageType DamageType) {
 }
 ```
 
-物抗每点减 15% × 护甲值点数的物理伤害，魔抗每点减 100% × 护甲值点数——**物理护甲比魔抗"软"**，这引导玩家对不同敌人选择不同塔类型。
+物抗每点减 15% × 护甲值点数的物理伤害，魔抗每点减 100% × 护甲值点数——物理护甲比魔抗"软"，这引导玩家对不同敌人选择不同塔类型。
 
 ---
 
@@ -193,11 +193,11 @@ bool ABaseCharacter::LoseHealth(int32 Damage, EDamageType DamageType) {
 
 | Task | 实现方式 | 关键点 |
 |------|---------|--------|
-| **沿路径移动** | Spline + `BTTask_GetNextPoint` | 从 DataTable 读取移动速度 |
-| **攻击终点** | `BTTask_EnemyAttack` | 调用 `OnAttackAnimNotify` → Play Montage → 伤害事件 |
-| **被击杀** | `OnTakeDamage` → 血量检查 → `Dead()` | `BlueprintImplementableEvent`，蓝图中播死亡动画 + 延迟销毁 |
+| 沿路径移动 | Spline + `BTTask_GetNextPoint` | 从 DataTable 读取移动速度 |
+| 攻击终点 | `BTTask_EnemyAttack` | 调用 `OnAttackAnimNotify` → Play Montage → 伤害事件 |
+| 被击杀 | `OnTakeDamage` → 血量检查 → `Dead()` | `BlueprintImplementableEvent`，蓝图中播死亡动画 + 延迟销毁 |
 
-Spline 路径还有一个有趣的应用——**投射物贝塞尔曲线**。塔生成的子弹不是直线飞行，而是沿 Bezier 曲线移动，增强了视觉表现力。
+Spline 路径还有一个应用——投射物贝塞尔曲线。塔生成的子弹不是直线飞行，而是沿 Bezier 曲线移动，增强了视觉表现力。
 
 ---
 
@@ -251,8 +251,8 @@ void USpeedBuff::Detach() {
 
 | 层 | 主要 Widget | 功能 |
 |----|------------|------|
-| **局内** | `WBP_GameHUD`, `WBP_BuildPanel`, `WBP_HealthBar_Info`, `WBP_SkillPanel`, `WBP_NextWaveBTN` | 实时血量、防御塔建造、技能释放、波次推进 |
-| **局外** | `WBP_StartPanel`, `WBP_MenuPanel`, `WBP_HeroPanel`, `WBP_TowerPanel1`, `WBP_LoadPanel` | 关卡选择、英雄/塔图鉴、存档加载 |
+| 局内 | `WBP_GameHUD`, `WBP_BuildPanel`, `WBP_HealthBar_Info`, `WBP_SkillPanel`, `WBP_NextWaveBTN` | 实时血量、防御塔建造、技能释放、波次推进 |
+| 局外 | `WBP_StartPanel`, `WBP_MenuPanel`, `WBP_HeroPanel`, `WBP_TowerPanel1`, `WBP_LoadPanel` | 关卡选择、英雄/塔图鉴、存档加载 |
 
 UI 数据绑定流程：
 
@@ -308,32 +308,32 @@ Event Tick:
 
 ---
 
-## 七、踩坑记录
+## 七、踩过的坑
 
 ### 1. Behavior Tree Task Finish 必须手动标记 Success
 
-**现象**：AI 走到第一个路径点后停止不动。
+现象：AI 走到第一个路径点后停止不动。
 
-**原因**：`BTTask_GetNextPoint` 的 `Finish Execute` 节点没有勾选 `Success`，导致 BT 认为 Task 仍在运行中。这是 UE Behavior Tree 最常见的坑——Task 不返回 Success，后续节点永远不会执行。
+原因：`BTTask_GetNextPoint` 的 `Finish Execute` 节点没有勾选 `Success`，导致 BT 认为 Task 仍在运行中。这是 UE Behavior Tree 一个很容易遇到的坑——Task 不返回 Success，后续节点永远不会执行。
 
-**Git 记录**：
+Git 记录：
 > `paramove to spline and random spawn point, fix ai malfunction (in task finish, success unchecked)`
 
 ### 2. 碰撞预设导致的检测失效
 
-**现象**：`Multi Sphere Trace For Objects` 永远返回空数组。
+现象：`Multi Sphere Trace For Objects` 永远返回空数组。
 
-**原因**：敌人角色的 Collision Preset 中 `Object Type` 不是 "Enemy" 通道。在 Project Settings 创建了自定义 Object Channel 后，忘记在 Enemy 蓝图上设置 Collision Preset。
+原因：敌人角色的 Collision Preset 中 `Object Type` 不是 "Enemy" 通道。在 Project Settings 创建了自定义 Object Channel 后，忘记在 Enemy 蓝图上设置 Collision Preset。
 
-**教训**：自定义物理通道需要在每个相关 Actor 上确认 Collision 设置，不能只在代码中写过滤逻辑就假设能工作。
+经验：自定义物理通道需要在每个相关 Actor 上确认 Collision 设置，不能只在代码中写过滤逻辑就假设能工作。
 
 ### 3. 移动端构建错误
 
-**现象**：`Makefile error`，项目无法编译。
+现象：`Makefile error`，项目无法编译。
 
-**原因**：引擎版本从 5.5 升级到 5.6 后，`.uproject` 中残留了一个已禁用的插件引用（`"Cargo": {"Enabled": false}`），UBT 在处理时产生兼容性问题。
+原因：引擎版本从 5.5 升级到 5.6 后，`.uproject` 中残留了一个已禁用的插件引用（`"Cargo": {"Enabled": false}`），UBT 在处理时产生兼容性问题。
 
-**解决**：清理 `.uproject` 中无效的插件声明即可。
+解决：清理 `.uproject` 中无效的插件声明即可。
 
 ---
 
@@ -341,12 +341,12 @@ Event Tick:
 
 | 问题 | 当前做法 | 改进方向 |
 |------|---------|---------|
-| **等级数组越界** | `TowerData.DamageMin[Level-1]` 无边界检查 | 封装 `GetValueAtLevel()` 加 `check()` 断言 |
-| **BaseCharacter 不必要地继承 ACharacter** | 所有角色继承 `ACharacter`，塔防不需要 SkeletalMesh 和物理 | 轻量级角色可改为继承 `APawn` 或自定义 `UObject` |
-| **Buff 直接修改 CharacterData** | `AttackSpeedBuff` 直接改了 `CharacterData.AttackCoolDownTime`，如果多个 Buff 叠加可能出错 | 引入属性快照机制，Buff 修改前保存原始值 |
-| **缺少网络同步** | 单机项目，未考虑 RPC 和属性复制 | 如需多人模式，需要在 GameMode 加 Server RPC，GameState 加 Replicated 属性 |
-| **波次系统耦合在 GameMode 蓝图中** | 波次逻辑、敌人创建、UI 更新全部在一个蓝图里 | 拆分为独立的 `WaveManager` Component |
-| **DataTable Init 传原始指针** | `Init(FName, UDataTable*)` 无空指针检查 | 用 `TObjectPtr<UDataTable>` + `ensure()` |
+| 等级数组越界 | `TowerData.DamageMin[Level-1]` 无边界检查 | 封装 `GetValueAtLevel()` 加 `check()` 断言 |
+| BaseCharacter 不必要地继承 ACharacter | 所有角色继承 `ACharacter`，塔防不需要 SkeletalMesh 和物理 | 轻量级角色可改为继承 `APawn` 或自定义 `UObject` |
+| Buff 直接修改 CharacterData | `AttackSpeedBuff` 直接改了 `CharacterData.AttackCoolDownTime`，如果多个 Buff 叠加可能出错 | 引入属性快照机制，Buff 修改前保存原始值 |
+| 缺少网络同步 | 单机项目，未考虑 RPC 和属性复制 | 如需多人模式，需要在 GameMode 加 Server RPC，GameState 加 Replicated 属性 |
+| 波次系统耦合在 GameMode 蓝图中 | 波次逻辑、敌人创建、UI 更新全部在一个蓝图里 | 拆分为独立的 `WaveManager` Component |
+| DataTable Init 传原始指针 | `Init(FName, UDataTable*)` 无空指针检查 | 用 `TObjectPtr<UDataTable>` + `ensure()` |
 
 ---
 
