@@ -1,5 +1,14 @@
 extends includes/layout.pug
 
 block content
-  include ./includes/mixins/indexPostUI.pug
-  +indexPostUI
+  if is_home()
+    aside.home-left-sidebar
+      !=partial('includes/widget/card_categories', {}, {cache: true})
+      !=partial('includes/widget/card_announcement', {}, {cache: true})
+      !=partial('includes/widget/card_tags', {}, {cache: true})
+    .home-main.nc
+      include ./includes/mixins/indexPostUI.pug
+      +indexPostUI
+  else
+    include ./includes/mixins/indexPostUI.pug
+    +indexPostUI

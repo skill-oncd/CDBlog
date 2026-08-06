@@ -1,0 +1,12 @@
+# 文章目录不自动加序号（因为标题已手动使用"一、二、"格式）
+toc:
+  number: false
+
+# 系列功能序号也关掉
+series:
+  number: false
+
+# 注入自定义 CSS（修复 TOC 序号 + 标题中文字体 + 首页分类卡片）
+inject:
+  head:
+    - <link rel="stylesheet" href="/css/custom.css">
