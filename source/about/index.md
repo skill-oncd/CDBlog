@@ -2,12 +2,12 @@
 title: About CD
 date: 2026-08-04 14:24:07
 type: about
-description: Combat designer crafting ARPG gameplay across Unreal & Unity. Skills, hit feel, frame data, and the numbers behind the fun. CoolDownSpace — a game development playground.
+description: Combat designer crafting ARPG gameplay across Unreal & Unity. Skills, hit feel, frame data, and the numbers behind the fun. CDSpace — a game development playground.
 keywords: combat design,gameplay programmer,unreal engine,unity,ARPG,game developer portfolio,C++
 comments: true
 ---
 
-## 🎮 CoolDownSpace
+## 🎮 CDSpace
 
 🎮 **Combat designer** crafting **ARPG** gameplay across **Unreal** & **Unity**.
 
@@ -38,10 +38,9 @@ while (Alive)
 
 ### 🧰 Tech Stack
 
-![Unreal Engine](https://img.shields.io/badge/Unreal_Engine-0E1128?style=flat&logo=unrealengine&logoColor=white)
-![Unity](https://img.shields.io/badge/Unity-000000?style=flat&logo=unity&logoColor=white)
-![C++](https://img.shields.io/badge/C++-00599C?style=flat&logo=cplusplus&logoColor=white)
-![C#](https://img.shields.io/badge/C%23-512BD4?style=flat&logo=csharp&logoColor=white)
+<div style="display:flex;justify-content:center;gap:4px;flex-wrap:wrap;">
+<img src="https://img.shields.io/badge/Unreal_Engine-0E1128?style=flat&logo=unrealengine&logoColor=white"> <img src="https://img.shields.io/badge/Unity-000000?style=flat&logo=unity&logoColor=white"> <img src="https://img.shields.io/badge/Lua-2C2D72?style=flat&logo=lua&logoColor=white"> <img src="https://img.shields.io/badge/C++-00599C?style=flat&logo=cplusplus&logoColor=white">
+</div>
 
 ---
 
