@@ -604,13 +604,13 @@
       <tags>
         <tag>UE5</tag>
         <tag>Unreal</tag>
-        <tag>GAS</tag>
-        <tag>GameplayAbilitySystem</tag>
-        <tag>Portfolio</tag>
         <tag>Animation</tag>
         <tag>AnimationBlueprint</tag>
         <tag>BlendSpace</tag>
         <tag>Montage</tag>
+        <tag>GAS</tag>
+        <tag>GameplayAbilitySystem</tag>
+        <tag>Portfolio</tag>
       </tags>
   </entry>
   <entry>
@@ -1138,10 +1138,10 @@
         <tag>Unreal</tag>
         <tag>GAS</tag>
         <tag>GameplayAbilitySystem</tag>
+        <tag>Portfolio</tag>
         <tag>NetworkReplication</tag>
         <tag>CombatDesign</tag>
         <tag>ARPG</tag>
-        <tag>Portfolio</tag>
       </tags>
   </entry>
 </search>
