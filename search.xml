@@ -61,6 +61,577 @@
       </tags>
   </entry>
   <entry>
+    <title>Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入</title>
+    <url>/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F/</url>
+    <content><![CDATA[<h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td><strong>八</strong></td>
+<td><strong>UI 系统（本文 · 终篇）</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 UI 系统是一个<strong>四层可组合架构</strong>——其核心不是一个 <code>AHUD</code> 子类，而是一个 <strong>GameplayTag 驱动的发布&#x2F;订阅引擎</strong>（<code>UUIExtensionSubsystem</code>）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的最佳实践参考。</p>
+<hr>
+<h2 id="一，为什么不直接用-UMG-HUD？"><a href="#一，为什么不直接用-UMG-HUD？" class="headerlink" title="一，为什么不直接用 UMG HUD？"></a>一，为什么不直接用 UMG HUD？</h2><p>在传统 UE 项目中，最自然的 UI 做法是：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">AHUD::<span class="built_in">BeginPlay</span>() &#123;</span><br><span class="line">    MainWidget = <span class="built_in">CreateWidget</span>&lt;UMainHUD&gt;(PlayerController, MainHUDClass);</span><br><span class="line">    MainWidget-&gt;<span class="built_in">AddToViewport</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这在单人项目中工作得很好。但在 Lyra 的场景下有三个致命短板：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>传统 UMG</th>
+<th>Lyra 的需求</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>多人分屏</strong></td>
+<td><code>AHUD</code> 是全局单例，每个 Player 无独立 UI 根</td>
+<td>4 人分屏 → 4 套独立 UI 树</td>
+</tr>
+<tr>
+<td><strong>跨平台输入</strong></td>
+<td>手动 <code>SetInputMode_GameOnly</code>&#x2F;<code>UIOnly</code>，手柄&#x2F;键鼠需自己处理</td>
+<td>CommonUI 的 <code>CommonActivatableWidgetStack</code> 自动管理输入模式</td>
+</tr>
+<tr>
+<td><strong>GameFeature 热插拔</strong></td>
+<td>HUD 硬引用 Widget 类 → 无法热卸载</td>
+<td>UIExtension 的发布&#x2F;订阅模式：GameFeature 注册时不引用具体 HUD</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="二，四层分层架构"><a href="#二，四层分层架构" class="headerlink" title="二，四层分层架构"></a>二，四层分层架构</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GameFeature 层:   GameFeatureAction_AddWidgets</span><br><span class="line">                  → 向 HUD Layout 注入 Layout + Element Widget</span><br><span class="line">                       ↓</span><br><span class="line">UIExtension 层:   UUIExtensionSubsystem（WorldSubsystem）</span><br><span class="line">                  → GameplayTag 驱动的发布/订阅引擎</span><br><span class="line">                       ↓</span><br><span class="line">CommonGame 层:    UPrimaryGameLayout</span><br><span class="line">                  → 每个 LocalPlayer 独立的根布局 + 多层级 Stack 管理</span><br><span class="line">                       ↓</span><br><span class="line">CommonUI 层:      CommonActivatableWidget + CommonActivatableWidgetStack</span><br><span class="line">                  → 输入路由 + 焦点自动管理 + 跨平台切换</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据流"><a href="#数据流" class="headerlink" title="数据流"></a>数据流</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Experience 加载</span><br><span class="line">  → GameFeature 激活</span><br><span class="line">    → GameFeatureAction_AddWidgets::OnGameFeatureActivating</span><br><span class="line">      → Layout 模式: PushWidgetToLayerStack(UI.Layer.Game, LayoutClass)</span><br><span class="line">      → Widget 模式: UIExtensionSubsystem::RegisterExtensionPoint(Tag, WidgetClass)</span><br><span class="line">        → HUD Layout 内的 ExtensionPointWidget 接收 → 创建 Widget</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三，UIExtensionSubsystem：发布-订阅引擎"><a href="#三，UIExtensionSubsystem：发布-订阅引擎" class="headerlink" title="三，UIExtensionSubsystem：发布&#x2F;订阅引擎"></a>三，UIExtensionSubsystem：发布&#x2F;订阅引擎</h2><p>这是 Lyra UI 系统最核心的创新——它不是”HUD 知道所有 Widget”，而是”HUD 声明插槽，GameFeature 提供内容，GameplayTag 做中介”：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">发布方（GameFeature）:</span><br><span class="line">  UIExtensionSubsystem-&gt;RegisterExtension(</span><br><span class="line">      TAG(&quot;HUD.Slot.QuickBar&quot;),     // ← 我要往这个插槽放 Widget</span><br><span class="line">      QuickBarWidgetClass,          // ← 这是我的 Widget 类</span><br><span class="line">      Priority = 0                  // ← 同一插槽多个 Widget 的排序</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">订阅方（HUD Layout）:</span><br><span class="line">  // UUIExtensionPointWidget 注册到 TAG(&quot;HUD.Slot.QuickBar&quot;)</span><br><span class="line">  // ExtensionSubsystem 通知有新 Extension 注册</span><br><span class="line">  // → ExtensionPointWidget::RebuildWidget() → CreateWidget(QuickBarWidgetClass)</span><br></pre></td></tr></table></figure>
+
+<h3 id="关键特性"><a href="#关键特性" class="headerlink" title="关键特性"></a>关键特性</h3><ol>
+<li><strong>GameplayTag 层级匹配</strong>：TAG(<code>HUD.Slot</code>) 可以接收 TAG(<code>HUD.Slot.QuickBar</code>)、TAG(<code>HUD.Slot.Reticle</code>) 等所有子 Tag 的 Extension。这提供了”接收全部 HUD 部件”和”接收特定部件”的灵活性</li>
+<li><strong>ContextObject 过滤</strong>：Extension 可以携带 Context（如”只有装备了特定武器才显示此 Widget”），ExtensionPoint 在 Rebuild 时检查 Context 是否匹配</li>
+<li><strong>Priority 排序</strong>：同一插槽多个 Extension → 按 Priority 排序显示</li>
+<li><strong>完全解耦</strong>：发布方（ShooterCore 的 QuickBar）不知道订阅方（HUD Layout）的存在，甚至不知道有没有人订阅</li>
+</ol>
+<hr>
+<h2 id="四，CommonUI-的哲学：UI-是玩家的私有财产"><a href="#四，CommonUI-的哲学：UI-是玩家的私有财产" class="headerlink" title="四，CommonUI 的哲学：UI 是玩家的私有财产"></a>四，CommonUI 的哲学：UI 是玩家的私有财产</h2><p>Lyra 选择 CommonUI 而非纯 UMG 的深层原因是 CommonUI 的一个根本假设：</p>
+<blockquote>
+<p><strong>每个玩家拥有一棵独立的 UI 树。</strong></p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// CommonUI 中，每个 LocalPlayer 获得独立的 UPrimaryGameLayout</span></span><br><span class="line"><span class="keyword">for</span> (ULocalPlayer* LP : GameInstance-&gt;<span class="built_in">GetLocalPlayers</span>())</span><br><span class="line">    LP-&gt;<span class="built_in">GetPrimaryGameLayout</span>()-&gt;<span class="built_in">PushWidgetToLayerStack</span>(<span class="built_in">TAG</span>(<span class="string">&quot;UI.Layer.Game&quot;</span>), LayoutClass);</span><br></pre></td></tr></table></figure>
+
+<p>对比传统 UMG 中 <code>AHUD</code> 是全局单例——在 4 人分屏场景下根本无法支持。</p>
+<h3 id="多层级-Stack-自动输入模式"><a href="#多层级-Stack-自动输入模式" class="headerlink" title="多层级 Stack + 自动输入模式"></a>多层级 Stack + 自动输入模式</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UPrimaryGameLayout (Root)</span><br><span class="line">  ├─ UCommonActivatableWidgetStack: UI.Layer.Game        ← 游戏 HUD（QuickBar、Reticle、血量）</span><br><span class="line">  ├─ UCommonActivatableWidgetStack: UI.Layer.GameMenu    ← 暂停菜单、背包、地图</span><br><span class="line">  ├─ UCommonActivatableWidgetStack: UI.Layer.Menu        ← 主菜单、设置、角色选择</span><br><span class="line">  └─ UCommonActivatableWidgetStack: UI.Layer.Modal       ← 确认框、错误提示、按键绑定</span><br></pre></td></tr></table></figure>
+
+<p><strong>输入模式自动切换</strong>：当你在 Game 层（HUD 可见）时，输入自动设为 <code>GameOnly</code>——鼠标控制视角。当 GameMenu 层有 Widget Push 进入（打开背包），输入自动切换为 <code>GameAndMenu</code>——鼠标出现、角色停止响应视角输入。</p>
+<hr>
+<h2 id="五，ULyraActivatableWidget：声明式输入模式"><a href="#五，ULyraActivatableWidget：声明式输入模式" class="headerlink" title="五，ULyraActivatableWidget：声明式输入模式"></a>五，ULyraActivatableWidget：声明式输入模式</h2><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ULyraActivatableWidget : UCommonActivatableWidget &#123;</span><br><span class="line">    ELyraWidgetInputMode InputMode;  <span class="comment">// ← 声明这个 Widget 要什么输入模式</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">ELyraWidgetInputMode &#123;</span><br><span class="line">    Default,       <span class="comment">// 继承父层设置</span></span><br><span class="line">    GameAndMenu,   <span class="comment">// 游戏输入 + UI 输入（鼠标可见，角色可移动）</span></span><br><span class="line">    Game,          <span class="comment">// 纯游戏输入（鼠标隐藏，视角控制）</span></span><br><span class="line">    Menu,          <span class="comment">// 纯 UI 输入（鼠标可见，角色停止响应）</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>当这个 Widget 被 Push 到 Stack 上时，System 自动应用其声明的输入模式；被 Pop 时自动恢复之前的模式。</p>
+<hr>
+<h2 id="六，Indicator-系统：3D-世界-→-2D-屏幕投影"><a href="#六，Indicator-系统：3D-世界-→-2D-屏幕投影" class="headerlink" title="六，Indicator 系统：3D 世界 → 2D 屏幕投影"></a>六，Indicator 系统：3D 世界 → 2D 屏幕投影</h2><p>Lyra 的离屏指示器系统（离屏目标箭头）是 UI 系统中另一个值得学习的独立子系统：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ULyraIndicatorManagerComponent (挂载在 PlayerController)</span><br><span class="line">  ├── IndicatorDescriptor[] — 需要跟踪的目标列表（位置 + 数据）</span><br><span class="line">  └── 通知 SActorCanvas（纯 Slate Panel）</span><br><span class="line">        └── 每帧 ActiveTimer: 3D WorldPos → 2D ScreenPos（ProjectWorldLocationToScreen）</span><br><span class="line">              ├── 在屏幕内 → 显示图标</span><br><span class="line">              └── 在屏幕外 → Clamp + 旋转箭头指向屏幕外方向</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么用纯 Slate 而非 UMG？</strong></p>
+<ul>
+<li>性能：ActorCanvas 每帧遍历所有指示器做 3D→2D 投影。如果用 UMG Widget，每个指示器一个 Widget 对象 → 大量创建&#x2F;销毁开销</li>
+<li><code>FUserWidgetPool</code> 池化：即使只在 Slate 层，Widget 实例仍然从池中获取和归还</li>
+<li><code>SActorCanvas</code> 直接处理 Slate 绘制——无 UMG 开销</li>
+</ul>
+<hr>
+<h2 id="七，GameFeatureAction-AddWidgets：两种注入模式"><a href="#七，GameFeatureAction-AddWidgets：两种注入模式" class="headerlink" title="七，GameFeatureAction_AddWidgets：两种注入模式"></a>七，GameFeatureAction_AddWidgets：两种注入模式</h2><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">UGameFeatureAction_AddWidgets &#123;</span><br><span class="line">    <span class="comment">// 模式 1: Layout 模式 — 向 Layer Stack 推入整个 HUD Layout</span></span><br><span class="line">    FLyraHUDLayoutRequest Layout;</span><br><span class="line">    <span class="comment">// → AddWidgets(TAG(&quot;UI.Layer.Game&quot;), W_ShooterHUDLayout)</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 模式 2: Widget 模式 — 向 UIExtensionSubsystem 注册单个 Widget</span></span><br><span class="line">    FLyraHUDElementEntry Widgets[];</span><br><span class="line">    <span class="comment">// → RegisterExtension(TAG(&quot;HUD.Slot.QuickBar&quot;), W_QuickBar)</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>Layout 模式 &#x3D; “这个 GameFeature 提供一整套 HUD”（如 ShooterCore 的 <code>W_ShooterHUDLayout</code>）。<br>Widget 模式 &#x3D; “这个 GameFeature 向现有 HUD 追加一个部件”（如 DLC 武器添加专属弹药计数器）。</p>
+<p><strong>两者可以组合</strong>——ShooterCore ActionSet 同时使用 Layout（推入 HUD Layout）和 Widget（注册 QuickBar&#x2F;Reticle 等部件）。</p>
+<hr>
+<h2 id="八，全系列回顾"><a href="#八，全系列回顾" class="headerlink" title="八，全系列回顾"></a>八，全系列回顾</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>系统</th>
+<th>核心思想</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td>架构哲学</td>
+<td>薄 Actor + 厚 Component + GameFeature + Experience</td>
+</tr>
+<tr>
+<td>二</td>
+<td>Experience</td>
+<td>DataAsset 配方表替代 GameMode 子类</td>
+</tr>
+<tr>
+<td>三</td>
+<td>Character</td>
+<td>InitState 状态机替代 BeginPlay 时序</td>
+</tr>
+<tr>
+<td>四</td>
+<td>GAS</td>
+<td>五大封装：AbilitySet &#x2F; InputTag &#x2F; ActivationGroup &#x2F; Global &#x2F; ExperiencePipe</td>
+</tr>
+<tr>
+<td>五</td>
+<td>Equipment</td>
+<td>Fragment 组合 + Definition&#x2F;Instance 分离 + SourceObject 反向引用</td>
+</tr>
+<tr>
+<td>六</td>
+<td>Input</td>
+<td>GameplayTag 中介解耦按键绑定与能力激活</td>
+</tr>
+<tr>
+<td>七</td>
+<td>网络</td>
+<td>分层解耦 + ReplicationGraph 默认禁用 + FastShared 独立带宽</td>
+</tr>
+<tr>
+<td>八</td>
+<td>UI</td>
+<td>GameplayTag 发布&#x2F;订阅 + CommonUI 多层级 Stack + 异步注入</td>
+</tr>
+</tbody></table>
+<p><strong>Lyra 在所有这些系统中有同一个设计 DNA：数据驱动注入 + GameplayTag 中介 + 组合优于继承 + 异步不阻塞。</strong> 理解这个 DNA，比记住任何具体类的 API 都重要。</p>
+<hr>
+<p><em>这是 Lyra 框架拆解系列的最后一篇。如果你对某个系统的实现细节有更深入的问题，欢迎交流。</em></p>
+]]></content>
+      <categories>
+        <category>Lyra 框架拆解</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>GameplayTag</tag>
+        <tag>UI</tag>
+        <tag>CommonUI</tag>
+        <tag>UIExtension</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径</title>
+    <url>/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/</url>
+    <content><![CDATA[<h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td><strong>七</strong></td>
+<td><strong>网络同步框架（本文）</strong></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的网络同步架构不是”用一套方案解决所有问题”——它构建了<strong>四层分层协作体系</strong>，从底层的 Iris 序列化到上层的 VerbMessage 消息广播，每一层解决一个粒度的同步需求。最关键的设计决策：<strong>ReplicationGraph 默认禁用</strong>——先跑起来，性能瓶颈出现时再逐层启用优化。</p>
+<hr>
+<h2 id="一，五层同步架构"><a href="#一，五层同步架构" class="headerlink" title="一，五层同步架构"></a>一，五层同步架构</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Gameplay 层:  UPROPERTY(Replicated) / FFastArray / RPC</span><br><span class="line">   ↓          基础同步原语 —— 简单的 float/HUD 走属性，数组走 FastArray，一次性事件走 RPC</span><br><span class="line">消息层:       FLyraVerbMessage（FFastArray + GameplayMessageSubsystem）</span><br><span class="line">   ↓          跨系统的轻量事件广播（击杀广播、助攻消息、控制点占领）</span><br><span class="line">压缩层:       FSharedRepMovement / FLyraReplicatedAcceleration</span><br><span class="line">   ↓          移动数据共享——多个客户端观察同一个角色时，共享序列化结果</span><br><span class="line">LOD 层:       ULyraSignificanceManager</span><br><span class="line">   ↓          基于重要性动态调整复制频率（占位，框架已注册但未完成实现）</span><br><span class="line">路由层:       ULyraReplicationGraph / Iris ObjectReplicationBridge</span><br><span class="line">   ↓          按 Actor 类型分派到不同复制节点 —— 每个连接只收到&quot;相关&quot;的数据</span><br><span class="line">Iris 传输层:   过滤 → 优先级排序 → 序列化 → Delta 压缩 → 带宽分配</span><br></pre></td></tr></table></figure>
+
+<p><strong>核心原则：每一层可以独立替换或禁用。</strong> 这是 Lyra 最务实的网络设计决策——不是”给你一套完美但必须全用的系统”，而是”给你一套可逐层启用的工具集”。</p>
+<hr>
+<h2 id="二，Iris-与-ReplicationGraph-的分工"><a href="#二，Iris-与-ReplicationGraph-的分工" class="headerlink" title="二，Iris 与 ReplicationGraph 的分工"></a>二，Iris 与 ReplicationGraph 的分工</h2><h3 id="Iris：下一代复制系统"><a href="#Iris：下一代复制系统" class="headerlink" title="Iris：下一代复制系统"></a>Iris：下一代复制系统</h3><p>Iris 是 UE5 新的底层复制框架（替代旧的 <code>UNetDriver</code> 复制管线），在 <code>LyraGame.Build.cs</code> 中通过一行宏启用：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">SetupIrisSupport</span>(Target);</span><br></pre></td></tr></table></figure>
+
+<p>Iris 负责<strong>怎么复制</strong>：序列化格式选择、过滤算法、优先级计算、Delta 压缩、带宽分配。通过 <code>ObjectReplicationBridgeConfig</code> 按类指定过滤策略：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 按类指定过滤方式</span></span><br><span class="line">FilterConfigs = [</span><br><span class="line">    &#123; Class = ALyraCharacter,    DynamicFilterName = <span class="string">&quot;Spatial&quot;</span> &#125;,   <span class="comment">// 空间距离过滤</span></span><br><span class="line">    &#123; Class = AWorldSettings,    DynamicFilterName = <span class="string">&quot;NotRouted&quot;</span> &#125;, <span class="comment">// 不复制</span></span><br><span class="line">    &#123; Class = AGameState,        DynamicFilterName = <span class="string">&quot;None&quot;</span> &#125;,      <span class="comment">// 不过滤，全连接</span></span><br><span class="line">];</span><br></pre></td></tr></table></figure>
+
+<h3 id="ReplicationGraph：自定义节点体系"><a href="#ReplicationGraph：自定义节点体系" class="headerlink" title="ReplicationGraph：自定义节点体系"></a>ReplicationGraph：自定义节点体系</h3><p>ReplicationGraph 负责<strong>复制什么</strong>：哪些 Actor 对哪些连接是相关的。它定义了 6 种节点类型：</p>
+<table>
+<thead>
+<tr>
+<th>节点</th>
+<th>Actor 类型</th>
+<th>策略</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>GridSpatialization2D</strong></td>
+<td>大部分 Gameplay Actor</td>
+<td>空间网格——只复制到”附近”的连接</td>
+</tr>
+<tr>
+<td><strong>AlwaysRelevant_ForConnection</strong></td>
+<td>PlayerController + ViewTarget</td>
+<td>始终复制到拥有者</td>
+</tr>
+<tr>
+<td><strong>PlayerStateFrequencyLimiter</strong></td>
+<td>PlayerState</td>
+<td>限制更新频率，降低带宽</td>
+</tr>
+<tr>
+<td><strong>ActorList</strong></td>
+<td>ALyraCharacter</td>
+<td>独立列表，配合 FastShared 路径使用</td>
+</tr>
+<tr>
+<td><strong>TearOff</strong></td>
+<td>销毁的 Actor</td>
+<td>延迟清理，确保客户端收到销毁前的最后状态</td>
+</tr>
+<tr>
+<td><strong>FrequencyBuckets</strong></td>
+<td>低优先级 Actor</td>
+<td>分频复制——远距离 Actor 以更低频率更新</td>
+</tr>
+</tbody></table>
+<h3 id="关键设计：ReplicationGraph-默认禁用"><a href="#关键设计：ReplicationGraph-默认禁用" class="headerlink" title="关键设计：ReplicationGraph 默认禁用"></a>关键设计：ReplicationGraph 默认禁用</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">bDisableReplicationGraph = <span class="literal">true</span>;  <span class="comment">// 默认不走 ReplicationGraph</span></span><br></pre></td></tr></table></figure>
+
+<p>当 ReplicationGraph 禁用时，Iris 的 <code>ObjectReplicationBridgeConfig</code> 接管相关性过滤。这是 Lyra 的”先跑起来，优化再说”哲学的体现——小项目用 Iris 默认过滤足够，大项目再接入 ReplicationGraph 做精细路由。</p>
+<hr>
+<h2 id="三，FastShared-路径：独立带宽-共享序列化"><a href="#三，FastShared-路径：独立带宽-共享序列化" class="headerlink" title="三，FastShared 路径：独立带宽 + 共享序列化"></a>三，FastShared 路径：独立带宽 + 共享序列化</h2><p>ReplicationGraph 一个重要优化是 <strong>FastShared 路径</strong>——专门为移动数据设计：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ALyraCharacter 移动数据:</span><br><span class="line">  常规路径:    每个连接独立序列化 + 独立发送</span><br><span class="line">  带宽:        10 kB/s × N 个连接</span><br><span class="line">  </span><br><span class="line">  FastShared 路径: 序列化一次 → 广播给所有相关连接</span><br><span class="line">  带宽:        10 kB/s × 1 次序列化</span><br></pre></td></tr></table></figure>
+
+<p><code>ALyraCharacter</code> 通过 <code>FLyraReplicatedAcceleration</code> 结构体走这条路径——加速度数据从 12 字节压缩到 3 字节（75% 节省），且所有观察同一个角色的客户端共享同一份序列化结果。</p>
+<p><strong>这对大逃杀&#x2F;Battle Royale 场景至关重要</strong>——一个角色可能被 30+ 个客户端同时观察，每条连接单独复制移动数据会吃掉所有上行带宽。</p>
+<hr>
+<h2 id="四，FSharedRepMovement：移动压缩详解"><a href="#四，FSharedRepMovement：移动压缩详解" class="headerlink" title="四，FSharedRepMovement：移动压缩详解"></a>四，FSharedRepMovement：移动压缩详解</h2><p>传统的 <code>FRepMovement</code> 结构通过 <code>ReplicatedMovement</code> 复制——包含 Location(12 bytes) + Rotation(12 bytes) + Velocity(12 bytes) + 额外数据 ≈ 50+ bytes。</p>
+<p>Lyra 的 <code>FSharedRepMovement</code> 使用以下优化：</p>
+<ol>
+<li><strong>量化位置</strong>：世界坐标通过网格对齐降低精度 → 减少 bit 数</li>
+<li><strong>加速度压缩</strong>：<code>FLyraReplicatedAcceleration</code> 从 12 bytes → 3 bytes（量化为 256 级方向 + 精度缩放）</li>
+<li><strong>Delta 压缩</strong>：只发送相对于上一帧的变化，而非完整值</li>
+<li><strong>独立带宽预算</strong>：移动复制使用独立的带宽限制（而非与其他属性竞争）</li>
+</ol>
+<hr>
+<h2 id="五，FLyraVerbMessage：轻量事件广播"><a href="#五，FLyraVerbMessage：轻量事件广播" class="headerlink" title="五，FLyraVerbMessage：轻量事件广播"></a>五，FLyraVerbMessage：轻量事件广播</h2><p>传统 RPC 是”一对一”（Server→OwningClient）或”一对多”（NetMulticast），但有些游戏事件需要<strong>更灵活的订阅模型</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">击杀事件（Elimination.Message）:</span><br><span class="line">  谁需要知道？</span><br><span class="line">    → 击杀者 UI（显示击杀提示）</span><br><span class="line">    → 被击杀者 UI（显示死亡画面）</span><br><span class="line">    → 记分板（更新排名）</span><br><span class="line">    → 助攻处理器（检测助攻）</span><br><span class="line">    → 荣誉系统（检查连杀成就）</span><br></pre></td></tr></table></figure>
+
+<p><code>FLyraVerbMessage</code> 提供了一条<strong>双通道架构</strong>：</p>
+<ol>
+<li><strong>FFastArray 复制通道</strong>：<code>FVerbMessageArray</code> 使用 <code>FFastArraySerializer</code> → 服务器上有新消息时增量复制到所有客户端</li>
+<li><strong>GameplayMessageSubsystem 分发通道</strong>：客户端收到消息后通过 <code>UGameplayMessageSubsystem</code> 广播 → 任何感兴趣的 Subsystem 自行订阅</li>
+</ol>
+<p><strong>消息的生产者和消费者完全解耦</strong>——ShooterCore 的 Elimination 消息可以被 ShooterExplorer 的 UI 订阅，双方互不知道对方存在。这是 Lyra 在 Gameplay 层实现的最大粒度的模块化通信。</p>
+<hr>
+<h2 id="六，FFastArraySerializer：结构化数据复制的基石"><a href="#六，FFastArraySerializer：结构化数据复制的基石" class="headerlink" title="六，FFastArraySerializer：结构化数据复制的基石"></a>六，FFastArraySerializer：结构化数据复制的基石</h2><p>Lyra 中几乎所有的结构化列表数据都使用 <code>FFastArraySerializer</code>：</p>
+<table>
+<thead>
+<tr>
+<th>使用处</th>
+<th>数据结构</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Inventory</strong></td>
+<td><code>FLyraInventoryList</code></td>
+<td>增量更新 + SubObject 注册</td>
+</tr>
+<tr>
+<td><strong>Equipment</strong></td>
+<td><code>FLyraEquipmentList</code></td>
+<td>装备列表的原子增删</td>
+</tr>
+<tr>
+<td><strong>VerbMessage</strong></td>
+<td><code>FVerbMessageArray</code></td>
+<td>消息队列的自动回收</td>
+</tr>
+<tr>
+<td><strong>GameplayTag Stack</strong></td>
+<td>Tag 堆叠计数</td>
+<td>StackCount 变化即复制</td>
+</tr>
+</tbody></table>
+<p><code>FFastArraySerializer</code> 的核心优势：</p>
+<ul>
+<li><strong>增量复制</strong>：只复制变化了的 Entry，不复制整个数组</li>
+<li><strong>客户端回调</strong>：<code>PreReplicatedRemove</code> + <code>PostReplicatedAdd</code> + <code>PostReplicatedChange</code>——客户端在数组变化时收到明确通知</li>
+<li><strong>SubObject 支持</strong>：通过 <code>RegisteredSubObject</code> 实现嵌套 UObject 的复制依赖</li>
+</ul>
+<hr>
+<h2 id="七，SignificanceManager：预留的优化层"><a href="#七，SignificanceManager：预留的优化层" class="headerlink" title="七，SignificanceManager：预留的优化层"></a>七，SignificanceManager：预留的优化层</h2><p><code>ULyraSignificanceManager</code> 已经注册在 <code>DefaultEngine.ini</code> 中，但 <code>RegisterObject()</code> 的实现被注释掉了（代码中有 <code>@TODO</code> 标记）。它的理论协作路径是：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ReplicationGraph::GetSignificance(Obj)</span><br><span class="line">  → SignificanceManager::GetSignificance(Obj)</span><br><span class="line">    → 返回 SignificanceValue（0-255）</span><br><span class="line">      → ReplicationGraph 据此调整复制频率甚至完全跳过</span><br></pre></td></tr></table></figure>
+
+<p><strong>Lyra 的设计风格</strong>：基建先到位（类已创建、已注册），调优留给项目开发者。”你知道有这个优化点，框架已经给你留好了位置”——比”框架没考虑这个场景，你需要从头实现”好得多。</p>
+<hr>
+<blockquote>
+<p><strong>下一篇（终篇）</strong>：<a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a> — 拆解 Lyra 的四层 UI 架构：CommonUI → CommonGame → UIExtension → LyraGame。以及 GameplayTag 驱动的发布&#x2F;订阅式 UI 注入如何实现”GameFeature 插件的 UI 完全解耦”。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Lyra 框架拆解</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>Networking</tag>
+        <tag>ReplicationGraph</tag>
+        <tag>Iris</tag>
+        <tag>FFastArraySerializer</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</title>
+    <url>/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F/</url>
+    <content><![CDATA[<h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td><strong>六</strong></td>
+<td><strong>Input 系统（本文）</strong></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 在 UE Enhanced Input 之上增加了一个<strong>GameplayTag 路由层</strong>——InputConfig 把按键映射为语义 Tag，AbilitySet 把 Tag 关联到具体 GA，运行时 ASC 通过 Tag 匹配完成”按键 → 能力”的路由。这个中间层是 Lyra 模块化架构的”胶水”——没有它，GameFeature 的热加载&#x2F;卸载在输入层就卡死了。</p>
+<hr>
+<h2 id="一，标准-Enhanced-Input-的问题"><a href="#一，标准-Enhanced-Input-的问题" class="headerlink" title="一，标准 Enhanced Input 的问题"></a>一，标准 Enhanced Input 的问题</h2><h3 id="标准做法"><a href="#标准做法" class="headerlink" title="标准做法"></a>标准做法</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 直接绑定：InputAction 指针 → Callback 函数</span></span><br><span class="line">EnhancedInputComponent-&gt;<span class="built_in">BindAction</span>(IA_Fire, ETriggerEvent::Triggered, </span><br><span class="line">    <span class="keyword">this</span>, &amp;AMyCharacter::OnFirePressed);</span><br></pre></td></tr></table></figure>
+
+<p>这在单体项目中完全够用。但在 Lyra 的模块化 GameFeature 架构下有致命缺陷：</p>
+<ol>
+<li><strong>硬引用 InputAction 资产</strong>：Character C++ 代码引用 <code>IA_Fire</code> 指针 → 该 InputAction 必须在所有模式中都存在</li>
+<li><strong>一个按键 &#x3D; 一个能力</strong>：无法支持”同一个按键在不同模式下触发不同能力”</li>
+<li><strong>GameFeature 无法卸载</strong>：C++ 层的对象引用阻止了 <code>.uplugin</code> 热卸载</li>
+<li><strong>按键自定义困难</strong>：玩家想改按键布局，需要修改绑定代码或在 IMC 层处理——但 IMC 和 Ability 之间缺乏中间抽象</li>
+</ol>
+<h3 id="Lyra-的方案：GameplayTag-中介"><a href="#Lyra-的方案：GameplayTag-中介" class="headerlink" title="Lyra 的方案：GameplayTag 中介"></a>Lyra 的方案：GameplayTag 中介</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">不直接绑定 InputAction → Ability</span><br><span class="line">而是绑定 InputAction → GameplayTag → Ability</span><br></pre></td></tr></table></figure>
+
+<p><strong>InputAction 和 Ability 互不知道对方的存在</strong>。它们唯一的共同点是同一个 GameplayTag 字符串。</p>
+<hr>
+<h2 id="二，三层抽象架构"><a href="#二，三层抽象架构" class="headerlink" title="二，三层抽象架构"></a>二，三层抽象架构</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">第3层: 能力激活层（GAS）</span><br><span class="line">  LyraAbilitySystemComponent::ProcessAbilityInput</span><br><span class="line">  → InputTag → DynamicSpecSourceTags.HasTagExact(InputTag)</span><br><span class="line">  → TryActivateAbility</span><br><span class="line"></span><br><span class="line">第2层: Tag 路由层（Lyra 核心创新）</span><br><span class="line">  ULyraInputConfig:        IA → InputTag 映射（&quot;哪个按键对应哪个语义&quot;）</span><br><span class="line">  ULyraAbilitySet:          Ability → InputTag 关联（&quot;哪个能力响应哪个语义&quot;）</span><br><span class="line">  ULyraInputComponent:     基于 Tag 的批量绑定</span><br><span class="line"></span><br><span class="line">第1层: 物理输入层（UE 原生）</span><br><span class="line">  UEnhancedPlayerInput + InputMappingContext + InputAction</span><br><span class="line">  → 处理硬件输入、应用 Modifier、触发 Trigger</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三，核心-DataAsset：ULyraInputConfig"><a href="#三，核心-DataAsset：ULyraInputConfig" class="headerlink" title="三，核心 DataAsset：ULyraInputConfig"></a>三，核心 DataAsset：ULyraInputConfig</h2><p>这是 Lyra 输入系统的”配置入口”：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ULyraInputConfig : UDataAsset &#123;</span><br><span class="line">    <span class="comment">// Native 动作（移动、视角、UI导航）—— 不走 GAS</span></span><br><span class="line">    TArray&lt;FLyraInputAction&gt; NativeInputActions;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Ability 动作（攻击、跳跃、技能）—— 走 GAS Tag 路由</span></span><br><span class="line">    TArray&lt;FLyraInputAction&gt; AbilityInputActions;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">FLyraInputAction &#123;</span><br><span class="line">    UInputAction* InputAction;     <span class="comment">// ← 物理按键绑定</span></span><br><span class="line">    FGameplayTag  InputTag;        <span class="comment">// ← 语义标签（&quot;这个按键的含义&quot;）</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="两类动作的不同处理路径"><a href="#两类动作的不同处理路径" class="headerlink" title="两类动作的不同处理路径"></a>两类动作的不同处理路径</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Native 动作（Input_Move, Input_LookMouse）:</span><br><span class="line">  InputAction 触发 → ULyraHeroComponent::Input_Move() 直接处理 → 移动 Component</span><br><span class="line"></span><br><span class="line">Ability 动作（Input_AbilityInputTagPressed）:</span><br><span class="line">  InputAction 触发 → HeroComponent::Input_AbilityInputTagPressed(InputTag)</span><br><span class="line">    → ASC::AbilityInputTagPressed(InputTag)</span><br><span class="line">      → 遍历所有 ActivatableAbilities</span><br><span class="line">        → Spec.DynamicSpecSourceTags.HasTagExact(InputTag) ✓</span><br><span class="line">        → InputPressedSpecHandles.AddUnique(Handle) → 暂存，帧末统一激活</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四，帧末批量激活：ProcessAbilityInput"><a href="#四，帧末批量激活：ProcessAbilityInput" class="headerlink" title="四，帧末批量激活：ProcessAbilityInput"></a>四，帧末批量激活：ProcessAbilityInput</h2><p>Lyra 的能力输入<strong>不在按键回调中直接激活 Ability</strong>，而是暂存到帧末统一处理：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">LyraAbilitySystemComponent::ProcessAbilityInput</span><span class="params">(<span class="type">float</span> DeltaTime, <span class="type">bool</span> bGamePaused)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 对每个暂存的 SpecHandle，按 InputAction 触发状态分类处理：</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Handle : InputPressedSpecHandles) &#123;</span><br><span class="line">        <span class="comment">// InputAction 当前值 &gt; 0？</span></span><br><span class="line">        <span class="keyword">if</span> (InputActionValue.<span class="built_in">GetMagnitude</span>() &gt; <span class="number">0</span>)</span><br><span class="line">            <span class="built_in">AbilitySpecInputPressed</span>(Handle);  <span class="comment">// → TryActivateAbility（ActivationPolicy = WhileInputActive）</span></span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            <span class="built_in">AbilitySpecInputReleased</span>(Handle);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Handle : InputHeldSpecHandles) &#123;</span><br><span class="line">        <span class="comment">// 保持按下的能力 → 驱动 WhileInputActive 循环</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Handle : InputReleasedSpecHandles) &#123;</span><br><span class="line">        <span class="comment">// 刚释放 → 触发 OnInputTriggered（ActivationPolicy = OnInputTriggered）</span></span><br><span class="line">        <span class="comment">// 或取消 WhileInputActive 能力</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么帧末统一处理？</strong> 因为同一帧内可能按了多个按键，统一处理可以：</p>
+<ul>
+<li>批量检查 ActivationGroup 互斥（先检查全局约束，再逐个激活）</li>
+<li>处理输入取消时序（同一帧内按下 A 又放开 A）</li>
+<li>性能：一次帧末批处理优于多次回调触发 GAS 查询</li>
+</ul>
+<hr>
+<h2 id="五，InputTag-方案的多重收益"><a href="#五，InputTag-方案的多重收益" class="headerlink" title="五，InputTag 方案的多重收益"></a>五，InputTag 方案的多重收益</h2><h3 id="一键多能"><a href="#一键多能" class="headerlink" title="一键多能"></a>一键多能</h3><p>同一个 <code>InputTag.Weapon.Fire</code> Tag 可以关联到多个 AbilitySpec：</p>
+<ul>
+<li><code>GA_Weapon_Fire_Rifle</code>（装备步枪时）</li>
+<li><code>GA_Weapon_Fire_Shotgun</code>（装备霰弹枪时）</li>
+<li><code>GA_Hero_Dash</code>（跑步时，按键含义变为闪避）</li>
+</ul>
+<p>ASC 的 <code>HasTagExact</code> 匹配会找到<strong>所有</strong>匹配的 AbilitySpec，然后 ActivationGroup 和 TagRequirements 做进一步的”谁应该激活”过滤。</p>
+<h3 id="条件阻断"><a href="#条件阻断" class="headerlink" title="条件阻断"></a>条件阻断</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 角色力竭时，通过 Tag 临时阻断所有能力输入</span></span><br><span class="line">ASC-&gt;<span class="built_in">AddLooseGameplayTag</span>(TAG_Gameplay_AbilityInputBlocked);</span><br><span class="line"><span class="comment">// ProcessAbilityInput 中检查此 Tag → 所有 Input 被忽略</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="UI-按键提示"><a href="#UI-按键提示" class="headerlink" title="UI 按键提示"></a>UI 按键提示</h3><p>HUD 通过 InputTag 反向查找 InputAction → 获取当前绑定的按键 → 显示”按 R 换弹”提示：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UI 端查询</span></span><br><span class="line">FGameplayTag InputTag = FGameplayTag::<span class="built_in">RequestGameplayTag</span>(<span class="string">&quot;InputTag.Weapon.Reload&quot;</span>);</span><br><span class="line">UInputAction* IA = InputConfig-&gt;<span class="built_in">FindAbilityInputActionForTag</span>(InputTag);</span><br><span class="line">FKey Key = EnhancedInputSubsystem-&gt;<span class="built_in">QueryKeysMappedToAction</span>(IA)[<span class="number">0</span>];</span><br><span class="line"><span class="comment">// → 显示 Key.GetDisplayName()</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="六，GameFeature-的两阶段输入注入"><a href="#六，GameFeature-的两阶段输入注入" class="headerlink" title="六，GameFeature 的两阶段输入注入"></a>六，GameFeature 的两阶段输入注入</h2><p>GameFeatureAction 提供两种输入注入方式，解决不同的场景：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>AddInputBinding</th>
+<th>AddInputContextMapping</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>注入内容</strong></td>
+<td>基于 <code>ULyraInputConfig</code> 的能力绑定</td>
+<td>基于 <code>UInputMappingContext</code> 的物理按键映射</td>
+</tr>
+<tr>
+<td><strong>注入时机</strong></td>
+<td>NAME_BindInputsNow 事件（GameplayReady 后）</td>
+<td>GameFeature 激活时 + Register 阶段</td>
+</tr>
+<tr>
+<td><strong>目标</strong></td>
+<td>HeroComponent → InputComponent → BindAbilityActions</td>
+<td>EnhancedInputSubsystem → AddMappingContext</td>
+</tr>
+<tr>
+<td><strong>典型场景</strong></td>
+<td>DLC 角色添加专属技能按键</td>
+<td>新游戏模式添加不同的按键布局</td>
+</tr>
+</tbody></table>
+<h3 id="为什么需要两个？"><a href="#为什么需要两个？" class="headerlink" title="为什么需要两个？"></a>为什么需要两个？</h3><p><code>AddInputContextMapping</code> 只管”按键 → InputAction”，不涉及 GAS。这意味着它可以在 GameFeature 激活时就注入——用户进菜单就能看到新模式的自定义按键布局。</p>
+<p><code>AddInputBinding</code> 涉及 InputTag → AbilitySpec 匹配，必须等 ASC 就绪 + 所有 AbilitySet 注入完成——即 <code>GameplayReady</code> 之后——才能绑定。</p>
+<p><strong>两阶段分离避免了”IMC 已加载但 ASC 未就绪 → GAS 绑定失败 → 按键无效”的竞态条件。</strong></p>
+<hr>
+<h2 id="七，输入系统类的完整全景"><a href="#七，输入系统类的完整全景" class="headerlink" title="七，输入系统类的完整全景"></a>七，输入系统类的完整全景</h2><table>
+<thead>
+<tr>
+<th>类</th>
+<th>层</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ULyraInputComponent</code></td>
+<td>Tag 路由</td>
+<td>扩展 <code>UEnhancedInputComponent</code>，提供 <code>BindAbilityActions(InputConfig)</code> 批量绑定</td>
+</tr>
+<tr>
+<td><code>ULyraInputConfig</code></td>
+<td>Tag 路由</td>
+<td>Const DataAsset：<code>NativeInputActions</code> + <code>AbilityInputActions</code></td>
+</tr>
+<tr>
+<td><code>ULyraPlayerInput</code></td>
+<td>物理输入</td>
+<td>扩展 <code>UEnhancedPlayerInput</code>，添加 NVIDIA Reflex 延迟标记</td>
+</tr>
+<tr>
+<td><code>ULyraPlayerMappableKeyProfile</code></td>
+<td>物理输入</td>
+<td>玩家自定义按键映射，预留 Equip&#x2F;UnEquip 钩子</td>
+</tr>
+<tr>
+<td><code>ULyraAimSensitivityData</code></td>
+<td>物理输入</td>
+<td>PrimaryDataAsset，手柄灵敏度 10 档枚举→浮点映射</td>
+</tr>
+<tr>
+<td><code>ULyraHeroComponent</code></td>
+<td>Tag 路由</td>
+<td>输入初始化的核心协调者：绑定 Native&#x2F;Ability 动作、广播 <code>NAME_BindInputsNow</code></td>
+</tr>
+<tr>
+<td><code>ULyraAbilitySystemComponent</code></td>
+<td>能力激活</td>
+<td>InputTag → Spec 匹配 + <code>ProcessAbilityInput</code> 帧末批量激活</td>
+</tr>
+<tr>
+<td><code>UGameFeatureAction_AddInputBinding</code></td>
+<td>GameFeature</td>
+<td>注入额外 <code>ULyraInputConfig</code> 到 HeroComponent</td>
+</tr>
+<tr>
+<td><code>UGameFeatureAction_AddInputContextMapping</code></td>
+<td>GameFeature</td>
+<td>注入 <code>UInputMappingContext</code> 到 <code>EnhancedInputSubsystem</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="八，ARPG-落地要点"><a href="#八，ARPG-落地要点" class="headerlink" title="八，ARPG 落地要点"></a>八，ARPG 落地要点</h2><p>对于 TowerChallenge：</p>
+<ol>
+<li><strong>不要给每个 Ability 创建专属 InputAction</strong>——通过 InputTag 区分。攻击&#x2F;格挡&#x2F;弹反都用同一个按键（右键），但通过 ActivationGroup + 当前状态决定触发哪个 GA</li>
+<li><strong>NativeInputActions 保持最小</strong>——只放移动（WASD）、视角（Mouse）、菜单。战斗全部走 AbilityInputActions</li>
+<li><strong>插件级输入配置放 GameFeature 内</strong>——每个 GameFeature 定义自己的 IMC 和 InputConfig，不污染项目级配置</li>
+</ol>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a> — 拆解 Lyra 的三层网络架构：Iris 底层序列化、ReplicationGraph 六节点路由、FastShared 路径与 SharedRepMovement 压缩优化。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Lyra 框架拆解</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>GAS</tag>
+        <tag>GameplayTag</tag>
+        <tag>EnhancedInput</tag>
+        <tag>Input</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</title>
     <url>/2026/08/06/ArcaneRush-UE5-Blueprint-Portfolio/</url>
     <content><![CDATA[<h2 id="项目概览"><a href="#项目概览" class="headerlink" title="项目概览"></a>项目概览</h2><table>
@@ -288,6 +859,1164 @@
         <tag>Gameplay Programming</tag>
         <tag>DataTable</tag>
         <tag>塔防</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构</title>
+    <url>/2026/08/06/Lyra-05-Equipment-Inventory/</url>
+    <content><![CDATA[<h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td><strong>五</strong></td>
+<td><strong>Equipment &amp; Inventory（本文）</strong></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 Equipment&#x2F;Inventory 系统用<strong>三层分离架构</strong>实现了”武器切换 &#x3D; AbilitySet 的 GiveTo + TakeFrom”——Inventory 管”你拥有什么”，Equipment 管”你正装备什么”，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了”武器类膨胀到 5000 行”的噩梦。</p>
+<hr>
+<h2 id="一，三层架构全景"><a href="#一，三层架构全景" class="headerlink" title="一，三层架构全景"></a>一，三层架构全景</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Inventory（数据容器层）—— &quot;你拥有什么&quot;</span><br><span class="line">  ULyraInventoryManagerComponent (挂载在 PlayerState)</span><br><span class="line">  ├── FLyraInventoryList (FFastArraySerializer 网络复制)</span><br><span class="line">  │   └── ULyraInventoryItemInstance[] (运行时实例)</span><br><span class="line">  └── 物品定义: ULyraInventoryItemDefinition（Fragment 数组）</span><br><span class="line"></span><br><span class="line">          │  玩家按&quot;3&quot;切武器</span><br><span class="line">          ▼</span><br><span class="line"></span><br><span class="line">QuickBar（策略桥接层）—— &quot;你选哪个&quot;</span><br><span class="line">  ULyraQuickBarComponent (挂载在 Controller)</span><br><span class="line">  ├── Slots[] → InventoryItemInstance</span><br><span class="line">  ├── ActiveSlotIndex</span><br><span class="line">  └── EquipItemInSlot(7步流程)</span><br><span class="line"></span><br><span class="line">          │  调用 EquipmentManager</span><br><span class="line">          ▼</span><br><span class="line"></span><br><span class="line">Equipment（能力授予层）—— &quot;装备怎么生效&quot;</span><br><span class="line">  ULyraEquipmentManagerComponent (挂载在 Pawn)</span><br><span class="line">  ├── ULyraEquipmentDefinition → InstanceType + AbilitySetsToGrant + ActorsToSpawn</span><br><span class="line">  └── ULyraEquipmentInstance → OnEquipped/OnUnequipped 事件</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二，Fragment-模式：组合优于继承的极致应用"><a href="#二，Fragment-模式：组合优于继承的极致应用" class="headerlink" title="二，Fragment 模式：组合优于继承的极致应用"></a>二，Fragment 模式：组合优于继承的极致应用</h2><h3 id="传统方案：武器类的继承爆炸"><a href="#传统方案：武器类的继承爆炸" class="headerlink" title="传统方案：武器类的继承爆炸"></a>传统方案：武器类的继承爆炸</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AWeapon</span><br><span class="line">  ├── ARifle     （射击逻辑、弹夹管理、后座力）</span><br><span class="line">  ├── AShotgun   （射击逻辑、弹夹管理、散布）</span><br><span class="line">  ├── APistol    （射击逻辑、弹夹管理、双持）</span><br><span class="line">  ├── AGrenade   （投掷逻辑、引信计时、范围伤害）</span><br><span class="line">  └── AMedkit    （治疗逻辑、使用动画、冷却）</span><br></pre></td></tr></table></figure>
+
+<p>每个子类都是”所有功能混在一起”。随着武器类型增加，共享的逻辑（弹夹管理、UI 显示）需要不断抽取基类或复制粘贴。</p>
+<h3 id="Lyra-方案：物品-Fragment-集合"><a href="#Lyra-方案：物品-Fragment-集合" class="headerlink" title="Lyra 方案：物品 &#x3D; Fragment 集合"></a>Lyra 方案：物品 &#x3D; Fragment 集合</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ULyraInventoryItemDefinition : UPrimaryDataAsset &#123;</span><br><span class="line">    <span class="comment">// 不定义&quot;武器是什么&quot;，而是列出&quot;武器有哪些碎片&quot;</span></span><br><span class="line">    TArray&lt;ULyraInventoryItemFragment*&gt; Fragments;  <span class="comment">// ← 核心：一个物品 = 一组 Fragment</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 模板方法：按类型查找 Fragment</span></span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt; <span class="type">const</span> T* <span class="title">FindFragmentByClass</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Frag : Fragments)</span><br><span class="line">            <span class="keyword">if</span> (Frag-&gt;<span class="built_in">IsA</span>(T::<span class="built_in">StaticClass</span>()) <span class="keyword">return</span> <span class="built_in">Cast</span>&lt;T&gt;(Frag);  <span class="comment">// O(n) 线性查找</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>每种 Fragment 只负责一个维度的数据：</p>
+<table>
+<thead>
+<tr>
+<th>Fragment 类型</th>
+<th>职责</th>
+<th>示例数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>EquippableFragment</code></td>
+<td>定义该物品是否能装备，以及对应的 EquipmentDefinition</td>
+<td>EquipmentDef 引用</td>
+</tr>
+<tr>
+<td><code>DisplayFragment</code></td>
+<td>物品名称、图标、描述</td>
+<td>FText + UTexture2D</td>
+</tr>
+<tr>
+<td><code>BulletFragment</code></td>
+<td>弹药信息</td>
+<td>GameplayTag Stack 配置</td>
+</tr>
+<tr>
+<td><code>WeaponPickupFragment</code></td>
+<td>世界拾取属性</td>
+<td>碰撞体大小、拾取音效</td>
+</tr>
+</tbody></table>
+<p><strong>一个物品 &#x3D; 一组 Fragment，每个 Fragment 是一个独立关注点</strong>。新增”附魔系统” &#x3D; 新增 <code>EnchantmentFragment</code>——不需要改任何现有代码。</p>
+<hr>
+<h2 id="三，Definition-Instance-分离"><a href="#三，Definition-Instance-分离" class="headerlink" title="三，Definition &#x2F; Instance 分离"></a>三，Definition &#x2F; Instance 分离</h2><p>这是 Lyra 中反复出现的模式（Experience ↔ ExperienceManager、PawnData ↔ Pawn、Equipment ↔ Instance）：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Definition (DataAsset)</th>
+<th>Instance (Runtime Object)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>性质</strong></td>
+<td>静态模板，不可变</td>
+<td>运行时状态，可变</td>
+</tr>
+<tr>
+<td><strong>数量</strong></td>
+<td>每种装备类型一个</td>
+<td>每个装备实例一个</td>
+</tr>
+<tr>
+<td><strong>网络</strong></td>
+<td>不复制（通过 PrimaryAssetId 引用）</td>
+<td>部分复制（StatTags、装备状态）</td>
+</tr>
+<tr>
+<td><strong>创建</strong></td>
+<td>编辑器中配置</td>
+<td>装备时 NewObject</td>
+</tr>
+</tbody></table>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 装备流程：Definition → Instance → AbilitySet → ASC</span></span><br><span class="line"><span class="built_in">EquipItem</span>(EquipmentDef) &#123;</span><br><span class="line">    <span class="keyword">auto</span>* Instance = <span class="built_in">NewObject</span>&lt;ULyraEquipmentInstance&gt;(Pawn);</span><br><span class="line">    <span class="comment">// Instance 持有对 Def 的引用</span></span><br><span class="line">    <span class="comment">// Def-&gt;AbilitySetsToGrant 通过 Instance 授予</span></span><br><span class="line">    Def-&gt;AbilitySetsToGrant.<span class="built_in">GiveToAbilitySystem</span>(ASC, &amp;Handles, Instance);  </span><br><span class="line">    <span class="comment">// ↑ SourceObject = Instance, 能力可以回溯到装备实例</span></span><br><span class="line">    <span class="built_in">SpawnEquipmentActors</span>(Def-&gt;ActorsToSpawn);  <span class="comment">// 生成世界中的武器 Actor</span></span><br><span class="line">    Instance-&gt;<span class="built_in">OnEquipped</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四，QuickBar：策略桥接层"><a href="#四，QuickBar：策略桥接层" class="headerlink" title="四，QuickBar：策略桥接层"></a>四，QuickBar：策略桥接层</h2><p>QuickBar 是 Inventory 和 Equipment 之间的”中间人”——它负责”用户选了哪个物品→通知装备系统”的策略逻辑：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">SetActiveSlotIndex(NewSlotIndex) &#123;</span><br><span class="line">    // 1. 取出当前槽位的 InventoryItemInstance</span><br><span class="line">    // 2. 找到它的 EquippableFragment</span><br><span class="line">    // 3. 取出 EquipmentDefinition</span><br><span class="line">    // 4. 调用 EquipmentManager::EquipItem(Def)</span><br><span class="line">    </span><br><span class="line">    // 这是一个 Server RPC —— 网络权威在服务器</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么需要 QuickBar 这一层？</strong> 因为 Inventory 不知道 Equipment 的存在（你不背包里所有东西都装备），Equipment 不知道 Inventory 的存在（它只管”当前装备了什么”）。QuickBar 是唯一的”知道两边”的协调层。</p>
+<hr>
+<h2 id="五，SourceObject-反向引用链：被低估的设计"><a href="#五，SourceObject-反向引用链：被低估的设计" class="headerlink" title="五，SourceObject 反向引用链：被低估的设计"></a>五，SourceObject 反向引用链：被低估的设计</h2><p>当 Ability 需要知道自己来自哪个装备时（例如：射击技能需要获取武器弹药信息），Lyra 不用全局 Manager 查找，而是用 GAS 原生的 <code>SourceObject</code> 字段：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GameplayAbility（GA_WeaponFire）</span><br><span class="line">  → CurrentAbilitySpec.SourceObject → ULyraEquipmentInstance</span><br><span class="line">    → GetInstigator() → ULyraInventoryItemInstance</span><br><span class="line">      → GetStatTagStackCount(TAG_Ammo) → 当前弹药数</span><br></pre></td></tr></table></figure>
+
+<p>这一设计的优势：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>SourceObject（Lyra）</th>
+<th>全局 Manager 查找（替代方案）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>耦合度</strong></td>
+<td>Ability 只知道 SourceObject 是 UObject，无类型依赖</td>
+<td>Ability 需知道 Manager 的具体类型和获取路径</td>
+</tr>
+<tr>
+<td><strong>多装备场景</strong></td>
+<td>每个 AbilitySpec 精确绑定到自己的 EquipmentInstance</td>
+<td>需额外的槽位 ID 区分</td>
+</tr>
+<tr>
+<td><strong>网络正确性</strong></td>
+<td>SourceObject 随 AbilitySpec 复制，天然正确</td>
+<td>需额外复制槽位映射</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="六，Inventory-的网络复制"><a href="#六，Inventory-的网络复制" class="headerlink" title="六，Inventory 的网络复制"></a>六，Inventory 的网络复制</h2><p>Inventory 使用 <code>FFastArraySerializer</code> 进行网络复制——这是 UE 中最高效的数组复制方式：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">FLyraInventoryList : FFastArraySerializer &#123;</span><br><span class="line">    TArray&lt;FLyraInventoryEntry&gt; Entries;</span><br><span class="line">    <span class="comment">// FFastArraySerializer 自动处理：</span></span><br><span class="line">    <span class="comment">//   - 增量更新（只复制变化项，不复制整个数组）</span></span><br><span class="line">    <span class="comment">//   - 按 Index 追踪，用 ReplicationID 复用槽位</span></span><br><span class="line">    <span class="comment">//   - PreReplicatedRemove / PostReplicatedAdd 回调保证客户端正确响应</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>此外，<code>ULyraInventoryItemInstance</code> 通过 <code>RegisteredSubObject</code> 注册到 <code>FLyraInventoryEntry</code>，实现嵌套对象的自动复制依赖。</p>
+<hr>
+<h2 id="七，装备-卸载完整时序"><a href="#七，装备-卸载完整时序" class="headerlink" title="七，装备&#x2F;卸载完整时序"></a>七，装备&#x2F;卸载完整时序</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">装备：EquipItem(EquipmentDef)</span><br><span class="line">  1. EquipmentList::AddEntry(Def, InstanceType)</span><br><span class="line">  2. NewObject EquipmentInstance(Outer=Pawn)</span><br><span class="line">  3. Def-&gt;AbilitySetsToGrant.GiveToAbilitySystem(ASC, &amp;GrantedHandles, Instance)</span><br><span class="line">  4. SpawnEquipmentActors(ActorsToSpawn) — 生成世界 Actor，骨骼挂载</span><br><span class="line">  5. Instance-&gt;OnEquipped() — 蓝图事件</span><br><span class="line"></span><br><span class="line">卸载：UnequipItem()</span><br><span class="line">  1. Instance-&gt;OnUnequipped() — 蓝图事件</span><br><span class="line">  2. EquipmentList::RemoveEntry()</span><br><span class="line">  3. GrantedHandles.TakeFromAbilitySystem(ASC) — ClearAbility(bWasCancelled=true)</span><br><span class="line">  4. DestroyEquipmentActors() — 销毁世界 Actor</span><br></pre></td></tr></table></figure>
+
+<p><strong>关键顺序</strong>：卸载时先 <code>OnUnequipped</code>（蓝图有机会做清理），再撤销能力（正在激活的能力收到 Cancel 信号），最后销毁 Actor。</p>
+<hr>
+<h2 id="八，与-PawnData-能力注入的互补"><a href="#八，与-PawnData-能力注入的互补" class="headerlink" title="八，与 PawnData 能力注入的互补"></a>八，与 PawnData 能力注入的互补</h2><table>
+<thead>
+<tr>
+<th>能力来源</th>
+<th>注入路径</th>
+<th>生命周期</th>
+<th>典型内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>PawnData.AbilitySets</strong></td>
+<td>Experience → PawnData → PawnExtension → ASC</td>
+<td>随 Pawn 生成&#x2F;销毁</td>
+<td>固有：移动、跳跃、血量</td>
+</tr>
+<tr>
+<td><strong>Equipment.AbilitySetsToGrant</strong></td>
+<td>QuickBar → EquipmentManager → ASC</td>
+<td>装备时授予，卸下时撤销</td>
+<td>装备：射击、换弹、战技</td>
+</tr>
+</tbody></table>
+<p>两者叠加 &#x3D; 角色的完整运行时能力集。一个角色永远有”移动 + 跳跃”，但”射击”只在装备武器时有。</p>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a> — 拆解 Lyra 的三层抽象输入管道：物理输入 → GameplayTag 路由 → GAS 激活，以及为什么 GameplayTag 中介是模块化框架的”胶水层”。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Lyra 框架拆解</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>GAS</tag>
+        <tag>Equipment</tag>
+        <tag>Inventory</tag>
+        <tag>Fragment</tag>
+        <tag>Data-Driven</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学</title>
+    <url>/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/</url>
+    <content><![CDATA[<h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td><strong>四</strong></td>
+<td><strong>GAS 集成层（本文）</strong></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 GAS 层不是简单的”使用”原生 GameplayAbilitySystem——它用五个封装层将 GAS 改造成<strong>完全 DataAsset 驱动、GameplayTag 中介、模块化注入的子系统</strong>。同一个 <code>ALyraCharacter</code> 在不同 Experience 中呈现完全不同的能力组合，这一切不需要写一行硬编码的 <code>GiveAbility()</code>。</p>
+<hr>
+<h2 id="一，与标准-GAS-的核心差异"><a href="#一，与标准-GAS-的核心差异" class="headerlink" title="一，与标准 GAS 的核心差异"></a>一，与标准 GAS 的核心差异</h2><h3 id="标准-GAS-的做法"><a href="#标准-GAS-的做法" class="headerlink" title="标准 GAS 的做法"></a>标准 GAS 的做法</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 传统 UE：在 Actor 构造中硬编码所有能力</span></span><br><span class="line">AMyCharacter::<span class="built_in">AMyCharacter</span>() &#123;</span><br><span class="line">    ASC = <span class="built_in">CreateDefaultSubobject</span>&lt;UAbilitySystemComponent&gt;(<span class="string">&quot;ASC&quot;</span>);</span><br><span class="line">    AttributeSet = <span class="built_in">CreateDefaultSubobject</span>&lt;UMyAttributeSet&gt;(<span class="string">&quot;AttributeSet&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">AMyCharacter::BeginPlay</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    ASC-&gt;<span class="built_in">GiveAbility</span>(<span class="built_in">FGameplayAbilitySpec</span>(UMyAttack::<span class="built_in">StaticClass</span>()));</span><br><span class="line">    ASC-&gt;<span class="built_in">GiveAbility</span>(<span class="built_in">FGameplayAbilitySpec</span>(UMyJump::<span class="built_in">StaticClass</span>()));</span><br><span class="line">    <span class="comment">// ... 每个新能力加一行</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>问题：</p>
+<ul>
+<li>同一 Character 类无法在不同模式中拥有不同能力组合</li>
+<li>卸载能力困难（ClearAbility 后 SpecHandle 丢失）</li>
+<li>输入绑定与能力代码耦合</li>
+</ul>
+<h3 id="Lyra-的做法"><a href="#Lyra-的做法" class="headerlink" title="Lyra 的做法"></a>Lyra 的做法</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Lyra: 零硬编码。能力全部从外部 DataAsset 注入</span></span><br><span class="line">ALyraCharacter::<span class="built_in">ALyraCharacter</span>() &#123;</span><br><span class="line">    <span class="comment">// 不创建 ASC。不创建 AttributeSet。不 GiveAbility。</span></span><br><span class="line">    PawnExtComp = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraPawnExtensionComponent&gt;(<span class="string">&quot;PawnExt&quot;</span>);</span><br><span class="line">    <span class="comment">// PawnExtComp 内部动态创建 ASC，但能力通过外部管道注入</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二，五大封装层"><a href="#二，五大封装层" class="headerlink" title="二，五大封装层"></a>二，五大封装层</h2><table>
+<thead>
+<tr>
+<th>封装层</th>
+<th>解决的原生问题</th>
+<th>核心机制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>AbilitySet</strong></td>
+<td>能力&#x2F;属性&#x2F;效果硬编码在构造函数中</td>
+<td>将 GA + GE + AttributeSet 打包为单一 DataAsset，支持批量授予与撤销</td>
+</tr>
+<tr>
+<td><strong>InputTag 桥接</strong></td>
+<td>InputAction 指针直接引用 → 无法热卸载</td>
+<td>GameplayTag 作为中间层：InputConfig 和 AbilitySet 通过 Tag 字符串耦合</td>
+</tr>
+<tr>
+<td><strong>ActivationGroup 互斥</strong></td>
+<td>原生仅靠 Block&#x2F;Cancel Tags 做粗粒度互斥</td>
+<td>三级分组：Independent &#x2F; Exclusive_Replaceable &#x2F; Exclusive_Blocking</td>
+</tr>
+<tr>
+<td><strong>GlobalAbility 系统</strong></td>
+<td>无全局能力概念</td>
+<td>WorldSubsystem 级别的全局能力，新 ASC 注册时自动继承</td>
+</tr>
+<tr>
+<td><strong>Experience 注入管道</strong></td>
+<td>能力配置分散在各处，无统一入口</td>
+<td>Experience → GameFeatureAction → AbilitySet → ASC 的完整注入链</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三，AbilitySet：打包、授予、撤销"><a href="#三，AbilitySet：打包、授予、撤销" class="headerlink" title="三，AbilitySet：打包、授予、撤销"></a>三，AbilitySet：打包、授予、撤销</h2><p><code>ULyraAbilitySet</code> 是 Lyra GAS 封装层的核心——它把三个独立的 GAS 概念打包在一起：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ULyraAbilitySet : UPrimaryDataAsset &#123;</span><br><span class="line">    TArray&lt;FLyraAbilitySet_GameplayAbility&gt; GrantedAbilities;     <span class="comment">// GA + AbilityLevel + InputTag</span></span><br><span class="line">    TArray&lt;FLyraAbilitySet_GameplayEffect&gt;  GrantedEffects;       <span class="comment">// GE + EffectLevel</span></span><br><span class="line">    TArray&lt;FLyraAbilitySet_AttributeSet&gt;    GrantedAttributes;    <span class="comment">// AttributeSet 类型</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="GiveToAbilitySystem：原子授予"><a href="#GiveToAbilitySystem：原子授予" class="headerlink" title="GiveToAbilitySystem：原子授予"></a>GiveToAbilitySystem：原子授予</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">GiveToAbilitySystem</span><span class="params">(UAbilitySystemComponent* ASC, </span></span></span><br><span class="line"><span class="params"><span class="function">                         FLyraAbilitySet_GrantedHandles* OutHandles, </span></span></span><br><span class="line"><span class="params"><span class="function">                         UObject* SourceObject)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1. 授予 AttributeSet（在 ASC 上创建）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Attr : GrantedAttributes)</span><br><span class="line">        OutHandles-&gt;<span class="built_in">AddAttributeSet</span>(ASC-&gt;<span class="built_in">InitStats</span>(Attr.AttributeSet));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 应用 GameplayEffect（初始化属性值）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Effect : GrantedEffects)</span><br><span class="line">        OutHandles-&gt;<span class="built_in">AddGameplayEffectHandle</span>(</span><br><span class="line">            ASC-&gt;<span class="built_in">ApplyGameplayEffectToSelf</span>(Effect.GameplayEffect, Effect.EffectLevel));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 授予 GameplayAbility</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Ability : GrantedAbilities) &#123;</span><br><span class="line">        <span class="function">FGameplayAbilitySpec <span class="title">Spec</span><span class="params">(Ability.GameplayAbility, Ability.AbilityLevel)</span></span>;</span><br><span class="line">        Spec.SourceObject = SourceObject;    <span class="comment">// ← 回溯到 Equipment/PawnData</span></span><br><span class="line">        Spec.DynamicSpecSourceTags.<span class="built_in">AddTag</span>(Ability.InputTag);  <span class="comment">// ← InputTag 桥接的关键</span></span><br><span class="line">        OutHandles-&gt;<span class="built_in">AddAbilitySpecHandle</span>(ASC-&gt;<span class="built_in">GiveAbility</span>(Spec));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="GrantedHandles：可撤销句柄"><a href="#GrantedHandles：可撤销句柄" class="headerlink" title="GrantedHandles：可撤销句柄"></a>GrantedHandles：可撤销句柄</h3><p><code>FLyraAbilitySet_GrantedHandles</code> 记录每个 AbilitySet 授予的所有 Handle。调用 <code>TakeFromAbilitySystem()</code> 时，按授予的反序统一撤销——GA 被 ClearAbility()、GE 被 RemoveActiveGameplayEffect()、AttributeSet 被移除。</p>
+<hr>
+<h2 id="四，InputTag-桥接：DataAsset-间的”软耦合”"><a href="#四，InputTag-桥接：DataAsset-间的”软耦合”" class="headerlink" title="四，InputTag 桥接：DataAsset 间的”软耦合”"></a>四，InputTag 桥接：DataAsset 间的”软耦合”</h2><p>这是 Lyra 最精妙的设计模式之一。InputAction → GAS 的链路不是直接引用，而是通过 GameplayTag：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ULyraInputConfig.DataAsset:</span><br><span class="line">    AbilityInputActions[0] = &#123; InputAction = IA_WeaponFire, InputTag = &quot;InputTag.Weapon.Fire&quot; &#125;</span><br><span class="line"></span><br><span class="line">ULyraAbilitySet.DataAsset:</span><br><span class="line">    GrantedAbilities[0] = &#123; GameplayAbility = GA_WeaponFire, InputTag = &quot;InputTag.Weapon.Fire&quot; &#125;</span><br><span class="line"></span><br><span class="line">运行时桥接（LyraAbilitySystemComponent::AbilityInputTagPressed）:</span><br><span class="line">    for (auto&amp; Spec : ActivatableAbilities) &#123;</span><br><span class="line">        if (Spec.DynamicSpecSourceTags.HasTagExact(&quot;InputTag.Weapon.Fire&quot;))</span><br><span class="line">            InputPressedSpecHandles.AddUnique(Spec.Handle);  // 收集匹配的 Ability</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>两个 DataAsset 之间的唯一耦合点是一个 GameplayTag 字符串</strong>。这意味着：</p>
+<ul>
+<li>可以修改按键绑定（改 InputConfig）而不影响能力定义</li>
+<li>可以替换能力实现（改 AbilitySet）而不影响输入绑定</li>
+<li>GameFeature 卸载时只需要移除 InputConfig 和 AbilitySet，无残余引用</li>
+</ul>
+<hr>
+<h2 id="五，ActivationGroup：三级互斥"><a href="#五，ActivationGroup：三级互斥" class="headerlink" title="五，ActivationGroup：三级互斥"></a>五，ActivationGroup：三级互斥</h2><p>传统 GAS 通过 <code>BlockAbilitiesWithTag</code> &#x2F; <code>CancelAbilitiesWithTag</code> 做互斥，但配置分散、关系不直观。Lyra 提供了三级分组：</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>行为</th>
+<th>用例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Independent</strong></td>
+<td>独立运行，不影响其他</td>
+<td>移动、跳跃、被动技能</td>
+</tr>
+<tr>
+<td><strong>Exclusive_Replaceable</strong></td>
+<td>同组新能力激活时，自动取消旧能力</td>
+<td>武器射击（切枪时取消前一武器的射击）</td>
+</tr>
+<tr>
+<td><strong>Exclusive_Blocking</strong></td>
+<td>激活期间阻止同组其他能力激活</td>
+<td>处决技、大招动画（播放中不可被其他动作打断）</td>
+</tr>
+</tbody></table>
+<p><code>LyraAbilitySystemComponent</code> 维护 <code>ActivationGroupCounts</code>，在 <code>TryActivateAbility</code> 时检查分组约束，在 <code>NotifyAbilityEnded</code> 时递减计数。</p>
+<hr>
+<h2 id="六，GlobalAbility-系统"><a href="#六，GlobalAbility-系统" class="headerlink" title="六，GlobalAbility 系统"></a>六，GlobalAbility 系统</h2><p><code>ULyraGlobalAbilitySystem</code> 是一个 <code>UWorldSubsystem</code>，解决了一个实际问题：<strong>某些能力应该在整个 World 范围内生效，而非挂在某个特定 ASC 上</strong>。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 向全局系统施加一个效果</span></span><br><span class="line">GlobalAbilitySystem-&gt;<span class="built_in">ApplyAbilityToAll</span>(GA_DoubleDamage, MyASC);</span><br><span class="line"><span class="comment">// 任何新加入的 ASC 自动获得该效果</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 新角色加入时自动继承</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RegisterASC</span><span class="params">(UAbilitySystemComponent* ASC)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; AppliedAbility : AppliedAbilities)</span><br><span class="line">        <span class="built_in">GiveAbilityToASC</span>(ASC, AppliedAbility);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>典型使用场景：Boss 房间的全局 debuff、天气系统对全场景的影响、团队光环。</p>
+<hr>
+<h2 id="七，Experience-→-GAS-端到端-8-步时间线"><a href="#七，Experience-→-GAS-端到端-8-步时间线" class="headerlink" title="七，Experience → GAS 端到端 8 步时间线"></a>七，Experience → GAS 端到端 8 步时间线</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1. Experience 加载 → GameFeature 激活</span><br><span class="line">2. GameFeatureAction_AddAbilities 注册</span><br><span class="line">3. GameMode::RestartPlayer → SpawnDefaultPawn</span><br><span class="line">4. SetPawnData(Experience.DefaultPawnData) → BeginPlay</span><br><span class="line">5. PawnData.AbilitySets → GiveToAbilitySystem(ASC)</span><br><span class="line">6. NAME_LyraAbilityReady 事件广播</span><br><span class="line">7. GameFeatureAction_AddAbilities 响应 → ActorAbilities.GiveToAbilitySystem(ASC)</span><br><span class="line">8. GameplayReady → 玩家可以激活能力</span><br></pre></td></tr></table></figure>
+
+<p><strong>两阶段注入</strong>：PawnData.AbilitySets（角色固有）先注入，GameFeatureAction（模式专属）后注入。这保证了”固有”和”模式”两层能力的分离与覆盖。</p>
+<hr>
+<h2 id="八，ARPG-落地要点"><a href="#八，ARPG-落地要点" class="headerlink" title="八，ARPG 落地要点"></a>八，ARPG 落地要点</h2><p>对于 TowerChallenge 的 Souls-like 战斗系统，我们直接利用了这些 Lyra 封装：</p>
+<ol>
+<li><strong>每种武器 &#x3D; 一个 AbilitySet</strong>：装备时 GiveTo，卸下时 TakeFrom。武器的 GA（轻攻&#x2F;重攻&#x2F;战技）都在 AbilitySet 中</li>
+<li><strong>体力消耗用 GAS 原生 Cost GE</strong>：而非在 GA 中手动检查属性。<code>UGameplayAbility::GetCostGameplayEffect()</code> 返回体力消耗 GE</li>
+<li><strong>弹反&#x2F;处决用 ActivationGroup</strong>：弹反 GA 设为 <code>Exclusive_Replaceable</code>（同一按键下不同窗口阶段自动切换），处决 GA 设为 <code>Exclusive_Blocking</code>（执行中不可打断）</li>
+<li><strong>不要创建 UTowerGameplayAbility</strong>：直接继承 <code>ULyraGameplayAbility</code>。我们曾误判 MinimalAPI + UE_API virtual 的含义，以为不可跨模块子类化——实际上可以。踩坑详见 <a href="/2026/08/06/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6">Lyra-WarTower 复盘</a>。</li>
+</ol>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a> — 拆解 Lyra 的三段式装备架构：Fragment 模式、Definition&#x2F;Instance 分离、QuickBar 桥接、以及 SourceObject 反向引用链的精妙设计。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Lyra 框架拆解</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>GAS</tag>
+        <tag>AbilitySet</tag>
+        <tag>GameplayAbility</tag>
+        <tag>GameplayTag</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机</title>
+    <url>/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB/</url>
+    <content><![CDATA[<h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td><strong>三</strong></td>
+<td><strong>Character 组件体系（本文）</strong></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p><strong>ALyraCharacter 不是一个”角色”，而是一个”插槽”</strong>——它只做三件事：创建核心 Component、转发接口调用、初始化死亡流程。所有真正的游戏逻辑全部下沉到独立的 PawnComponent 中，由 GameplayTag 驱动的 InitState 状态机协调初始化顺序。</p>
+<hr>
+<h2 id="一，继承链：从-Engine-到-Lyra"><a href="#一，继承链：从-Engine-到-Lyra" class="headerlink" title="一，继承链：从 Engine 到 Lyra"></a>一，继承链：从 Engine 到 Lyra</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ACharacter (Engine)</span><br><span class="line">  └─ AModularCharacter (ModularGameplayActors 插件)</span><br><span class="line">       └─ ALyraCharacter (LyraGame)</span><br></pre></td></tr></table></figure>
+
+<p><code>AModularCharacter</code> 极其简单——它只重写了三个函数：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">PreInitializeComponents</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 将此 Actor 注册为 GameFrameworkComponentManager 的 Receiver</span></span><br><span class="line">    <span class="comment">// 这是 Actor 级别的唯一注册点</span></span><br><span class="line">    UGameFrameworkComponentManager::<span class="built_in">AddReceiver</span>(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BeginPlay</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Super::<span class="built_in">BeginPlay</span>();</span><br><span class="line">    <span class="comment">// 发送信号：Actor 已就绪，GameFeatureAction 可以开始注入</span></span><br><span class="line">    UGameFrameworkComponentManager::<span class="built_in">SendGameFrameworkComponentExtensionEvent</span>(</span><br><span class="line">        <span class="keyword">this</span>, NAME_GameActorReady);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">EndPlay</span><span class="params">()</span> </span>&#123; <span class="comment">/* 反注册 */</span> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>三行逻辑，但这是 Lyra 最关键的”锚点”——它把 Actor 接入到 <code>GameFrameworkComponentManager</code> 的全局管理体系中，从此任何 GameFeatureAction 都可以通过 <code>AddExtensionHandler(ActorClass, Delegate)</code> 在检测到此类 Actor 生成时动态注入 Component 和 Ability。</p>
+<hr>
+<h2 id="二，ALyraCharacter-的五层解耦"><a href="#二，ALyraCharacter-的五层解耦" class="headerlink" title="二，ALyraCharacter 的五层解耦"></a>二，ALyraCharacter 的五层解耦</h2><h3 id="2-1-薄-Actor：构造函数就是全部”主动行为”"><a href="#2-1-薄-Actor：构造函数就是全部”主动行为”" class="headerlink" title="2.1 薄 Actor：构造函数就是全部”主动行为”"></a>2.1 薄 Actor：构造函数就是全部”主动行为”</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ALyraCharacter::<span class="built_in">ALyraCharacter</span>() &#123;</span><br><span class="line">    PawnExtComp = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraPawnExtensionComponent&gt;(<span class="string">&quot;PawnExtension&quot;</span>);</span><br><span class="line">    HealthComp  = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraHealthComponent&gt;(<span class="string">&quot;HealthComponent&quot;</span>);</span><br><span class="line">    CameraComp  = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraCameraComponent&gt;(<span class="string">&quot;CameraComponent&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 替换默认 MovementComponent 为 Lyra 定制版</span></span><br><span class="line">    ObjectInitializer.<span class="built_in">SetDefaultSubobjectClass</span>&lt;ULyraCharacterMovementComponent&gt;(</span><br><span class="line">        ACharacter::CharacterMovementComponentName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>仅 3 个 Component</strong>。注意什么不在构造函数中：</p>
+<ul>
+<li>❌ 没有 <code>ULyraHeroComponent</code>（输入绑定 + 相机代理）——在 BP 或 GameFeature 中添加</li>
+<li>❌ 没有 <code>UAbilitySystemComponent</code>（GAS 核心）——放在 <code>ULyraPawnExtensionComponent</code> 中，被动创建</li>
+<li>❌ 没有武器&#x2F;装备 Component —— 通过 Equipment 系统动态挂载</li>
+</ul>
+<h3 id="2-2-接口转发：Actor-自己不做实现"><a href="#2-2-接口转发：Actor-自己不做实现" class="headerlink" title="2.2 接口转发：Actor 自己不做实现"></a>2.2 接口转发：Actor 自己不做实现</h3><p>ALyraCharacter 实现了 4 个接口，但全部是<strong>转发</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// IAbilitySystemInterface</span></span><br><span class="line"><span class="function">UAbilitySystemComponent* <span class="title">GetAbilitySystemComponent</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> PawnExtComp-&gt;<span class="built_in">GetLyraAbilitySystemComponent</span>();  <span class="comment">// 转发到 PawnExtension</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// IGameplayTagAssetInterface</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">GetOwnedGameplayTags</span><span class="params">(FGameplayTagContainer&amp; TagContainer)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="built_in">GetAbilitySystemComponent</span>()-&gt;<span class="built_in">GetOwnedGameplayTags</span>(TagContainer);  <span class="comment">// 转发到 ASC</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ILyraTeamAgentInterface（队伍归属）</span></span><br><span class="line"><span class="comment">// MyTeamID 成员变量 + ConditionalBroadcastTeamChanged 广播</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-InitState-状态机：不再依赖-BeginPlay-时序"><a href="#2-3-InitState-状态机：不再依赖-BeginPlay-时序" class="headerlink" title="2.3 InitState 状态机：不再依赖 BeginPlay 时序"></a>2.3 InitState 状态机：不再依赖 BeginPlay 时序</h3><p>在传统 UE 项目中，<code>BeginPlay</code> 的调用顺序不可靠——你无法保证 Component A 的 <code>BeginPlay</code> 在 Component B 之前执行。Lyra 用显式状态机替代隐式时序。</p>
+<h3 id="2-4-ExtensionHandler-动态注入"><a href="#2-4-ExtensionHandler-动态注入" class="headerlink" title="2.4 ExtensionHandler 动态注入"></a>2.4 ExtensionHandler 动态注入</h3><p>GameFeatureAction 在运行时动态注入 Component + AbilitySet——ALyraCharacter 无需知道是哪个插件注入了什么。</p>
+<h3 id="2-5-PawnData-数据驱动"><a href="#2-5-PawnData-数据驱动" class="headerlink" title="2.5 PawnData 数据驱动"></a>2.5 PawnData 数据驱动</h3><p>所有配置外化到 <code>ULyraPawnData</code> DataAsset：<code>AbilitySets</code>、<code>InputConfig</code>、<code>CameraMode</code>、<code>TagRelationshipMapping</code>。设计师不写代码即可切换 Pawn 功能。</p>
+<hr>
+<h2 id="三，InitState-状态机详解"><a href="#三，InitState-状态机详解" class="headerlink" title="三，InitState 状态机详解"></a>三，InitState 状态机详解</h2><h3 id="3-1-为什么用-GameplayTag-而不是枚举？"><a href="#3-1-为什么用-GameplayTag-而不是枚举？" class="headerlink" title="3.1 为什么用 GameplayTag 而不是枚举？"></a>3.1 为什么用 GameplayTag 而不是枚举？</h3><p>因为 <strong>GameFeature 插件可以定义自己的中间状态</strong>。例如，DLC 插件可以定义 <code>InitState_DLC_AssetsLoaded</code>，要求所有 Feature 在继续之前等待 DLC 资产加载——整个过程不需要修改引擎代码或核心框架。</p>
+<h3 id="3-2-四阶段状态"><a href="#3-2-四阶段状态" class="headerlink" title="3.2 四阶段状态"></a>3.2 四阶段状态</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">InitState_Spawned           ← Actor 已存在，Component 已注册</span><br><span class="line">        │                     触发：BeginPlay</span><br><span class="line">        │                     条件：无（总是通过）</span><br><span class="line">        ▼</span><br><span class="line">InitState_DataAvailable     ← 所需配置数据已就绪</span><br><span class="line">        │                     触发：SetPawnData() + Controller 已 Possessed</span><br><span class="line">        │                     条件：PawnData 非空；Authority/Local 需已 Possessed</span><br><span class="line">        ▼</span><br><span class="line">InitState_DataInitialized   ← 所有 Feature 的数据都已就绪</span><br><span class="line">        │                     触发：HaveAllFeaturesReachedInitState(DataAvailable)</span><br><span class="line">        │                     条件：HeroComponent 的 DataAvailable 也通过</span><br><span class="line">        │                     （Hero 需要 PlayerState + Controller + LocalPlayer）</span><br><span class="line">        ▼</span><br><span class="line">InitState_GameplayReady     ← 所有 Component 初始化完成，开始游戏逻辑</span><br><span class="line">                              条件：无条件通过（实际工作由各 Component 回调完成）</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-HeroComponent-的更严格前置"><a href="#3-3-HeroComponent-的更严格前置" class="headerlink" title="3.3 HeroComponent 的更严格前置"></a>3.3 HeroComponent 的更严格前置</h3><p><code>ULyraHeroComponent</code> 的 <code>DataAvailable</code> 比 <code>PawnExtensionComponent</code> 更严格：</p>
+<ul>
+<li>PlayerState 必须存在</li>
+<li><code>Controller-&gt;PlayerState-&gt;GetOwner() == Controller</code>（确保绑定完成）</li>
+<li>本地控制且非 Bot：InputComponent + LyraPC + LocalPlayer 都必须存在</li>
+</ul>
+<p>这就是 Lyra 对”输入绑定必须在所有玩家信息就绪后才能执行”这个隐式约束的显式化。</p>
+<h3 id="3-4-HaveAllFeaturesReachedInitState-的工作原理"><a href="#3-4-HaveAllFeaturesReachedInitState-的工作原理" class="headerlink" title="3.4 HaveAllFeaturesReachedInitState 的工作原理"></a>3.4 HaveAllFeaturesReachedInitState 的工作原理</h3><p><code>UGameFrameworkComponentManager</code> 维护每个 Actor 上所有已注册 Feature 的当前状态。当任何 Feature 的状态发生变化时：</p>
+<ol>
+<li>Manager 调用所有注册了 <code>BindOnActorInitStateChanged</code> 的回调</li>
+<li><code>ULyraPawnExtensionComponent</code> 在回调中调用 <code>CheckDefaultInitialization()</code></li>
+<li>检查”所有 Feature 是否都达到了目标状态” → 如果是，推进当前 Feature 的状态链</li>
+</ol>
+<p><strong>这是事件驱动而非轮询</strong>——状态推进只在状态变化时发生，无 CPU 浪费。</p>
+<hr>
+<h2 id="四，完整生命周期：9-阶段时间线"><a href="#四，完整生命周期：9-阶段时间线" class="headerlink" title="四，完整生命周期：9 阶段时间线"></a>四，完整生命周期：9 阶段时间线</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">阶段 0-1: Experience 加载</span><br><span class="line">  └─ GameMode::OnExperienceLoaded → RestartPlayer</span><br><span class="line"></span><br><span class="line">阶段 2: Pawn 生成与 PawnData 注入</span><br><span class="line">  └─ SpawnActor(bDeferConstruction) → SetPawnData → FinishSpawning → BeginPlay</span><br><span class="line">     ★ PawnData 在 BeginPlay 之前注入——组件 BeginPlay 时 PawnData 已可用</span><br><span class="line"></span><br><span class="line">阶段 3: InitState 启动</span><br><span class="line">  └─ PawnExtensionComponent::BeginPlay → TryToChangeInitState(Spawned) ✓</span><br><span class="line">     → CheckDefaultInitialization → DataAvailable ✓</span><br><span class="line"></span><br><span class="line">阶段 4: PlayerState 设置</span><br><span class="line">  └─ LyraPlayerState::SetPawnData() → GiveAbilitySet(PawnData-&gt;AbilitySets)</span><br><span class="line">     → NAME_LyraAbilityReady 事件 → GameFeatureAction 注入额外 AbilitySet</span><br><span class="line"></span><br><span class="line">阶段 5: DataInitialized → 全局初始化</span><br><span class="line">  └─ HeroComponent: InitializeAbilitySystem(ASC, LyraPS)</span><br><span class="line">     → ASC 广播 OnAbilitySystemInitialized</span><br><span class="line">     → HealthComponent: InitializeWithAbilitySystem(ASC) → 绑定 HealthSet 委托</span><br><span class="line">     → HeroComponent: InitializePlayerInput → Enhanced Input 全链路绑定</span><br><span class="line">     → CameraComponent: DetermineCameraModeDelegate 绑定</span><br><span class="line"></span><br><span class="line">阶段 6: GameplayReady</span><br><span class="line">  └─ NAME_BindInputsNow 事件 → GameFeatureAction 绑定额外输入</span><br><span class="line">     → GameplayReady ✓ → 玩家可正常游戏</span><br><span class="line"></span><br><span class="line">阶段 7: 游戏运行中</span><br><span class="line">  └─ ASC 处理 Ability、HealthComponent 监听属性、CameraComponent 混合 CameraMode</span><br><span class="line"></span><br><span class="line">阶段 8: 角色死亡</span><br><span class="line">  └─ HandleOutOfHealth → StartDeath → DisableMovementAndCollision</span><br><span class="line">     → FinishDeath → DestroyDueToDeath</span><br><span class="line">     ★ ASC 在 PlayerState 上继续存活，不随 Pawn 销毁</span><br><span class="line"></span><br><span class="line">阶段 9: Respawn</span><br><span class="line">  └─ GameMode 生成新 Pawn → InitializeAbilitySystem(复用旧 ASC)</span><br><span class="line">     → 新 Pawn 成为 ASC 的 Avatar</span><br></pre></td></tr></table></figure>
+
+<h3 id="关键洞察：ASC-生命周期-Pawn-生命周期"><a href="#关键洞察：ASC-生命周期-Pawn-生命周期" class="headerlink" title="关键洞察：ASC 生命周期 &gt; Pawn 生命周期"></a>关键洞察：ASC 生命周期 &gt; Pawn 生命周期</h3><p>ASC 放在 <code>ALyraPlayerState</code> 上而不是 <code>ALyraCharacter</code> 上。这意味着 <strong>Pawn 销毁时 ASC 存活，新 Pawn 直接复用旧 ASC</strong>。Respawn 不需要重新授予 AbilitySet、不需要重建 AttributeSet——所有 GAS 状态跨生命保持。</p>
+<hr>
+<h2 id="五，ExtensionHandler：GameFeature-如何动态注入"><a href="#五，ExtensionHandler：GameFeature-如何动态注入" class="headerlink" title="五，ExtensionHandler：GameFeature 如何动态注入"></a>五，ExtensionHandler：GameFeature 如何动态注入</h2><p>GameFeatureAction 通过 <code>AddExtensionHandler</code> 实现完全解耦的动态注入：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1. GameFeatureAction 注册 Handler:</span><br><span class="line">   Manager-&gt;AddExtensionHandler(ALyraCharacter::StaticClass(), </span><br><span class="line">       FGameFrameworkComponentExtensionDelegate::CreateLambda([](AActor* Actor) &#123;</span><br><span class="line">           // 2. 动态创建 Component</span><br><span class="line">           UActorComponent* NewComp = NewObject&lt;UMyFeatureComponent&gt;(Actor);</span><br><span class="line">           NewComp-&gt;RegisterComponent();</span><br><span class="line">           </span><br><span class="line">           // 3. 授予 AbilitySet</span><br><span class="line">           MyAbilitySet-&gt;GiveToAbilitySystem(ASC, &amp;GrantedHandles, Actor);</span><br><span class="line">       &#125;));</span><br><span class="line"></span><br><span class="line">4. 当任何 ALyraCharacter 生成时 → Manager 自动调用 Lambda</span><br><span class="line">5. ALyraCharacter 从头到尾不知道是哪个插件给它加了什么</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="六，ARPG-落地要点"><a href="#六，ARPG-落地要点" class="headerlink" title="六，ARPG 落地要点"></a>六，ARPG 落地要点</h2><p>对于 TowerChallenge：</p>
+<ol>
+<li><strong>不要为 Character 创建 C++ 子类</strong>——这是 Lyra 架构的核心约束。我们吃过亏：430 行 <code>ATowerCharacter</code> 全量返工，最终 ~90 行 Component 解决了同样的问题。</li>
+<li><strong>ASC 放 PlayerState 上</strong>——这是 Lyra 的选择，不是标准 GAS 做法。优点：Respawn 不丢失 GAS 状态。缺点：<code>GetASC()</code> 需要经过 <code>PlayerState</code> 间接访问。</li>
+<li><strong>自定义 InitState 中间状态</strong>——如果某个 Feature 需要等待 DLC 资产加载，定义 <code>InitState_DLC_AssetsLoaded</code> Tag，在 <code>CanChangeInitState</code> 中检查即可。</li>
+<li><strong>PawnData 的三级覆盖</strong>：Experience.DefaultPawnData → ActionSet.PawnData → 运行时覆盖。设计师通过切换 DataAsset 实现不同爬塔阶段的角色配置。</li>
+</ol>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a> — 拆解 Lyra 在 UE 原生 GAS 之上构建的五大封装层：AbilitySet 打包、InputTag 桥接、ActivationGroup 互斥、GlobalAbility 系统、Experience 注入管道。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Lyra 框架拆解</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>ModularGameplay</tag>
+        <tag>Character</tag>
+        <tag>InitState</tag>
+        <tag>Component</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表</title>
+    <url>/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F/</url>
+    <content><![CDATA[<h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td><strong>二</strong></td>
+<td><strong>Experience 系统（本文）</strong></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系与 InitState 状态机</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p><strong>Experience 是一张”玩法配方表”</strong>——它用一个 DataAsset 回答了”这场游戏玩什么”：激活哪些 GameFeature 插件、执行哪些初始化动作、玩家用什么样的 Pawn。</p>
+<hr>
+<h2 id="一，问题：GameMode-子类为何不够"><a href="#一，问题：GameMode-子类为何不够" class="headerlink" title="一，问题：GameMode 子类为何不够"></a>一，问题：GameMode 子类为何不够</h2><p>在 Standard UE 中，为不同模式创建不同的 <code>AGameModeBase</code> 子类是标准做法：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 传统方案：每增加一个模式 = 一个新类</span></span><br><span class="line">AGameModeBase</span><br><span class="line">  ├── AGameMode_TDM        → PawnClass = B_Hero_TDM, HUDClass = B_HUD_TDM</span><br><span class="line">  ├── AGameMode_CP         → PawnClass = B_Hero_CP,  HUDClass = B_HUD_CP</span><br><span class="line">  └── AGameMode_Race       → PawnClass = B_Hero_Race, HUDClass = B_HUD_Race</span><br></pre></td></tr></table></figure>
+
+<p>三个模式看着还行，但扩展一下就暴露问题：</p>
+<ol>
+<li><strong>C++ 类爆炸</strong>：十个模式 &#x3D; 十个 GameMode 子类，即使差异只在配置层面</li>
+<li><strong>GameFeature 激活时机失控</strong>：所有插件在游戏启动时加载，内存中堆着不用的代码和资产</li>
+<li><strong>配置分散</strong>：Pawn 配置、能力授予、输入绑定、UI 注册分散在多个子系统，无统一入口</li>
+<li><strong>初始化顺序脆弱</strong>：子系统隐式依赖彼此的初始化状态，竞态条件难以排查</li>
+<li><strong>PIE 多会话仲裁</strong>：编辑器并行运行多个 PIE 时，全局 GameFeature 状态冲突</li>
+</ol>
+<p>Lyra 用 <strong>一张 DataAsset + 一个状态机</strong> 替代了这套继承体系。</p>
+<hr>
+<h2 id="二，ULyraExperienceDefinition：配方表的结构"><a href="#二，ULyraExperienceDefinition：配方表的结构" class="headerlink" title="二，ULyraExperienceDefinition：配方表的结构"></a>二，<code>ULyraExperienceDefinition</code>：配方表的结构</h2><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 这就是 Lyra 中所有游戏模式的&quot;唯一真相来源&quot;</span></span><br><span class="line">ULyraExperienceDefinition : UPrimaryDataAsset</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 1. 激活哪些 GameFeature 插件（原料清单）</span></span><br><span class="line">    TArray&lt;FString&gt; GameFeaturesToEnable;   <span class="comment">// [&quot;ShooterCore&quot;, &quot;ShooterMaps&quot;]</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 2. 默认 Pawn 配置（玩家角色配方）</span></span><br><span class="line">    TObjectPtr&lt;ULyraPawnData&gt; DefaultPawnData;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 3. 初始化动作列表（料理步骤）</span></span><br><span class="line">    TArray&lt;UGameFeatureAction*&gt; Actions;     <span class="comment">// [AddAbilities, AddInputBinding, AddWidgets...]</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4. 可复用的动作组合（预制菜包）</span></span><br><span class="line">    TArray&lt;ULyraExperienceActionSet*&gt; ActionSets;  <span class="comment">// [LAS_SharedInput, LAS_StandardHUD...]</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="三层隐喻"><a href="#三层隐喻" class="headerlink" title="三层隐喻"></a>三层隐喻</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Experience ≈ 配方表 (&quot;这场游戏玩什么&quot;)</span><br><span class="line">    │</span><br><span class="line">    ├── GameFeaturesToEnable ≈ 原料 (&quot;需要哪些插件&quot;)</span><br><span class="line">    │</span><br><span class="line">    ├── Actions + ActionSets ≈ 料理步骤 (&quot;按什么顺序做什么&quot;)</span><br><span class="line">    │</span><br><span class="line">    └── DefaultPawnData ≈ 主菜配置 (&quot;玩家使用什么角色&quot;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="ActionSet：可复用组合"><a href="#ActionSet：可复用组合" class="headerlink" title="ActionSet：可复用组合"></a>ActionSet：可复用组合</h3><p><code>ULyraExperienceActionSet</code> 是 Lyra 的”预制菜”机制——它是一组 Action + GameFeature 的组合，可以在不同 Experience 间复用：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">LAS_ShooterGame_SharedInput    → 所有射击模式共享的输入绑定</span><br><span class="line">LAS_ShooterGame_StandardComponents → 所有射击模式共享的通用组件</span><br><span class="line">LAS_ShooterGame_StandardHUD    → 所有射击模式共享的 HUD 布局</span><br></pre></td></tr></table></figure>
+
+<p>ShooterCore 使用三个共享 ActionSet + 模式专属 Action 的组合方式，避免了<code>AddAbilities</code> &#x2F; <code>AddInputBinding</code> &#x2F; <code>AddWidgets</code> 在每个 Experience 中重复配置。</p>
+<hr>
+<h2 id="三，7-阶段加载状态机"><a href="#三，7-阶段加载状态机" class="headerlink" title="三，7 阶段加载状态机"></a>三，7 阶段加载状态机</h2><p>Experience 的加载不是”一把梭”——它有一个精心设计的异步状态机，确保每个阶段的依赖就绪后才继续：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Unloaded</span><br><span class="line">  │  SetCurrentExperience()</span><br><span class="line">  ▼</span><br><span class="line">Loading                           ← 通过 AssetManager 加载 Experience DataAsset</span><br><span class="line">  │  OnExperienceLoadComplete()</span><br><span class="line">  ▼</span><br><span class="line">LoadingGameFeatures               ← 异步激活所有 GameFeature 插件</span><br><span class="line">  │  所有插件 LoadAndActivate 完成</span><br><span class="line">  ▼</span><br><span class="line">LoadingChaosTestingDelay          ← 仅测试：插入随机延迟模拟网络波动</span><br><span class="line">  │  OnExperienceFullLoadCompleted()</span><br><span class="line">  ▼</span><br><span class="line">ExecutingActions                  ← 按序执行所有 Action 的三阶段回调</span><br><span class="line">  │  所有 Action 执行完毕</span><br><span class="line">  ▼</span><br><span class="line">Loaded ◀───────────────────────── 广播三级委托，游戏正式开始</span><br><span class="line">  │  EndPlay / 切换 Experience</span><br><span class="line">  ▼</span><br><span class="line">Deactivating                      ← 反向执行 Action 反注册 + GameFeature 卸载</span><br><span class="line">  │</span><br><span class="line">  ▼</span><br><span class="line">Unloaded</span><br></pre></td></tr></table></figure>
+
+<h3 id="为什么分这么细？"><a href="#为什么分这么细？" class="headerlink" title="为什么分这么细？"></a>为什么分这么细？</h3><p><strong>分阶段 &#x3D; 可观测 + 可插拔</strong>。每个阶段有明确的入口条件、出口条件和失败处理。如果你要加一个”加载 DLC 资产”的步骤，在 <code>LoadingGameFeatures</code> 和 <code>ExecutingActions</code> 之间插入一个阶段即可，无需修改其他阶段。</p>
+<hr>
+<h2 id="四，三级委托优先级：解决初始化隐式依赖"><a href="#四，三级委托优先级：解决初始化隐式依赖" class="headerlink" title="四，三级委托优先级：解决初始化隐式依赖"></a>四，三级委托优先级：解决初始化隐式依赖</h2><p>Loaded 阶段广播的不是一个委托，而是<strong>三级优先级委托</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">OnExperienceLoaded_HighPriority   ← 队伍创建组件（玩家依赖 TeamID）</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">OnExperienceLoaded                ← ALyraGameMode::OnExperienceLoaded (RestartPlayer)</span><br><span class="line">                                   ← ALyraPlayerState::OnExperienceLoaded (设置 PawnData)</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">OnExperienceLoaded_LowPriority    ← 画质/音效等非关键设置</span><br></pre></td></tr></table></figure>
+
+<p>这解决了一个实际问题：<code>RestartPlayer()</code> 生成 Pawn 时，<code>PlayerState</code> 可能需要查询 TeamID。如果队伍创建和 Pawn 生成同时触发，顺序不确定就会导致竞态条件。三级优先级让”先创建队伍，再生成玩家”成为确定性行为。</p>
+<hr>
+<h2 id="五，Client-Server-Bundle-分离"><a href="#五，Client-Server-Bundle-分离" class="headerlink" title="五，Client&#x2F;Server Bundle 分离"></a>五，Client&#x2F;Server Bundle 分离</h2><p>在 <code>StartExperienceLoad()</code> 中，根据 NetMode 加载不同的 Asset Bundle：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 客户端和服务器加载不同的资产集</span></span><br><span class="line">TArray&lt;FName&gt; Bundles;</span><br><span class="line">Bundles.<span class="built_in">Add</span>(<span class="string">&quot;Equipped&quot;</span>);            <span class="comment">// 两方都加载</span></span><br><span class="line"><span class="keyword">if</span> (NetMode == NM_DedicatedServer)</span><br><span class="line">    Bundles.<span class="built_in">Add</span>(<span class="string">&quot;Server&quot;</span>);          <span class="comment">// 服务器专属</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    Bundles.<span class="built_in">Add</span>(<span class="string">&quot;Client&quot;</span>);          <span class="comment">// 客户端专属（UI 纹理、音效等）</span></span><br></pre></td></tr></table></figure>
+
+<p>专用服务器不会加载 UI 纹理、音频文件、特效材质——显著减少内存占用。</p>
+<hr>
+<h2 id="六，PIE-多会话-FILO-引用计数：被低估的设计"><a href="#六，PIE-多会话-FILO-引用计数：被低估的设计" class="headerlink" title="六，PIE 多会话 FILO 引用计数：被低估的设计"></a>六，PIE 多会话 FILO 引用计数：被低估的设计</h2><p>编辑器同时运行两个 PIE 会话会发生什么？如果两个会话都加载了 ShooterCore，关闭一个就卸载 ShooterCore 会崩掉另一个。</p>
+<p>Lyra 的解决方案是 <code>ULyraExperienceManager</code>（EngineSubsystem）：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">PIE Session A 加载 ShooterCore → RefCount++</span><br><span class="line">PIE Session B 加载 ShooterCore → RefCount++</span><br><span class="line">PIE Session A 关闭 → RefCount--  (不为0，不卸载)</span><br><span class="line">PIE Session B 关闭 → RefCount--  (为0，卸载)</span><br></pre></td></tr></table></figure>
+
+<p><strong>FILO（First In Last Out）+ 引用计数</strong>——简单但有效地解决了全局单例插件在 PIE 多会话下的仲裁问题。</p>
+<hr>
+<h2 id="七，三个-ShooterCore-Experience-对比"><a href="#七，三个-ShooterCore-Experience-对比" class="headerlink" title="七，三个 ShooterCore Experience 对比"></a>七，三个 ShooterCore Experience 对比</h2><p>Lyra 提供了三个具体的 Experience 定义，可以从它们看出”配方表模式”的实际威力：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>B_Elimination</th>
+<th>B_ControlPoint</th>
+<th>B_Perf</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>GameFeatures</strong></td>
+<td>ShooterCore + ShooterMaps</td>
+<td>ShooterCore + ShooterMaps</td>
+<td>ShooterCore + ShooterMaps</td>
+</tr>
+<tr>
+<td><strong>PawnData</strong></td>
+<td>HeroData_ShooterGame</td>
+<td>HeroData_ShooterGame</td>
+<td>HeroData_ShooterGame (简化)</td>
+</tr>
+<tr>
+<td><strong>ActionSets</strong></td>
+<td>SharedInput + StandardComponents + StandardHUD</td>
+<td>SharedInput + StandardComponents + StandardHUD</td>
+<td>SharedInput + StandardComponents</td>
+</tr>
+<tr>
+<td><strong>专属Actions</strong></td>
+<td>TDM 计分 + 淘汰UI</td>
+<td>控制点占领 + CP UI</td>
+<td>性能统计</td>
+</tr>
+<tr>
+<td><strong>Map</strong></td>
+<td>L_Convolution_Blockout</td>
+<td>L_Convolution_Blockout</td>
+<td>L_Convolution_PerfWorld</td>
+</tr>
+</tbody></table>
+<p>它们共享<strong>完全相同的</strong> <code>ALyraGameMode</code> 和 <code>ALyraCharacter</code> C++ 类。TDM 和控制点之间的差异全部在 DataAsset 和蓝图层面解决。</p>
+<hr>
+<h2 id="八，ARPG-落地要点"><a href="#八，ARPG-落地要点" class="headerlink" title="八，ARPG 落地要点"></a>八，ARPG 落地要点</h2><p>对于 TowerChallenge（我们的 ARPG 项目），Experience 层的配置需要关注：</p>
+<ol>
+<li><strong><code>DefaultGame.ini</code> 的 AssetManager 扫描路径</strong>：确保 <code>/TowerChallenge/Experiences</code> 在 <code>LyraExperienceDefinition</code> 的扫描列表中</li>
+<li><strong>ActionSet 复用策略</strong>：将通用系统（输入绑定、基础 HUD）打包为 ActionSet，模式专属逻辑放 Experience 自身 Actions</li>
+<li><strong>GameFeature 按需加载</strong>：塔层数&#x2F;难度对应的内容放独立 GameFeature，高层才激活</li>
+<li><strong>PawnData 覆盖</strong>：不同职业&#x2F;爬塔阶段的 PawnData 可通过 Experience 或运行时覆盖</li>
+</ol>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系与 InitState 状态机</a> — 拆解 “薄 Actor + 厚 Component + 状态机协调” 的三位一体架构，以及从 Experience 加载到 GameplayReady 的完整 9 阶段时间线。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Lyra 框架拆解</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>GameFeature</tag>
+        <tag>ModularGameplay</tag>
+        <tag>Experience</tag>
+        <tag>DataAsset</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Lyra 框架拆解（一）：架构哲学总览 —— 薄 Actor + 厚 Component + GameFeature 插件化</title>
+    <url>/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88/</url>
+    <content><![CDATA[<h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>一</strong></td>
+<td><strong>架构哲学总览（本文）</strong></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统：玩法配方表</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系与 InitState 状态机</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话理解-Lyra"><a href="#一句话理解-Lyra" class="headerlink" title="一句话理解 Lyra"></a>一句话理解 Lyra</h2><p><strong>Lyra 不是”一个游戏”，而是一套”做游戏的游戏”</strong>——它是 Epic 在 UE5 时代给模块化多人游戏的参考答案。它的核心命题是：</p>
+<blockquote>
+<p>如何在不为每个游戏模式写一个 <code>AGameMode</code> 子类的前提下，让同一个 <code>ALyraCharacter</code> 在射击模式、探索模式、TopDown 模式下呈现完全不同的能力组合？</p>
+</blockquote>
+<p>Lyra 的答案是四个字：<strong>数据驱动注入</strong>。C++ 提供能力框架，DataAsset 定义具体配方，GameFeature 插件负责物理隔离与按需加载。</p>
+<hr>
+<h2 id="一，四层架构全景图"><a href="#一，四层架构全景图" class="headerlink" title="一，四层架构全景图"></a>一，四层架构全景图</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌──────────────────────────────────────────────┐</span><br><span class="line">│        Layer 0: Experience（配方层）           │</span><br><span class="line">│  &quot;这场游戏玩什么？&quot;                              │</span><br><span class="line">│  ULyraExperienceDefinition (DataAsset)         │</span><br><span class="line">│  → 激活哪些 GameFeature？                       │</span><br><span class="line">│  → 执行哪些初始化动作？                          │</span><br><span class="line">│  → 生成什么 Pawn？                              │</span><br><span class="line">└──────────────────┬───────────────────────────┘</span><br><span class="line">                   │ GameFeaturesToEnable</span><br><span class="line">┌──────────────────▼───────────────────────────┐</span><br><span class="line">│       Layer 1: GameFeature（原料层）            │</span><br><span class="line">│  物理隔离的玩法容器（独立 .uplugin）             │</span><br><span class="line">│  ShooterCore / TopDownArena / TowerChallenge  │</span><br><span class="line">│  → C++ 模块（可选）+ 蓝图资产 + 配置            │</span><br><span class="line">└──────────────────┬───────────────────────────┘</span><br><span class="line">                   │ GameFeatureAction</span><br><span class="line">┌──────────────────▼───────────────────────────┐</span><br><span class="line">│      Layer 2: Component（能力层）              │</span><br><span class="line">│  &quot;薄 Actor + 厚 Component&quot;                     │</span><br><span class="line">│  ALyraCharacter (~500行) = 事件转发器           │</span><br><span class="line">│  → PawnExtensionComponent：状态机指挥官         │</span><br><span class="line">│  → HeroComponent：输入 + 相机代理               │</span><br><span class="line">│  → HealthComponent：血量 + 死亡状态机           │</span><br><span class="line">│  → CameraComponent：CameraMode 栈              │</span><br><span class="line">└──────────────────┬───────────────────────────┘</span><br><span class="line">                   │ 能力通过 AbilitySet 授予</span><br><span class="line">┌──────────────────▼───────────────────────────┐</span><br><span class="line">│      Layer 3: GAS / Input / UI / Net          │</span><br><span class="line">│  被注入的具体游戏能力                           │</span><br><span class="line">│  → AbilitySet：GA + GE + AttributeSet 打包     │</span><br><span class="line">│  → InputConfig：InputAction → GameplayTag     │</span><br><span class="line">│  → UIExtension：GameplayTag 驱动 Widget 注入   │</span><br><span class="line">│  → ReplicationGraph：节点化复制策略             │</span><br><span class="line">└──────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p><strong>关键设计决策</strong>：每一层只知道下一层的接口，不知道下一层的具体实现。Experience 不知道 ShooterCore 的 C++ 类长什么样；ALyraCharacter 不知道有哪些 GameFeature 会给它注入 Component。这就是 Lyra 实现”同一套 C++ 代码支持多种游戏模式”的根本原因。</p>
+<hr>
+<h2 id="二，薄-Actor-厚-Component：最核心的架构决策"><a href="#二，薄-Actor-厚-Component：最核心的架构决策" class="headerlink" title="二，薄 Actor + 厚 Component：最核心的架构决策"></a>二，薄 Actor + 厚 Component：最核心的架构决策</h2><p>传统 UE 项目中，Character 类往往是”万恶之源”——血量管理、武器切换、技能逻辑、输入处理、相机控制全部堆在一个类里，轻松突破 3000 行。</p>
+<p>Lyra 的做法是<strong>把 Actor 变成一个”插槽”</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ALyraCharacter 构造函数 —— 这就是它的全部&quot;主动行为&quot;</span></span><br><span class="line">PawnExtComp = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraPawnExtensionComponent&gt;(<span class="string">&quot;PawnExtension&quot;</span>);</span><br><span class="line">HealthComp  = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraHealthComponent&gt;(<span class="string">&quot;HealthComponent&quot;</span>);</span><br><span class="line">CameraComp  = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraCameraComponent&gt;(<span class="string">&quot;CameraComponent&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>注意什么<strong>不在</strong>这里：<code>ULyraHeroComponent</code>（输入绑定 + 相机代理）不在 Character 的 C++ 构造函数中——它在蓝图 <code>B_Hero_ShooterMannequin</code> 中添加，甚至可以通过 GameFeatureAction 动态注入。</p>
+<p><strong>这意味着不同的 GameFeature 可以给同一个 Character 类注入不同的 Component 组合</strong>，而 Character 代码完全不需要修改。</p>
+<h3 id="第二层解耦：GameFrameworkComponentManager-的-ExtensionHandler"><a href="#第二层解耦：GameFrameworkComponentManager-的-ExtensionHandler" class="headerlink" title="第二层解耦：GameFrameworkComponentManager 的 ExtensionHandler"></a>第二层解耦：GameFrameworkComponentManager 的 ExtensionHandler</h3><p>更进一步，GameFeatureAction 通过 <code>AddExtensionHandler(ActorClass, Delegate)</code> 机制，在运行时检测到特定类型 Actor 创建时动态注入 Component：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GameFeatureAction 注册 Handler(&quot;ALyraCharacter&quot;, SpawnDelegate)</span><br><span class="line">         │</span><br><span class="line">         ▼</span><br><span class="line">GameFrameworkComponentManager 检测到 ALyraCharacter 生成</span><br><span class="line">         │</span><br><span class="line">         ▼</span><br><span class="line">SpawnDelegate 执行 → 给这个 Actor 动态添加 Component + 授予 AbilitySet</span><br></pre></td></tr></table></figure>
+
+<p><strong>ALyraCharacter 从头到尾不知道是哪个插件给它加了什么能力。</strong></p>
+<hr>
+<h2 id="三，Experience：配方表-vs-GameMode-子类"><a href="#三，Experience：配方表-vs-GameMode-子类" class="headerlink" title="三，Experience：配方表 vs GameMode 子类"></a>三，Experience：配方表 vs GameMode 子类</h2><h3 id="传统方案的问题"><a href="#传统方案的问题" class="headerlink" title="传统方案的问题"></a>传统方案的问题</h3><p>如果你要为同一个项目做三个模式（团队死斗、控制点、竞速），传统做法是：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AGameModeBase</span><br><span class="line">  ├─ AGameMode_TDM      （配置 TDM 专属 Pawn/HUD/规则）</span><br><span class="line">  ├─ AGameMode_CP       （配置 CP 专属 Pawn/HUD/规则）</span><br><span class="line">  └─ AGameMode_Race     （配置 Race 专属 Pawn/HUD/规则）</span><br></pre></td></tr></table></figure>
+
+<p>每个 GameMode 子类硬编码自己的 PawnClass、HUDClass、PlayerControllerClass。三个模式还行，十个模式呢？而且 TDM 和 CP 共享同样的武器系统，但需要不同的 HUD 和计分规则——继承体系无法优雅地表达这种”部分共享、部分差异”。</p>
+<h3 id="Lyra-的方案：配方表模式"><a href="#Lyra-的方案：配方表模式" class="headerlink" title="Lyra 的方案：配方表模式"></a>Lyra 的方案：配方表模式</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ULyraExperienceDefinition — 一张 DataAsset 解决一切</span></span><br><span class="line">GameFeaturesToEnable: [<span class="string">&quot;ShooterCore&quot;</span>, <span class="string">&quot;ShooterMaps&quot;</span>]  <span class="comment">// 激活什么插件</span></span><br><span class="line">DefaultPawnData: HeroData_ShooterGame                  <span class="comment">// 默认 Pawn 配置</span></span><br><span class="line">Actions: [AddAbilities, AddInputBinding, AddWidgets]   <span class="comment">// 初始化动作</span></span><br><span class="line">ActionSets: [LAS_ShooterGame_SharedInput]              <span class="comment">// 可复用动作组合</span></span><br></pre></td></tr></table></figure>
+
+<p>一个新的游戏模式 &#x3D; 一张新的 Experience DataAsset。不需要写一行 C++。</p>
+<p>Lyra 提供了三个 Experience 示例：</p>
+<ul>
+<li><code>B_Experience_Elimination</code> → TDM 模式</li>
+<li><code>B_Experience_ControlPoint</code> → 控制点模式</li>
+<li><code>B_Experience_Perf</code> → 性能测试模式</li>
+</ul>
+<p><strong>它们使用的是同一个 <code>ALyraGameMode</code> 类</strong>，差异全部在 DataAsset 和 GameFeature 层面。</p>
+<hr>
+<h2 id="四，InitState：用-GameplayTag-替代-BeginPlay-时序"><a href="#四，InitState：用-GameplayTag-替代-BeginPlay-时序" class="headerlink" title="四，InitState：用 GameplayTag 替代 BeginPlay 时序"></a>四，InitState：用 GameplayTag 替代 BeginPlay 时序</h2><p>这是 Lyra 最巧妙也最容易被忽视的设计。在多组件 + 网络复制的环境下，<code>BeginPlay</code> 的调用顺序是不可靠的：</p>
+<ul>
+<li>服务器上 Component A 先于 Component B 初始化</li>
+<li>客户端上 Component B 可能先复制到，Component A 还没创建</li>
+<li>某个 Component 依赖 PawnData 设置完毕 → 但 PawnData 在服务器上通过 RPC 设置，客户端何时收到不确定</li>
+</ul>
+<p>Lyra 的解决方案是用 <strong>GameplayTag 驱动的显式状态机</strong>替代隐式时序依赖：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">InitState_Spawned           ← Actor 已生成，Component 已注册</span><br><span class="line">        │</span><br><span class="line">        ▼  (条件：PawnData 已设置 + Controller 就绪)</span><br><span class="line">InitState_DataAvailable     ← 数据已就绪，可以开始读取配置</span><br><span class="line">        │</span><br><span class="line">        ▼  (条件：所有 Feature 都达到 DataAvailable)</span><br><span class="line">InitState_DataInitialized   ← 所有 Feature 的数据都就绪了</span><br><span class="line">        │</span><br><span class="line">        ▼  (无条件通过)</span><br><span class="line">InitState_GameplayReady     ← 开始正常游戏逻辑</span><br></pre></td></tr></table></figure>
+
+<p>每个 Component 实现 <code>IGameFrameworkInitStateInterface</code>，声明自己的 Feature 名称和当前状态。<code>ULyraPawnExtensionComponent</code> 作为”指挥”，监听所有 Feature 的状态变化，在条件满足时推进整体状态链。</p>
+<p><strong>为什么用 GameplayTag 而非枚举？</strong> 因为 GameFeature 插件可以定义自己的中间状态（如 <code>InitState_DLC_AssetsLoaded</code>），无需修改引擎代码。</p>
+<hr>
+<h2 id="五，GameFeature-插件：物理隔离的玩法容器"><a href="#五，GameFeature-插件：物理隔离的玩法容器" class="headerlink" title="五，GameFeature 插件：物理隔离的玩法容器"></a>五，GameFeature 插件：物理隔离的玩法容器</h2><p>GameFeature 是 Lyra 实现”按需加载”和”团队并行开发”的物理基础。每个 GameFeature 是一个独立的 <code>.uplugin</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ShooterCore/</span><br><span class="line">  ├── ShooterCore.uplugin   ← ExplicitlyLoaded: true, EnabledByDefault: false</span><br><span class="line">  ├── Source/               ← C++ 模块（可选，ShooterCore 有 15 个类）</span><br><span class="line">  ├── Content/              ← 蓝图资产（武器/角色/HUD/输入）</span><br><span class="line">  └── Config/Tags/          ← 插件级 GameplayTag 定义</span><br></pre></td></tr></table></figure>
+
+<h3 id="加载链路"><a href="#加载链路" class="headerlink" title="加载链路"></a>加载链路</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">WorldSettings → Experience.GameFeaturesToEnable</span><br><span class="line">  → ULyraExperienceManagerComponent (LoadingGameFeatures 阶段)</span><br><span class="line">    → UGameFeaturesSubsystem::LoadAndActivateGameFeaturePlugin()</span><br><span class="line">      → 插件状态：Registered → Loaded → Active</span><br></pre></td></tr></table></figure>
+
+<p>关键配置：</p>
+<ul>
+<li><code>ExplicitlyLoaded: true</code> — 不随引擎自动加载，由 Experience 显式触发</li>
+<li><code>EnabledByDefault: false</code> — 游戏启动时不加载，按需激活</li>
+<li><code>BuiltInInitialFeatureState: &quot;Registered&quot;</code> — 已注册但未激活（DLL 未加载，资产未扫描）</li>
+</ul>
+<h3 id="插件分层"><a href="#插件分层" class="headerlink" title="插件分层"></a>插件分层</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Layer 0: LyraGame (C++ 核心框架，非 GameFeature)</span><br><span class="line">Layer 1: ShooterCore (C++ + Content)  ← 射击基础</span><br><span class="line">Layer 2: ShooterExplorer, ShooterMaps (纯 Content)  ← 依赖 ShooterCore</span><br><span class="line">Layer 3: ShooterTests (C++ + Content)  ← 自动化测试</span><br><span class="line">独立游戏: TopDownArena, TowerChallenge  ← 不依赖 ShooterCore</span><br></pre></td></tr></table></figure>
+
+<p><strong>TowerChallenge（我们的 ARPG）与 ShooterCore 完全独立</strong>——两者都依赖 LyraGame 核心框架，但彼此无依赖关系。</p>
+<hr>
+<h2 id="六，C-职责边界：”三问决策”"><a href="#六，C-职责边界：”三问决策”" class="headerlink" title="六，C++ 职责边界：”三问决策”"></a>六，C++ 职责边界：”三问决策”</h2><p>Lyra 不是”把所有东西都写成 C++”——正相反，它大量使用蓝图。ShooterCore 只有 15 个 C++ 类，TopDownArena 只有 4 个。判断一个功能是否该写成 C++ 的”三问决策”：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>是 → C++</th>
+<th>否 → 蓝图&#x2F;DataAsset</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>需要每帧运行？</td>
+<td>瞄准辅助、移动计算</td>
+<td>技能激活逻辑</td>
+</tr>
+<tr>
+<td>需要自定义网络复制？</td>
+<td>AttributeSet、GameState 组件</td>
+<td>技能冷却 UI</td>
+</tr>
+<tr>
+<td>是 LyraGame 提供的扩展点？</td>
+<td>GameplayMessageProcessor、InputModifier</td>
+<td>自定义游戏模式逻辑</td>
+</tr>
+</tbody></table>
+<p><strong>关键约束：不要为 Lyra 框架类创建 C++ 子类</strong>。Lyra 的扩展点是 <code>UGameplayMessageProcessor</code>、<code>UGameStateComponent</code>、<code>UInputModifier</code> 这类专门的基类，而非 <code>AGameMode</code>、<code>ACharacter</code>、<code>AGameState</code> 这些核心 Actor。</p>
+<hr>
+<h2 id="七，Lyra-的”不变量”清单"><a href="#七，Lyra-的”不变量”清单" class="headerlink" title="七，Lyra 的”不变量”清单"></a>七，Lyra 的”不变量”清单</h2><p>在深入研究各个子系统之前，先记住 Lyra 框架中那些<strong>从不改变</strong>的东西：</p>
+<ol>
+<li><strong>同一个 <code>ALyraGameMode</code></strong> — 不按模式子类化</li>
+<li><strong>同一个 <code>ALyraCharacter</code></strong> — 不按角色类型子类化</li>
+<li><strong>数据驱动注入</strong> — 能力不硬编码在 Actor 构造函数中</li>
+<li><strong>GameplayTag 中介</strong> — Input → Tag → GAS，不直接引用 InputAction</li>
+<li><strong>组合优于继承</strong> — Component + GameFeatureAction，不用 C++ 继承链表达玩法差异</li>
+<li><strong>InitState 状态机</strong> — 不用 <code>BeginPlay</code> 时序假设替代显式状态推进</li>
+</ol>
+<p>理解这些不变量，就理解了 Lyra 一半的设计意图。</p>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统：玩法配方表</a> — 深入拆解 <code>ULyraExperienceDefinition</code> 如何用一张 DataAsset 替代 GameMode 子类，以及 7 阶段加载状态机的完整运转机制。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Lyra 框架拆解</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>GameFeature</tag>
+        <tag>ModularGameplay</tag>
+        <tag>Architecture</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</title>
+    <url>/2026/08/06/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6/</url>
+    <content><![CDATA[<h2 id="项目概览"><a href="#项目概览" class="headerlink" title="项目概览"></a>项目概览</h2><table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>类型</strong></td>
+<td>AI 辅助游戏开发基础设施 &#x2F; 多智能体编排框架</td>
+</tr>
+<tr>
+<td><strong>引擎</strong></td>
+<td>UE5.4+（已迁移至 5.6）</td>
+</tr>
+<tr>
+<td><strong>核心框架</strong></td>
+<td>Lyra（Experience + GameFeature + GAS + Enhanced Input）</td>
+</tr>
+<tr>
+<td><strong>智能体数量</strong></td>
+<td>21 个专家子代理（9 执行层 + 6 知识层 + 6 Lyra 知识层）</td>
+</tr>
+<tr>
+<td><strong>MCP 工具</strong></td>
+<td>23 个，覆盖资产&#x2F;蓝图&#x2F;GAS&#x2F;动画&#x2F;PIE&#x2F;编译全流程</td>
+</tr>
+<tr>
+<td><strong>已产出内容</strong></td>
+<td>6 核心战斗 GA + 5 属性集 + 输入配置 + GameFeature 插件架构</td>
+</tr>
+<tr>
+<td><strong>开发周期</strong></td>
+<td>2026.07.13 — 至今（持续迭代）</td>
+</tr>
+</tbody></table>
+<p>这是一个<strong>为 Vibe Coding 设计的 UE5 开发框架</strong>——不是传统意义上的游戏项目，而是一套让 AI 能可靠地参与 UE5 游戏开发的工程基础设施。它回答了”当 AI 写游戏代码时，怎么保证架构正确、编译通过、资产就位、行为验收？”这个问题。</p>
+<hr>
+<h2 id="一、问题定义：Vibe-Coding-在-UE5-中的三个断层"><a href="#一、问题定义：Vibe-Coding-在-UE5-中的三个断层" class="headerlink" title="一、问题定义：Vibe Coding 在 UE5 中的三个断层"></a>一、问题定义：Vibe Coding 在 UE5 中的三个断层</h2><p>“Vibe Coding”——用自然语言描述意图，AI 生成代码——在小规模项目中已相当好用。但在 UE5 这种重度框架 + 编辑器资产 + 二进制蓝图混合的生态中，存在三个根本断层：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">用户意图（自然语言）</span><br><span class="line">    │</span><br><span class="line">    ▼  ❌ 断层 1：意图 → 架构设计</span><br><span class="line">    │     &quot;加一个弹反&quot; → 该不该创建 Character 子类？</span><br><span class="line">    │     还是用 Component + GameFeatureAction？</span><br><span class="line">    │</span><br><span class="line">    ▼  ❌ 断层 2：代码 → 编辑器资产</span><br><span class="line">    │     C++ 写完了，DataAsset 创建了吗？</span><br><span class="line">    │     InputMappingContext 配置了吗？</span><br><span class="line">    │     BP 壳设置了 IUnLuaInterface 吗？</span><br><span class="line">    │</span><br><span class="line">    ▼  ❌ 断层 3：资产 → 运行时验证</span><br><span class="line">          编译过了 ≠ 能进 PIE</span><br><span class="line">          进了 PIE ≠ 功能正确</span><br><span class="line">          单人正确 ≠ 网络同步正确</span><br></pre></td></tr></table></figure>
+
+<p>Lyra-WarTower 的核心命题就是：<strong>用工程化手段填补这三个断层</strong>。</p>
+<hr>
+<h2 id="二、架构总览"><a href="#二、架构总览" class="headerlink" title="二、架构总览"></a>二、架构总览</h2><h3 id="2-1-整体拓扑"><a href="#2-1-整体拓扑" class="headerlink" title="2.1 整体拓扑"></a>2.1 整体拓扑</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────┐</span><br><span class="line">│                    协调者（主 Claude）                  │</span><br><span class="line">│  意图路由 → 级联调度 → 中断仲裁 → 质量门放行            │</span><br><span class="line">└──────────┬──────────────────────────┬────────────────┘</span><br><span class="line">           │                          │</span><br><span class="line">    ┌──────▼──────┐           ┌──────▼──────┐</span><br><span class="line">    │  知识层 (6)  │           │  执行层 (9)  │</span><br><span class="line">    │             │           │             │</span><br><span class="line">    │ concept-*   │  ──REQ──▶ │ architect   │</span><br><span class="line">    │ requirement │           │ gameplay    │</span><br><span class="line">    │ archivist   │  ◀──归档── │ animation   │</span><br><span class="line">    │ doc-writer  │           │ blueprint   │</span><br><span class="line">    │             │           │ lua-module  │</span><br><span class="line">    └─────────────┘           │ tools       │</span><br><span class="line">                              │ build-verify│</span><br><span class="line">    ┌─────────────┐           │ code-review │</span><br><span class="line">    │ Lyra 知识层  │           │ debugger    │</span><br><span class="line">    │    (6)      │           └──────┬──────┘</span><br><span class="line">    │             │                  │</span><br><span class="line">    │ qa-navigator│  ◀── 横向服务 ──┘</span><br><span class="line">    │ cpp-advisor │       MCP 直连 UE Editor</span><br><span class="line">    │ code-advisor│       23 工具：资产/蓝图/GAS</span><br><span class="line">    │ cpp-writer  │       /动画/PIE/编译</span><br><span class="line">    │ integrity   │</span><br><span class="line">    │ gdd-writer  │</span><br><span class="line">    └─────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-三层抽象：从灵感到工单"><a href="#2-2-三层抽象：从灵感到工单" class="headerlink" title="2.2 三层抽象：从灵感到工单"></a>2.2 三层抽象：从灵感到工单</h3><p>这是整个框架最重要的设计决策。借鉴软件工程中的需求层级，我将游戏开发需求也拆为三层：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Concept（GDC 演讲级）     Order/GDD（技术规格级）    REQ（工单级）</span><br><span class="line">───────────────────     ──────────────────────    ──────────────</span><br><span class="line">&quot;要什么体验&quot;             &quot;用什么技术实现&quot;           &quot;具体改哪些文件/类&quot;</span><br><span class="line"></span><br><span class="line">&quot;前期 DS3 立回体验，      体力是第一公民，          创建 UTowerStaminaSet</span><br><span class="line"> 后期 黑夜君临成型流派&quot;    用 GAS Cost 机制消耗      继承 ULyraAttributeSet</span><br><span class="line">                         体力，空精触发力竭 Tag     实现体力消耗/回复/力竭</span><br><span class="line">                                                    检测，3 个 GE + 5 个</span><br><span class="line">                          负责：concept-critic       委托回调</span><br><span class="line"> 负责：concept-writer</span><br><span class="line">       concept-analyst                              负责：requirement-analyst</span><br></pre></td></tr></table></figure>
+
+<p>并且支持<strong>多对多关系</strong>：一个 Concept 可以产出多个 Order，多个 Concept 可以共享一个 Order。进度沿全链路向上聚合。</p>
+<h3 id="2-3-最小充分链路原则"><a href="#2-3-最小充分链路原则" class="headerlink" title="2.3 最小充分链路原则"></a>2.3 最小充分链路原则</h3><p>并非所有任务都要走 Concept → Order → REQ → 实现 → 归档的全链。协调者根据用户意图做<strong>路由判断</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>用户意图</th>
+<th>入口</th>
+<th>链路长度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>“加一个远程敌人”</td>
+<td>concept-writer</td>
+<td>全链（重型）</td>
+</tr>
+<tr>
+<td>“实现 REQ-0007”</td>
+<td>architect → coders</td>
+<td>执行层 3-4 agent</td>
+</tr>
+<tr>
+<td>“修崩溃”</td>
+<td>debugger → coder</td>
+<td>执行层 2 agent</td>
+</tr>
+<tr>
+<td>“改一行代码”</td>
+<td>对应 coder</td>
+<td>1 agent</td>
+</tr>
+<tr>
+<td>“查看 ORDER-0002”</td>
+<td>协调者直接操作</td>
+<td>0 agent</td>
+</tr>
+</tbody></table>
+<p><strong>只调用达成目标所必需的 agent，不强制走全链。</strong></p>
+<hr>
+<h2 id="三、核心设计一：MCP-直连——让-AI-操作-UE-Editor"><a href="#三、核心设计一：MCP-直连——让-AI-操作-UE-Editor" class="headerlink" title="三、核心设计一：MCP 直连——让 AI 操作 UE Editor"></a>三、核心设计一：MCP 直连——让 AI 操作 UE Editor</h2><p>这是整个框架最”硬核”的部分。通过 <a href="https://github.com/ChiR24/Unreal_mcp">Unreal-MCP</a> 插件（v0.5.30），Claude Code 可以通过 HTTP&#x2F;SSE 协议直接控制 UE Editor。</p>
+<h3 id="3-1-MCP-工具矩阵（23-工具）"><a href="#3-1-MCP-工具矩阵（23-工具）" class="headerlink" title="3.1 MCP 工具矩阵（23 工具）"></a>3.1 MCP 工具矩阵（23 工具）</h3><table>
+<thead>
+<tr>
+<th>域</th>
+<th>工具</th>
+<th>能力</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>system_control</strong></td>
+<td>UBT 编译、控制台命令、Python 脚本、日志订阅</td>
+<td>编译门 + 诊断</td>
+</tr>
+<tr>
+<td><strong>control_editor</strong></td>
+<td>PIE 启动&#x2F;停止、截图、相机控制</td>
+<td>运行时验证</td>
+</tr>
+<tr>
+<td><strong>manage_asset</strong></td>
+<td>资产 CRUD、搜索、依赖分析</td>
+<td>资产完整性检查</td>
+</tr>
+<tr>
+<td><strong>manage_blueprint</strong></td>
+<td>BP 创建、编译、SCS 组件、UMG Widget</td>
+<td>编辑器自动化</td>
+</tr>
+<tr>
+<td><strong>manage_gas</strong></td>
+<td>GA&#x2F;GE&#x2F;AttributeSet&#x2F;Cue 创建配置</td>
+<td>GAS 资产配置</td>
+</tr>
+<tr>
+<td><strong>manage_networking</strong></td>
+<td>Input Action&#x2F;Mapping Context、Replication 配置</td>
+<td>输入 + 网络</td>
+</tr>
+<tr>
+<td><strong>inspect</strong></td>
+<td>Object&#x2F;CDO 内省、属性读写、组件列表</td>
+<td>验证 + 调试</td>
+</tr>
+<tr>
+<td><strong>control_actor</strong></td>
+<td>Actor 生成&#x2F;删除&#x2F;Transform、物理</td>
+<td>PIE 场景操作</td>
+</tr>
+<tr>
+<td><strong>animation_physics</strong></td>
+<td>AnimBP、Montage、BlendSpace、IK</td>
+<td>动画系统</td>
+</tr>
+</tbody></table>
+<h3 id="3-2-MCP-分级使用策略"><a href="#3-2-MCP-分级使用策略" class="headerlink" title="3.2 MCP 分级使用策略"></a>3.2 MCP 分级使用策略</h3><p>不是所有 MCP 工具都同等对待：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Level 1 — 资产验证（强制）</span><br><span class="line">    build-verifier 编译通过后必须通过 MCP 检查资产完整性</span><br><span class="line">    code-reviewer 必须先执行 MCP 资产验证门（阻断级）</span><br><span class="line">    MCP 不可用时标记为 🔴阻断，而非跳过</span><br><span class="line"></span><br><span class="line">Level 2 — 编辑器自动化（尽力）</span><br><span class="line">    coder 优先通过 MCP 直接执行资产创建、BP 配置、Input 映射</span><br><span class="line">    MCP 不可用时回退为 ✋手动清单</span><br></pre></td></tr></table></figure>
+
+<p>这个分级的核心思想是：<strong>验证不允许降级，自动化允许回退</strong>。编译门和资产完整性检查是质量的最后防线，不能因为”编辑器没启动”就跳过。</p>
+<hr>
+<h2 id="四、核心设计二：双清单体系——编辑器配置-≠-PIE-验证"><a href="#四、核心设计二：双清单体系——编辑器配置-≠-PIE-验证" class="headerlink" title="四、核心设计二：双清单体系——编辑器配置 ≠ PIE 验证"></a>四、核心设计二：双清单体系——编辑器配置 ≠ PIE 验证</h2><p>传统 AI 辅助开发中，C++ 代码写完就认为”功能完成了”。但在 UE5 中，代码只是第一步。</p>
+<p>我设计了两份<strong>性质不同</strong>的清单，由不同 agent 负责产出和验证：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>编辑器配置前置清单</th>
+<th>PIE 运行时验收清单</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>性质</strong></td>
+<td>前置条件——不做则功能不存在</td>
+<td>后置验证——确认行为正确</td>
+</tr>
+<tr>
+<td><strong>时机</strong></td>
+<td>code-reviewer 审查前</td>
+<td>编辑器配置完成后</td>
+</tr>
+<tr>
+<td><strong>内容</strong></td>
+<td>DataAsset 创建、BP 壳、Input 映射、Details 面板配置</td>
+<td>运行时行为、交互验证、多人同步</td>
+</tr>
+<tr>
+<td><strong>执行方式</strong></td>
+<td>MCP 自动优先，不可用则 ✋手动</td>
+<td>MCP 辅助：截图&#x2F;日志&#x2F;属性检查</td>
+</tr>
+<tr>
+<td><strong>责任人</strong></td>
+<td>各 coder 产出 → build-verifier 初检 → code-reviewer 聚合</td>
+<td>code-reviewer 产出 → 用户执行</td>
+</tr>
+</tbody></table>
+<p><strong>关键洞察</strong>：把”让功能存在”和”让功能正确”分开，避免了”编译通过了但 PIE 进不去”的死循环。</p>
+<hr>
+<h2 id="五、核心设计三：流程-Bug-反馈闭环"><a href="#五、核心设计三：流程-Bug-反馈闭环" class="headerlink" title="五、核心设计三：流程 Bug 反馈闭环"></a>五、核心设计三：流程 Bug 反馈闭环</h2><p>这是框架中最独特的机制——<strong>Bug 不仅是代码 bug，也包括流程 bug、架构决策 bug</strong>。</p>
+<h3 id="5-1-六条流程-Bug-实录（精选）"><a href="#5-1-六条流程-Bug-实录（精选）" class="headerlink" title="5.1 六条流程 Bug 实录（精选）"></a>5.1 六条流程 Bug 实录（精选）</h3><p>在短短两周的开发中，框架自身捕获并修复了 6 条流程级缺陷：</p>
+<table>
+<thead>
+<tr>
+<th>Bug</th>
+<th>现象</th>
+<th>根因</th>
+<th>修复</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>PROC-BUG-0001</strong></td>
+<td>Architect 未评估 Lyra 方案，直接创建 Character 子类</td>
+<td>Agent 定义缺少架构对齐约束</td>
+<td>architect 增加 BLOCKING 级「Lyra 架构对齐评估」节</td>
+</tr>
+<tr>
+<td><strong>PROC-BUG-0002</strong></td>
+<td>430 行错误代码通过了 15 维审查</td>
+<td>Code-reviewer 维度缺少架构对齐检查</td>
+<td>新增维度 0（阻断）：Lyra 架构对齐，扩展至 16 维</td>
+</tr>
+<tr>
+<td><strong>PROC-BUG-0004</strong></td>
+<td>因 LYRAGAME_API 缺失误判，创建了 ~285 行不必要的平行类</td>
+<td>混淆了”编辑器实例化”与”C++ 子类化”</td>
+<td>区分能力矩阵：MinimalAPI+UE_API virtual &#x3D; 可子类化</td>
+</tr>
+<tr>
+<td><strong>PROC-BUG-0005</strong></td>
+<td>UTowerExperienceDefinition 是不必要的 C++ 子类 + 缺少 ActionSet 复用层</td>
+<td>重演 LYRA-API 误判 + 不了解 ActionSet 机制</td>
+<td>删除子类，改用 Lyra 原生 DataAsset + ActionSet</td>
+</tr>
+<tr>
+<td><strong>PROC-BUG-0006</strong></td>
+<td>误判 MinimalAPI 类不可跨模块子类化</td>
+<td>对 UE 导出宏机制理解不完整</td>
+<td>文档化 MinimalAPI 判定矩阵，修正 REQ-0005</td>
+</tr>
+</tbody></table>
+<h3 id="5-2-反馈闭环设计"><a href="#5-2-反馈闭环设计" class="headerlink" title="5.2 反馈闭环设计"></a>5.2 反馈闭环设计</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">生产事故 → Bug 知识条目 → Agent 定义更新 → 规范文档更新</span><br><span class="line">                                        │</span><br><span class="line">                    ┌───────────────────┘</span><br><span class="line">                    ▼</span><br><span class="line">            下一次同类请求 → Agent 自动遵循新规则</span><br></pre></td></tr></table></figure>
+
+<p>每条流程 Bug 的修复都涉及<strong>两层变更</strong>：</p>
+<ol>
+<li><strong>Agent 定义层</strong>：修改 <code>.claude/agents/</code> 中的 agent prompt</li>
+<li><strong>共享规范层</strong>：修改 <code>conventions.md</code> 中的编码约定</li>
+</ol>
+<p>这保证了”同样的错误不会犯两次”——不是靠人记忆，而是靠 agent 定义形成硬约束。</p>
+<hr>
+<h2 id="六、已产出内容：Souls-like-战斗系统"><a href="#六、已产出内容：Souls-like-战斗系统" class="headerlink" title="六、已产出内容：Souls-like 战斗系统"></a>六、已产出内容：Souls-like 战斗系统</h2><p>框架在两周内产出的实际游戏内容：</p>
+<h3 id="6-1-战斗-GA（6-个）"><a href="#6-1-战斗-GA（6-个）" class="headerlink" title="6.1 战斗 GA（6 个）"></a>6.1 战斗 GA（6 个）</h3><table>
+<thead>
+<tr>
+<th>GA</th>
+<th>机制亮点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>UTowerAbility_Attack</code></td>
+<td>轻攻击连段（Combo Window）+ 重攻击单发 + GAS 原生 Cost 体力消耗</td>
+</tr>
+<tr>
+<td><code>UTowerAbility_Dodge</code></td>
+<td>MotionWarping 位移 + 0.15s 无敌帧 + ServerInitiated 网络模式</td>
+</tr>
+<tr>
+<td><code>UTowerAbility_Block</code></td>
+<td>按住持续消耗体力（StaminaDrainEffect）+ 伤害减免 GE</td>
+</tr>
+<tr>
+<td><code>UTowerAbility_Parry</code></td>
+<td>窗口判定（0.1s-0.3s）+ 成功施加 RiposteReady Tag + 失败施加 Stunned</td>
+</tr>
+<tr>
+<td><code>UTowerAbility_Riposte</code></td>
+<td>目标搜索 + MotionWarping 突进 + 3x 伤害 GE + Exclusive_Blocking</td>
+</tr>
+<tr>
+<td><code>UTowerAbility_TargetLock</code></td>
+<td>锥形扫描 + 相机模式切换，LocalOnly &#x2F; Independent</td>
+</tr>
+</tbody></table>
+<h3 id="6-2-属性集（5-个）"><a href="#6-2-属性集（5-个）" class="headerlink" title="6.2 属性集（5 个）"></a>6.2 属性集（5 个）</h3><p><code>UTowerStaminaSet</code> &#x2F; <code>UTowerHealthSet</code> &#x2F; <code>UTowerManaSet</code> &#x2F; <code>UTowerBuildStatsSet</code> &#x2F; 复用 <code>ULyraHealthSet</code></p>
+<p>其中 <code>UTowerBuildStatsSet</code> 实现了 Souls-like 的 6 属性成长体系（力&#x2F;敏&#x2F;智&#x2F;信 + 经验等级），带保底曲线 + Bonus GE + 6 委托回调。</p>
+<h3 id="6-3-输入配置"><a href="#6-3-输入配置" class="headerlink" title="6.3 输入配置"></a>6.3 输入配置</h3><p>10 个 InputAction + IMC + <code>ULyraInputConfig</code> 完整链路，<strong>零新 C++ 类</strong>——全部复用 Lyra 原生框架。</p>
+<hr>
+<h2 id="七、踩坑记录"><a href="#七、踩坑记录" class="headerlink" title="七、踩坑记录"></a>七、踩坑记录</h2><h3 id="7-1-UE5-6-迁移：4-轮迭代"><a href="#7-1-UE5-6-迁移：4-轮迭代" class="headerlink" title="7.1 UE5.6 迁移：4 轮迭代"></a>7.1 UE5.6 迁移：4 轮迭代</h3><p>从 UE5.4 迁移到 5.6 时遇到的编译问题：</p>
+<ul>
+<li><code>CppCompileWarningSettings</code> Build.cs API 弃用</li>
+<li>UHT 裸指针强制 <code>TObjectPtr</code></li>
+<li><code>TChooseClass</code> 移除 → 改用 <code>std::conditional_t</code></li>
+<li>UnLua 全量替换至 v2.3.6</li>
+</ul>
+<h3 id="7-2-GameFeature-资产搜索路径"><a href="#7-2-GameFeature-资产搜索路径" class="headerlink" title="7.2 GameFeature 资产搜索路径"></a>7.2 GameFeature 资产搜索路径</h3><p>PIE 启动时 <code>GameFeatureData is missing</code>。根因是引擎的 GF 搜索路径有首选&#x2F;备选两级——<code>/Game/</code> 和 <code>/Plugins/GameFeatures/&lt;PluginName&gt;/</code>。解决：在备选路径创建同名 DataAsset，而非修改引擎配置。</p>
+<h3 id="7-3-ULyraExperienceDefinition-的-API-导出"><a href="#7-3-ULyraExperienceDefinition-的-API-导出" class="headerlink" title="7.3 ULyraExperienceDefinition 的 API 导出"></a>7.3 <code>ULyraExperienceDefinition</code> 的 API 导出</h3><p>Lyra 核心类没有 <code>LYRAGAME_API</code> 导出宏，意味着<strong>不能从外部 GameFeature 插件的 C++ 代码中继承它</strong>。正确做法是用蓝图 DataAsset 实例化，而非 C++ 子类化。</p>
+<h3 id="7-4-MinimalAPI-UE-API-virtual-的微妙语义"><a href="#7-4-MinimalAPI-UE-API-virtual-的微妙语义" class="headerlink" title="7.4 MinimalAPI + UE_API virtual 的微妙语义"></a>7.4 MinimalAPI + UE_API virtual 的微妙语义</h3><p><code>MinimalAPI</code> 不等于”不可用”。关键区别：</p>
+<ul>
+<li><code>MinimalAPI</code> + <code>virtual</code> + <code>UE_API</code> &#x3D; 可以从外部 DLL <strong>跨模块子类化</strong></li>
+<li>无 API 导出 &#x3D; 只能在本模块使用</li>
+</ul>
+<p>这个误判导致了一次 ~150 行不必要代码的教训（PROC-BUG-0006）。</p>
+<h3 id="7-5-架构审查盲区"><a href="#7-5-架构审查盲区" class="headerlink" title="7.5 架构审查盲区"></a>7.5 架构审查盲区</h3><p>最有价值的教训：<strong>代码审查的 15 个维度全过了，但架构选型是错的</strong>。430 行 <code>ATowerCharacter</code> 通过了所有审查标准——代码风格、GC 安全、网络同步、GAS 模式——但本质上是错的，因为在 Lyra 体系中，创建 Character C++ 子类是反模式。这暴露了”审查维度完备 ≠ 审查结论正确”，需要在维度之上加一层架构级硬约束。</p>
+<hr>
+<h2 id="八、架构可改进点"><a href="#八、架构可改进点" class="headerlink" title="八、架构可改进点"></a>八、架构可改进点</h2><table>
+<thead>
+<tr>
+<th>问题</th>
+<th>现状</th>
+<th>改进方向</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Agent 上下文重复加载</strong></td>
+<td>每个 Agent 启动时都需读取 conventions.md（~200 行）</td>
+<td>Claude Code 的 prompt caching 可缓解，但跨 agent 不共享。考虑将高频规范编译为子提示词模板</td>
+</tr>
+<tr>
+<td><strong>编辑器自动化成功率</strong></td>
+<td>MCP 工具覆盖率高，但部分操作（如复杂的 DataAsset 字段填充）仍需手动</td>
+<td>持续向 MCP 上游贡献工具增强；编写项目级 MCP 包装脚本</td>
+</tr>
+<tr>
+<td><strong>PIE 阻塞链</strong></td>
+<td>REQ-0005&#x2F;0006&#x2F;0008 的 PIE 验收因动画系统未完成而阻塞</td>
+<td>引入 Mock 策略——在动画就位前用数据化替代方案验证核心逻辑</td>
+</tr>
+<tr>
+<td><strong>多 REQ 并发时的文件冲突</strong></td>
+<td>当前靠 architect 预分配文件所有权</td>
+<td>引入 worktree 隔离 + 合并仲裁 agent</td>
+</tr>
+<tr>
+<td><strong>Lyra 版本同步</strong></td>
+<td>当前手动跟踪 LyraStarterGame 更新</td>
+<td>自动化 diff 检测 + 影响分析（可利用 GitNexus 技能）</td>
+</tr>
+<tr>
+<td><strong>测试覆盖</strong></td>
+<td>当前依赖 PIE 手动验收，无自动化测试</td>
+<td>引入 Gauntlet 功能测试 + GAS 单元测试框架</td>
+</tr>
+</tbody></table>
+<hr>
+<blockquote>
+<p>这个项目的核心收获是：<strong>AI 辅助开发的瓶颈不在 AI 能力，而在工程流程设计</strong>。21 个 Agent 写出能编译的 C++ 不难，难的是写出”符合 Lyra 架构、资产就位、网络同步安全、PIE 可验收”的完整功能。填这个坑的不是更强的模型，而是流程约束、MCP 自动化、双清单体系和 Bug 反馈闭环。</p>
+</blockquote>
+<hr>
+<p><em>Lyra-WarTower 持续迭代中。如果你对 AI 辅助 UE5 开发、多智能体编排、或 MCP 编辑器自动化感兴趣，欢迎交流。</em></p>
+]]></content>
+      <categories>
+        <category>Portfolio</category>
+      </categories>
+      <tags>
+        <tag>Lyra</tag>
+        <tag>Unreal</tag>
+        <tag>GameFeature</tag>
+        <tag>GAS</tag>
+        <tag>MCP</tag>
+        <tag>Claude Code</tag>
+        <tag>AI-Assisted Development</tag>
+        <tag>Vibe Coding</tag>
       </tags>
   </entry>
   <entry>
@@ -604,11 +2333,11 @@
       <tags>
         <tag>UE5</tag>
         <tag>Unreal</tag>
+        <tag>GAS</tag>
         <tag>Animation</tag>
         <tag>AnimationBlueprint</tag>
         <tag>BlendSpace</tag>
         <tag>Montage</tag>
-        <tag>GAS</tag>
         <tag>GameplayAbilitySystem</tag>
         <tag>Portfolio</tag>
       </tags>

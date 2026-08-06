@@ -1,0 +1,181 @@
+/* ===== TOC 目录去掉默认有序列表序号 ===== */
+.toc,
+.toc-child {
+  list-style: none;
+  padding-left: 0;
+}
+
+/* ===== 全局中文字体优化 ===== */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei",
+               "Hiragino Sans GB", sans-serif;
+}
+
+/* 标题加粗 + 适当字间距 */
+#post h1,
+#post h2,
+#post h3,
+#post h4 {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+/* 去掉标题前面的图标前缀（如果 beautify 没关干净） */
+#post h1:before,
+#post h2:before,
+#post h3:before,
+#post h4:before {
+  display: none !important;
+  content: none !important;
+}
+
+/* ===== 首页三栏布局（左栏 | 文章 | 右栏） ===== */
+
+/* 有左栏时放宽整体布局 + 缩小两侧留白，让左右栏靠边 */
+.layout:has(.home-left-sidebar) {
+  max-width: 1580px;
+  padding-left: 8px;
+  padding-right: 8px;
+  gap: 16px;
+}
+
+/* 消除右栏自带的左内边距，让三栏间距统一由 gap 控制 */
+.layout:has(.home-left-sidebar) #aside-content {
+  padding-left: 0;
+}
+
+/* ---- 左栏（分类 + 公告 + 标签）---- */
+.home-left-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  position: sticky;
+  position: -webkit-sticky;
+  top: 20px;
+  transition: top 0.3s;
+}
+
+/* 左栏卡片 —— 复刻 #aside-content .card-widget */
+.home-left-sidebar .card-widget {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+  padding: 20px 24px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--card-box-shadow);
+  transition: all 0.3s;
+}
+
+.home-left-sidebar .card-widget:hover {
+  box-shadow: var(--card-hover-box-shadow);
+}
+
+.home-left-sidebar .item-headline {
+  padding-bottom: 6px;
+  font-size: 1.2em;
+}
+
+.home-left-sidebar .item-headline span {
+  margin-left: 6px;
+}
+
+/* 公告喇叭图标红色 */
+.home-left-sidebar .card-announcement .item-headline i {
+  color: #FF0000;
+}
+
+/* ---- 左栏分类列表（复刻 #aside-content 同名样式）---- */
+.home-left-sidebar .card-categories ul.card-category-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-left-sidebar .card-categories ul.card-category-list > .card-category-list-item a {
+  display: flex;
+  flex-direction: row;
+  margin: 2px 0;
+  padding: 2px 8px;
+  color: var(--font-color);
+  transition: all 0.3s;
+  border-radius: 7px;
+  text-decoration: none;
+}
+
+.home-left-sidebar .card-categories ul.card-category-list > .card-category-list-item a:hover {
+  padding: 2px 12px;
+  background-color: var(--text-bg-hover);
+  color: var(--white);
+}
+
+.home-left-sidebar .card-categories .card-category-list-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-left-sidebar .card-categories .card-category-list-count {
+  text-align: right;
+}
+
+/* 子分类缩进 */
+.home-left-sidebar .card-categories .card-category-list.child {
+  padding: 0 0 0 16px;
+}
+
+/* ---- 左栏标签云（复刻 #aside-content 同名样式）---- */
+.home-left-sidebar .card-tag-cloud a {
+  display: inline-block;
+  padding: 0 4px;
+  line-height: 1.8;
+}
+
+.home-left-sidebar .card-tag-cloud a:hover {
+  color: #49b1f5 !important;
+}
+
+/* ---- 中间文章区域（替代 .layout > div:first-child 的默认宽度）---- */
+.layout > .home-main {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+  align-self: flex-start;
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--card-box-shadow);
+  padding: 50px 40px;
+  margin: 0;
+  transition: all 0.3s;
+}
+
+.layout > .home-main:hover {
+  box-shadow: var(--card-hover-box-shadow);
+}
+
+/* ---- 移动端：三栏堆叠 ---- */
+@media screen and (max-width: 900px) {
+  .layout:has(.home-left-sidebar) {
+    max-width: none;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .home-left-sidebar {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .layout > .home-main {
+    width: 100% !important;
+    margin: 0;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .layout > .home-main {
+    padding: 36px 14px;
+  }
+}

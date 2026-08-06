@@ -1,0 +1,213 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CD = CoolDown · CountDown · CombatDesign - CD的游戏开发自留地</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Combat designer crafting ARPG gameplay across Unreal &amp; Unity. Skills, hit feel, frame data, and the numbers behind the fun.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:url" content="https://cd-cd.top/page/2/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="Combat designer crafting ARPG gameplay across Unreal &amp; Unity. Skills, hit feel, frame data, and the numbers behind the fun.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="game development,combat design,ARPG,Unreal Engine,Unity,C++,gameplay programming">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/page/2/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CD = CoolDown · CountDown · CombatDesign',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'home'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">14</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">50</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">3</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> Categories</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="full_page" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> About</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> Archives</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> Categories</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="site-info"><h1 id="site-title">CD = CoolDown · CountDown · CombatDesign</h1><div id="site_social_icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><aside class="home-left-sidebar"><div class="card-widget card-categories"><div class="item-headline">
+            <i class="fas fa-folder-open"></i>
+            <span>Categories</span>
+            
+          </div>
+          <ul class="card-category-list" id="aside-cat-list">
+            <li class="card-category-list-item "><a class="card-category-list-link" href="/categories/Career/"><span class="card-category-list-name">Career</span><span class="card-category-list-count">1</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/Lyra-%E6%A1%86%E6%9E%B6%E6%8B%86%E8%A7%A3/"><span class="card-category-list-name">Lyra 框架拆解</span><span class="card-category-list-count">8</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/Portfolio/"><span class="card-category-list-name">Portfolio</span><span class="card-category-list-count">5</span></a></li>
+          </ul></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>Tags</span></div><div class="card-tag-cloud"><a href="/tags/Portfolio/" style="font-size: 1.2em; color: #999da3">Portfolio</a> <a href="/tags/Claude-Code/" style="font-size: 1.1em; color: #999">Claude Code</a> <a href="/tags/Experience/" style="font-size: 1.1em; color: #999">Experience</a> <a href="/tags/Lyra/" style="font-size: 1.5em; color: #99a9bf">Lyra</a> <a href="/tags/Unreal-Engine/" style="font-size: 1.1em; color: #999">Unreal Engine</a> <a href="/tags/UE5/" style="font-size: 1.3em; color: #99a1ac">UE5</a> <a href="/tags/Inventory/" style="font-size: 1.1em; color: #999">Inventory</a> <a href="/tags/GameFeature/" style="font-size: 1.3em; color: #99a1ac">GameFeature</a> <a href="/tags/Data-Driven/" style="font-size: 1.1em; color: #999">Data-Driven</a> <a href="/tags/Architecture/" style="font-size: 1.1em; color: #999">Architecture</a> <a href="/tags/BlendSpace/" style="font-size: 1.2em; color: #999da3">BlendSpace</a> <a href="/tags/Equipment/" style="font-size: 1.1em; color: #999">Equipment</a> <a href="/tags/GameplayAbilitySystem/" style="font-size: 1.2em; color: #999da3">GameplayAbilitySystem</a> <a href="/tags/UI/" style="font-size: 1.1em; color: #999">UI</a> <a href="/tags/Component/" style="font-size: 1.1em; color: #999">Component</a> <a href="/tags/Tower-Defense/" style="font-size: 1.1em; color: #999">Tower Defense</a> <a href="/tags/Character/" style="font-size: 1.1em; color: #999">Character</a> <a href="/tags/Animation/" style="font-size: 1.2em; color: #999da3">Animation</a> <a href="/tags/DataTable/" style="font-size: 1.1em; color: #999">DataTable</a> <a href="/tags/Fragment/" style="font-size: 1.1em; color: #999">Fragment</a> <a href="/tags/%E5%A1%94%E9%98%B2/" style="font-size: 1.1em; color: #999">塔防</a> <a href="/tags/portfolio/" style="font-size: 1.1em; color: #999">portfolio</a> <a href="/tags/AbilitySet/" style="font-size: 1.1em; color: #999">AbilitySet</a> <a href="/tags/EnhancedInput/" style="font-size: 1.1em; color: #999">EnhancedInput</a> <a href="/tags/ModularGameplay/" style="font-size: 1.3em; color: #99a1ac">ModularGameplay</a> <a href="/tags/GAS/" style="font-size: 1.4em; color: #99a5b6">GAS</a> <a href="/tags/FFastArraySerializer/" style="font-size: 1.1em; color: #999">FFastArraySerializer</a> <a href="/tags/AI-Assisted-Development/" style="font-size: 1.1em; color: #999">AI-Assisted Development</a> <a href="/tags/UIExtension/" style="font-size: 1.1em; color: #999">UIExtension</a> <a href="/tags/Montage/" style="font-size: 1.2em; color: #999da3">Montage</a> <a href="/tags/GameplayAbility/" style="font-size: 1.1em; color: #999">GameplayAbility</a> <a href="/tags/CommonUI/" style="font-size: 1.1em; color: #999">CommonUI</a> <a href="/tags/Gameplay-Programming/" style="font-size: 1.1em; color: #999">Gameplay Programming</a> <a href="/tags/DataAsset/" style="font-size: 1.1em; color: #999">DataAsset</a> <a href="/tags/NetworkReplication/" style="font-size: 1.1em; color: #999">NetworkReplication</a> <a href="/tags/GameplayTag/" style="font-size: 1.3em; color: #99a1ac">GameplayTag</a> <a href="/tags/Blueprint/" style="font-size: 1.1em; color: #999">Blueprint</a> <a href="/tags/Networking/" style="font-size: 1.1em; color: #999">Networking</a> <a href="/tags/Input/" style="font-size: 1.1em; color: #999">Input</a> <a href="/tags/career/" style="font-size: 1.1em; color: #999">career</a></div></div></aside><div class="home-main nc"><div class="recent-posts nc" id="recent-posts"><div class="recent-post-items"><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2026/08/06/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6/" title="Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络">Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2026-08-06T07:00:00.000Z" title="Created 2026-08-06 15:00:00">2026-08-06</time></span><span class="article-meta"><span class="article-meta-separator">|</span><i class="fas fa-inbox"></i><a class="article-meta__categories" href="/categories/Portfolio/">Portfolio</a></span></div><div class="content">项目概览   项 内容    类型 AI 辅助游戏开发基础设施 &#x2F; 多智能体编排框架   引擎 UE5.4+（已迁移至 5.6）   核心框架 Lyra（Experience + GameFeature + GAS + Enhanced Input）   智能体数量 21 个专家子代理（9 执行层 + 6 知识层 + 6 Lyra 知识层）   MCP 工具 23 个，覆盖资产&#x2F;蓝图&#x2F;GAS&#x2F;动画&#x2F;PIE&#x2F;编译全流程   已产出内容 6 核心战斗 GA + 5 属性集 + 输入配置 + GameFeature 插件架构   开发周期 2026.07.13 — 至今（持续迭代）   这是一个为 Vibe Coding 设计的 UE5 开发框架——不是传统意义上的游戏项目，而是一套让 AI 能可靠地参与 UE5 游戏开发的工程基础设施。它回答了”当 AI 写游戏代码时，怎么保证架构正确、编译通过、资产就位、行为验收？”这个问题。  一、问题定义：Vibe Coding 在 UE5 中的三个断层“Vibe Coding”——用...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2026/08/06/UE5%E5%8A%A8%E7%94%BB%E7%B3%BB%E7%BB%9F%E4%B8%A4%E7%A7%8D%E6%9E%B6%E6%9E%84-TPS%E4%B8%8EARPG%E5%AF%B9%E6%AF%94/" title="UE5 动画系统两种架构：TPS Blend Space 状态机 vs ARPG Montage + GAS 事件驱动">UE5 动画系统两种架构：TPS Blend Space 状态机 vs ARPG Montage + GAS 事件驱动</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2026-08-06T06:00:00.000Z" title="Created 2026-08-06 14:00:00">2026-08-06</time></span><span class="article-meta"><span class="article-meta-separator">|</span><i class="fas fa-inbox"></i><a class="article-meta__categories" href="/categories/Portfolio/">Portfolio</a></span></div><div class="content">项目概览这两篇文章的上下文——一个侧重动画系统本身的学习，一个侧重 GAS 战斗系统的搭建。但放在一起看，它们的动画架构恰好代表了 UE5 的两条主流路线：     TPS Tutorial Crunch    引擎版本 5.3 5.4   类型 第三人称射击 近战 ARPG &#x2F; MOBA   角色资源 Marketplace 侦探模型 + IK Retarget Paragon Crunch   动画资产规模 ~200+ 序列帧 ~20 序列帧   Blend Space 7 个 2 个   Animation Montage 4 个 4 个（按技能组织）   C++ AnimInstance 无 自定义 UCAnimInstance   自定义 AnimNotify 无 AN_SendGameplayEvent + AN_SendTargetGroup   核心驱动 Enhanced Input → CharacterMovement → AnimBP GAS AbilityTask → Montage → GameplayEvent    一、核心差异：表现丰富度...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2026/08/06/TPS%E5%8A%A8%E7%94%BB%E7%B3%BB%E7%BB%9F%E5%AE%9E%E8%B7%B5-ABP-%E5%85%AB%E5%90%91%E7%A7%BB%E5%8A%A8-Montage/" title="TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤">TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2026-08-06T04:00:00.000Z" title="Created 2026-08-06 12:00:00">2026-08-06</time></span><span class="article-meta"><span class="article-meta-separator">|</span><i class="fas fa-inbox"></i><a class="article-meta__categories" href="/categories/Portfolio/">Portfolio</a></span></div><div class="content">项目概览   项 内容    引擎 Unreal Engine 5.3   类型 第三人称射击（TPS）动画系统 Demo   核心标签 Animation Blueprint · Blend Space · Montage · IK Retargeting · Enhanced Input   一个聚焦 UE5 动画系统的 TPS 角色 Demo。核心产物是一个完整的 Animation Blueprint（ABP_MyCharacter），包含完整的移动状态机、7 个 Blend Space、4 个 Animation Montage，配合 IK Retargeter 将 Mannequin 动画重定向到自定义角色模型。  一、Animation Blueprint 总体架构ABP 是 UE 动画系统的枢纽。本项目的 ABP_MyCharacter 设计分三层： 123456789101112ABP_MyCharacter├── Event Graph          ← 每帧从 C++ / BP 拿数据，更新动画变量├── Anim Graph (主输出)│   ├── ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2026/08/05/crunch-ue-gamplay-ability-system-and-network-sync/" title="Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步">Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2026-08-05T04:00:00.000Z" title="Created 2026-08-05 12:00:00">2026-08-05</time></span><span class="article-meta"><span class="article-meta-separator">|</span><i class="fas fa-inbox"></i><a class="article-meta__categories" href="/categories/Portfolio/">Portfolio</a></span></div><div class="content">项目概览   项 内容    引擎 Unreal Engine 5.4   类型 第三人称动作 RPG &#x2F; MOBA 风格   角色资源 Epic Paragon（Crunch + Minions）   源码规模 ~80 个 C++ 文件，覆盖 GAS &#x2F; AI &#x2F; UI &#x2F; Inventory   核心标签 GAS Network Replication Combo System RPG Attributes Enhanced Input   一个从零搭建的 Unreal 动作游戏 Demo。角色是 Paragon 的 Crunch——一个近战拳击手，核心战斗围绕轻击连招、浮空 UpperCut、地面 AOE 轰炸展开。底层完全基于 Gameplay Ability System 搭建，”服务器权威”模型做网络同步。    📦 高清下载: EasyLink云链   一、为什么选 GAS？架构总览1.1 决策背景做动作游戏 Demo 时，技能系统有几种常见路线：    方案 优点 痛点    手写状态机 完全可控，无黑盒 技能一多，状态爆...</div></div></div></div><nav id="pagination"><div class="pagination"><a class="extend prev" rel="prev" href="/"><i class="fas fa-chevron-left fa-fw"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span></div></nav></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">14</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">50</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Posts</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F/" title="Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入">Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入</a><time datetime="2026-08-06T11:30:00.000Z" title="Created 2026-08-06 19:30:00">2026-08-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/" title="Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径">Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径</a><time datetime="2026-08-06T11:00:00.000Z" title="Created 2026-08-06 19:00:00">2026-08-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F/" title="Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层">Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</a><time datetime="2026-08-06T10:30:00.000Z" title="Created 2026-08-06 18:30:00">2026-08-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/06/ArcaneRush-UE5-Blueprint-Portfolio/" title="ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战">ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</a><time datetime="2026-08-06T10:00:00.000Z" title="Created 2026-08-06 18:00:00">2026-08-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/06/Lyra-05-Equipment-Inventory/" title="Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构">Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构</a><time datetime="2026-08-06T10:00:00.000Z" title="Created 2026-08-06 18:00:00">2026-08-06</time></div></div></div></div><div class="card-widget card-archives">
+    <div class="item-headline">
+      <i class="fas fa-archive"></i>
+      <span>Archives</span>
+      
+    </div>
+  
+    <ul class="card-archive-list">
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/08/">
+            <span class="card-archive-list-date">
+              August 2026
+            </span>
+            <span class="card-archive-list-count">14</span>
+          </a>
+        </li>
+      
+    </ul>
+  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>Website Info</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">Article Count :</div><div class="item-count">14</div></div><div class="webinfo-item"><div class="item-name">Unique Visitors :</div><div class="item-count" id="busuanzi_value_site_uv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">Page Views :</div><div class="item-count" id="busuanzi_value_site_pv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">Last Update :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-08-06T17:58:50.028Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>
