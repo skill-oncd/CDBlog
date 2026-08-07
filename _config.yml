@@ -110,8 +110,15 @@ search:
 encrypt:
   enable: true
   theme: 'default'
-  password: mianshi01
-  session: true
+  autoSave: true
+  message: '🔒 此内容需密码访问'
+  wrong_pass_message: '密码不正确，请重试'
+  decryptButton:
+    show: true
+    text: '确认'
+  tags:
+    - name: Portfolio
+      password: mianshi01
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment

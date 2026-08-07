@@ -9,9 +9,9 @@ tags:
   - Gameplay Programming
   - DataTable
   - 塔防
+  - Portfolio
 categories:
   - Portfolio
-encrypt: true
 description: 基于 UE5.6 的 ArcaneRush，C++ 编写数据层 + 蓝图实现全部游戏逻辑。涵盖多层级继承、DataTable 数据驱动、WorldSubsystem Buff 系统、Spline 寻路、Behavior Tree AI、波次管理及完整局内外 UI。第一个独立 UE 项目，侧重引擎基础功能熟练度与蓝图大规模工程化能力展示。
 ---
 

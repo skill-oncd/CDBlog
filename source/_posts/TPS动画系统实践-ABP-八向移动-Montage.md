@@ -8,9 +8,9 @@ tags:
   - AnimationBlueprint
   - BlendSpace
   - Montage
+  - Portfolio
 categories:
   - Portfolio
-encrypt: true
 description: 以 UE5.3 TPS 项目为例，拆解 Animation Blueprint 状态机设计、Blend Space 八向移动实现、Animation Montage 的搭建步骤与 C++ / BP 数据链路。
 ---
 
