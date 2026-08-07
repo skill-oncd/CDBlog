@@ -42,7 +42,7 @@ const CUSTOM_CSS = `
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
+  gap: 0.8rem;
   margin: 0;
   padding: 0;
   width: 100%;
@@ -103,7 +103,6 @@ const CUSTOM_CSS = `
   width: 100% !important;
   max-width: 100% !important;
   height: auto !important;
-  margin-top: 0.8rem !important;
   padding: 0.75rem 1.5rem !important;
   background: #2a7ae2 !important;
   color: #fff !important;
