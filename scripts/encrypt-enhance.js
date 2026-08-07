@@ -15,7 +15,7 @@ const CUSTOM_CSS = `
   position: relative;
   max-width: 420px;
   margin: 2.5rem auto 1.2rem auto;
-  padding: 1.6rem 2rem;
+  padding: 1.6rem 2rem 1.2rem 2rem;
   border-radius: 16px;
   background: rgba(255,255,255,0.30);
   backdrop-filter: blur(20px);
@@ -42,7 +42,7 @@ const CUSTOM_CSS = `
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0;
   margin: 0;
   padding: 0;
   width: 100%;
@@ -103,6 +103,7 @@ const CUSTOM_CSS = `
   width: 100% !important;
   max-width: 100% !important;
   height: auto !important;
+  margin-top: 0.8rem !important;
   padding: 0.75rem 1.5rem !important;
   background: #2a7ae2 !important;
   color: #fff !important;
