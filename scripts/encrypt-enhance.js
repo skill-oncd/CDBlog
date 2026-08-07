@@ -221,76 +221,77 @@ html[data-theme="dark"] .hbe-error {
 }
 </style>`;
 
-// Part A: expiry check — runs BEFORE the hbe bundle (synchronous, injected right before <script data-pjax>)
+// Part A: expiry check — runs BEFORE the hbe bundle (synchronous)
 const EXPIRY_CHECK_JS = `
 <script>
 (function() {
-  var TIMESTAMP_KEY = '${STORAGE_KEY}';
-  var EXPIRE_MS = ${EXPIRE_DAYS} * 24 * 60 * 60 * 1000;
-  var now = new Date().getTime();
-  var saved = localStorage.getItem(TIMESTAMP_KEY);
-  if (saved) {
-    var age = now - parseInt(saved, 10);
-    if (age > EXPIRE_MS) {
-      // Clear expired hbe keys BEFORE the bundle loads
-      var toRemove = [];
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k && k.indexOf('hbe') === 0) toRemove.push(k);
-      }
-      for (var r = 0; r < toRemove.length; r++) localStorage.removeItem(toRemove[r]);
-      localStorage.removeItem(TIMESTAMP_KEY);
+  var T = '${STORAGE_KEY}';
+  var DAYS = ${EXPIRE_DAYS};
+  var now = Date.now();
+  var ts = localStorage.getItem(T);
+  if (ts && (now - parseInt(ts,10) > DAYS * 86400000)) {
+    var rm = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('hbe') === 0) rm.push(k);
     }
+    for (var r = 0; r < rm.length; r++) localStorage.removeItem(rm[r]);
+    localStorage.removeItem(T);
+    localStorage.removeItem('hbeSharedPwd');
   }
 })();
 </script>`;
 
-// Part B: timestamp refresh — runs AFTER the hbe bundle (at </body>)
+// Part B: cross-page password sharing + timestamp refresh — runs AFTER the hbe bundle
 const REFRESH_JS = `
 <script>
 (function() {
-  var TIMESTAMP_KEY = '${STORAGE_KEY}';
+  var T = '${STORAGE_KEY}';
+  var S = 'hbeSharedPwd';
 
-  function refresh() {
-    localStorage.setItem(TIMESTAMP_KEY, String(new Date().getTime()));
-  }
+  function ts() { localStorage.setItem(T, String(Date.now())); }
 
   function setup() {
     var container = document.getElementById('hexo-blog-encrypt');
     if (!container) return;
 
-    // 0. Add placeholder to password input
-    var passField = document.getElementById('hbePass');
-    if (passField) { passField.placeholder = '请输入密码'; }
-
-    // 1. On form submit, refresh timestamp immediately (before decrypt finishes)
+    var pass = document.getElementById('hbePass');
     var form = document.getElementById('hbeForm');
-    if (form) {
-      form.addEventListener('submit', function() { refresh(); });
+    if (!pass || !form) return;
+
+    // 0. Placeholder
+    pass.placeholder = '请输入密码';
+
+    // 1. Cross-page auto-fill: if we have a shared password from another post, use it
+    var shared = localStorage.getItem(S);
+    if (shared) {
+      pass.value = shared;
+      // Use requestSubmit for proper event handling, fallback to submit()
+      setTimeout(function() {
+        if (form.requestSubmit) form.requestSubmit();
+        else form.submit();
+      }, 100);
+      return;
     }
 
-    // 2. If already auto-decrypted on load (key was cached & valid), refresh timestamp
-    var passField = document.getElementById('hbePass');
-    if (passField && passField.style.display === 'none') {
-      // Input hidden means already decrypted
-      refresh();
-    }
+    // 2. On manual submit: save password for cross-page sharing + refresh timestamp
+    form.addEventListener('submit', function() {
+      if (pass.value) localStorage.setItem(S, pass.value);
+      ts();
+    });
 
-    // 3. Watch for container removal (successful decrypt)
-    var observer = new MutationObserver(function(mutations) {
-      for (var m = 0; m < mutations.length; m++) {
-        for (var n = 0; n < mutations[m].removedNodes.length; n++) {
-          if (mutations[m].removedNodes[n].id === 'hexo-blog-encrypt') {
-            refresh();
-            observer.disconnect();
-            return;
-          }
+    // 3. If already auto-decrypted (cached key valid), refresh timestamp
+    if (pass.style.display === 'none') ts();
+
+    // 4. Watch for container removal (successful manual decrypt)
+    var obs = new MutationObserver(function(ms) {
+      for (var m = 0; m < ms.length; m++) {
+        for (var n = 0; n < ms[m].removedNodes.length; n++) {
+          if (ms[m].removedNodes[n].id === 'hexo-blog-encrypt') { ts(); obs.disconnect(); return; }
         }
       }
     });
-    if (container.parentNode) {
-      observer.observe(container.parentNode, { childList: true });
-    }
+    if (container.parentNode) obs.observe(container.parentNode, { childList: true });
   }
 
   if (document.readyState === 'loading') {
