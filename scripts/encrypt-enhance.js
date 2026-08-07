@@ -14,8 +14,8 @@ const CUSTOM_CSS = `
 .hbe-container {
   position: relative;
   max-width: 420px;
-  margin: 3rem auto 1.5rem auto;
-  padding: 2.2rem 2rem;
+  margin: 2.5rem auto 1.2rem auto;
+  padding: 1.6rem 2rem;
   border-radius: 16px;
   background: rgba(255,255,255,0.30);
   backdrop-filter: blur(20px);
@@ -32,7 +32,7 @@ const CUSTOM_CSS = `
   font-size: 1.15rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
   line-height: 1;
   letter-spacing: 0.03em;
 }
@@ -42,7 +42,7 @@ const CUSTOM_CSS = `
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.6rem;
   margin: 0;
   padding: 0;
   width: 100%;
@@ -55,12 +55,7 @@ const CUSTOM_CSS = `
   margin: 0 !important;
 }
 .hbe-input-label-default {
-  position: static !important;
-  width: 100% !important;
-  text-align: center !important;
-  pointer-events: auto !important;
-  padding: 0 !important;
-  float: none !important;
+  display: none !important;
 }
 .hbe-input-label-default::before,
 .hbe-input-label-default::after {
@@ -68,18 +63,9 @@ const CUSTOM_CSS = `
   content: none !important;
 }
 
-/* --- 提示文字：输入框下方轻提示 --- */
+/* --- 提示文字：隐藏（placeholder 已说明） --- */
 .hbe-input-label-content-default {
-  display: block !important;
-  padding: 0.5rem 0 0 0 !important;
-  font-size: 0.85rem !important;
-  font-weight: 400 !important;
-  color: #999 !important;
-  text-align: center !important;
-  transform: none !important;
-  transition: none !important;
-  transform-origin: unset !important;
-  letter-spacing: 0.02em;
+  display: none !important;
 }
 
 /* --- 输入框 --- */
