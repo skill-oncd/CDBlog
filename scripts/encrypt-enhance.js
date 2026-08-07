@@ -48,6 +48,8 @@ const CUSTOM_CSS = `
 /* ===== 彻底干掉 default 主题的动画 label ===== */
 .hbe-input-default {
   overflow: visible !important;
+  width: 100% !important;
+  margin: 0 !important;
 }
 .hbe-input-label-default {
   position: static !important;
@@ -219,78 +221,98 @@ html[data-theme="dark"] .hbe-error {
 }
 </style>`;
 
-// JS injected for 7-day localStorage expiry
-const CUSTOM_JS = `
+// Part A: expiry check — runs BEFORE the hbe bundle (synchronous, injected right before <script data-pjax>)
+const EXPIRY_CHECK_JS = `
 <script>
 (function() {
   var TIMESTAMP_KEY = '${STORAGE_KEY}';
   var EXPIRE_MS = ${EXPIRE_DAYS} * 24 * 60 * 60 * 1000;
+  var now = new Date().getTime();
+  var saved = localStorage.getItem(TIMESTAMP_KEY);
+  if (saved) {
+    var age = now - parseInt(saved, 10);
+    if (age > EXPIRE_MS) {
+      // Clear expired hbe keys BEFORE the bundle loads
+      var toRemove = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('hbe') === 0) toRemove.push(k);
+      }
+      for (var r = 0; r < toRemove.length; r++) localStorage.removeItem(toRemove[r]);
+      localStorage.removeItem(TIMESTAMP_KEY);
+    }
+  }
+})();
+</script>`;
 
-  function now() { return new Date().getTime(); }
+// Part B: timestamp refresh — runs AFTER the hbe bundle (at </body>)
+const REFRESH_JS = `
+<script>
+(function() {
+  var TIMESTAMP_KEY = '${STORAGE_KEY}';
 
-  // Check if saved password is still within 7-day window
-  function checkExpiry() {
-    var saved = localStorage.getItem(TIMESTAMP_KEY);
-    if (saved) {
-      var age = now() - parseInt(saved, 10);
-      if (age > EXPIRE_MS) {
-        // Expired — clear all hbe-related localStorage entries
-        var keys = [];
-        for (var i = 0; i < localStorage.length; i++) {
-          keys.push(localStorage.key(i));
-        }
-        for (var j = 0; j < keys.length; j++) {
-          if (keys[j] && keys[j].indexOf('hbe') === 0) {
-            localStorage.removeItem(keys[j]);
+  function refresh() {
+    localStorage.setItem(TIMESTAMP_KEY, String(new Date().getTime()));
+  }
+
+  function setup() {
+    var container = document.getElementById('hexo-blog-encrypt');
+    if (!container) return;
+
+    // 1. On form submit, refresh timestamp immediately (before decrypt finishes)
+    var form = document.getElementById('hbeForm');
+    if (form) {
+      form.addEventListener('submit', function() { refresh(); });
+    }
+
+    // 2. If already auto-decrypted on load (key was cached & valid), refresh timestamp
+    var passField = document.getElementById('hbePass');
+    if (passField && passField.style.display === 'none') {
+      // Input hidden means already decrypted
+      refresh();
+    }
+
+    // 3. Watch for container removal (successful decrypt)
+    var observer = new MutationObserver(function(mutations) {
+      for (var m = 0; m < mutations.length; m++) {
+        for (var n = 0; n < mutations[m].removedNodes.length; n++) {
+          if (mutations[m].removedNodes[n].id === 'hexo-blog-encrypt') {
+            refresh();
+            observer.disconnect();
+            return;
           }
         }
-        localStorage.removeItem(TIMESTAMP_KEY);
       }
+    });
+    if (container.parentNode) {
+      observer.observe(container.parentNode, { childList: true });
     }
   }
 
-  // Refresh timestamp after successful decrypt
-  function refreshTimestamp() {
-    localStorage.setItem(TIMESTAMP_KEY, String(now()));
-  }
-
-  // Hook into the decrypt button click and Enter key
-  function setupHook() {
-    var form = document.getElementById('hbeForm');
-    if (!form) return;
-
-    form.addEventListener('submit', function() {
-      // Wait a moment for autoSave to store the key, then refresh timestamp
-      setTimeout(refreshTimestamp, 500);
-    });
-  }
-
-  // Run on load
-  checkExpiry();
-
-  // Setup hook after DOM ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupHook);
+    document.addEventListener('DOMContentLoaded', setup);
   } else {
-    setupHook();
+    setup();
   }
-
-  // Also expose manual refresh in case auto-detection misses
-  window.__hbeRefreshTimestamp = refreshTimestamp;
-  window.__hbeCheckExpiry = checkExpiry;
 })();
 </script>`;
 
 // Hexo filter: inject CSS + JS only into pages that contain encrypted content
 hexo.extend.filter.register('after_render:html', function(html, data) {
-  // Only inject on pages with encryption container
   if (!html.includes('hbe-container')) return html;
 
-  // Inject CSS before </head>
+  // 1) CSS → <head>
   html = html.replace('</head>', CUSTOM_CSS + '\n</head>');
 
-  // Inject JS before </body>
-  html = html.replace('</body>', CUSTOM_JS + '\n</body>');
+  // 2) Expiry check → BEFORE the plugin's bundle <script> tag, so stale keys
+  //    are cleared synchronously before the bundle tries to auto-decrypt.
+  html = html.replace(
+    /(<script[^>]*data-pjax[^>]*src="[^"]*hbe\.[0-9a-f]{10}\.js"[^>]*><\/script>)/,
+    EXPIRY_CHECK_JS + '\n$1'
+  );
+
+  // 3) Timestamp refresh hook → </body>
+  html = html.replace('</body>', REFRESH_JS + '\n</body>');
 
   return html;
 }, 10);
