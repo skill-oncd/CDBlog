@@ -13,15 +13,15 @@ const CUSTOM_CSS = `
 /* --- 容器：毛玻璃卡片 --- */
 .hbe-container {
   position: relative;
-  max-width: 440px;
-  margin: 3rem auto;
-  padding: 2.8rem 2.2rem;
+  max-width: 420px;
+  margin: 3rem auto 1.5rem auto;
+  padding: 2.2rem 2rem;
   border-radius: 16px;
-  background: rgba(255,255,255,0.72);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,0.45);
-  box-shadow: 0 4px 40px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
+  background: rgba(255,255,255,0.30);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
 }
 
 /* --- 锁图标 --- */
@@ -29,8 +29,8 @@ const CUSTOM_CSS = `
   content: "🔐";
   display: block;
   text-align: center;
-  font-size: 2.4rem;
-  margin-bottom: 1rem;
+  font-size: 2rem;
+  margin-bottom: 0.6rem;
   line-height: 1;
 }
 
@@ -39,7 +39,7 @@ const CUSTOM_CSS = `
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.7rem;
   margin: 0;
   padding: 0;
   width: 100%;
@@ -68,10 +68,10 @@ const CUSTOM_CSS = `
 /* --- 提示文字：始终可见 --- */
 .hbe-input-label-content-default {
   display: block !important;
-  padding: 0 0 0.9rem 0 !important;
-  font-size: 1.05rem !important;
+  padding: 0 0 0.5rem 0 !important;
+  font-size: 1rem !important;
   font-weight: 500 !important;
-  color: #444 !important;
+  color: #555 !important;
   text-align: center !important;
   transform: none !important;
   transition: none !important;
@@ -84,8 +84,8 @@ const CUSTOM_CSS = `
   display: block !important;
   width: 100% !important;
   float: none !important;
-  padding: 0.8rem 1rem !important;
-  margin: 0 0 0.4rem 0 !important;
+  padding: 0.7rem 1rem !important;
+  margin: 0 !important;
   background: rgba(245,245,245,0.85) !important;
   color: #333 !important;
   border: 1.5px solid rgba(0,0,0,0.10) !important;
@@ -168,9 +168,9 @@ const CUSTOM_CSS = `
  * ============================================================ */
 [data-theme="dark"] .hbe-container,
 html[data-theme="dark"] .hbe-container {
-  background: rgba(30,32,48,0.75);
-  border-color: rgba(255,255,255,0.10);
-  box-shadow: 0 4px 40px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.20);
+  background: rgba(20,22,36,0.35);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.40), 0 1px 3px rgba(0,0,0,0.15);
 }
 [data-theme="dark"] .hbe-input-label-content-default,
 html[data-theme="dark"] .hbe-input-label-content-default {
