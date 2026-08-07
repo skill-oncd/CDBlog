@@ -24,14 +24,17 @@ const CUSTOM_CSS = `
   box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
 }
 
-/* --- 锁图标 --- */
+/* --- 顶部标题 --- */
 .hbe-container::before {
-  content: "🔐";
+  content: "此内容访问受限";
   display: block;
   text-align: center;
-  font-size: 2rem;
-  margin-bottom: 0.6rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
   line-height: 1;
+  letter-spacing: 0.03em;
 }
 
 /* --- 表单 --- */
@@ -65,13 +68,13 @@ const CUSTOM_CSS = `
   content: none !important;
 }
 
-/* --- 提示文字：始终可见 --- */
+/* --- 提示文字：输入框下方轻提示 --- */
 .hbe-input-label-content-default {
   display: block !important;
-  padding: 0 0 0.5rem 0 !important;
-  font-size: 1rem !important;
-  font-weight: 500 !important;
-  color: #555 !important;
+  padding: 0.5rem 0 0 0 !important;
+  font-size: 0.85rem !important;
+  font-weight: 400 !important;
+  color: #999 !important;
   text-align: center !important;
   transform: none !important;
   transition: none !important;
@@ -96,10 +99,17 @@ const CUSTOM_CSS = `
   z-index: auto !important;
   transition: border-color 0.25s, background 0.25s, box-shadow 0.25s !important;
 }
+.hbe-input-field-default::placeholder {
+  color: #bbb;
+  font-size: 0.95rem;
+}
 .hbe-input-field-default:focus {
   border-color: #4d8df0 !important;
   background: rgba(255,255,255,0.95) !important;
   box-shadow: 0 0 0 3px rgba(77,141,240,0.15) !important;
+}
+.hbe-input-field-default:focus::placeholder {
+  color: #ccc;
 }
 
 /* --- 解密按钮 --- */
@@ -171,6 +181,10 @@ html[data-theme="dark"] .hbe-container {
   background: rgba(20,22,36,0.35);
   border-color: rgba(255,255,255,0.08);
   box-shadow: 0 8px 32px rgba(0,0,0,0.40), 0 1px 3px rgba(0,0,0,0.15);
+}
+[data-theme="dark"] .hbe-container::before,
+html[data-theme="dark"] .hbe-container::before {
+  color: #c8ccd4;
 }
 [data-theme="dark"] .hbe-input-label-content-default,
 html[data-theme="dark"] .hbe-input-label-content-default {
@@ -258,6 +272,10 @@ const REFRESH_JS = `
   function setup() {
     var container = document.getElementById('hexo-blog-encrypt');
     if (!container) return;
+
+    // 0. Add placeholder to password input
+    var passField = document.getElementById('hbePass');
+    if (passField) { passField.placeholder = '请输入密码'; }
 
     // 1. On form submit, refresh timestamp immediately (before decrypt finishes)
     var form = document.getElementById('hbeForm');

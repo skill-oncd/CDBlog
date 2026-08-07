@@ -111,7 +111,7 @@ encrypt:
   enable: true
   theme: 'default'
   autoSave: true
-  message: '🔒 此内容需密码访问'
+  message: '请输入密码'
   wrong_pass_message: '密码不正确，请重试'
   decryptButton:
     show: true
