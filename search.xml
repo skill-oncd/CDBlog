@@ -35,7 +35,7 @@
 <td>面试题、作品集思路、行业洞察</td>
 </tr>
 </tbody></table>
-<p>没有通稿式的”技术分享”，只有一线开发者的真实记录。</p>
+<p>没有通稿式的”技术分享”，只有一线开发者的真实记录——如果你也在做类似的事情，希望这些内容对你有用。</p>
 <h2 id="当前进度"><a href="#当前进度" class="headerlink" title="当前进度"></a>当前进度</h2><blockquote>
 <p><strong>正在做：</strong> 一款 ARPG 的战斗 &amp; 技能系统</p>
 <p><strong>引擎：</strong> Unreal (C++ &#x2F; Blueprint) · Unity (C#)</p>
@@ -58,6 +58,88 @@
         <tag>portfolio</tag>
         <tag>game-design</tag>
         <tag>career</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>聊聊 MMO 战斗设计——一些不太成熟的笔记</title>
+    <url>/2026/08/07/MMO-Combat-Design-Methodology/</url>
+    <content><![CDATA[<h2 id="缘起"><a href="#缘起" class="headerlink" title="缘起"></a>缘起</h2><p>MMO 战斗设计是一个挺有意思的领域。它不像单机动作游戏那样有相对成熟的范式可以参考——精确的打击帧、客户端级停顿、逐帧调校的受击动画，这些在单机里理所当然的东西，放到网络同步、服务器校验、同屏几十人的环境下，往往就走不通了。</p>
+<p>但也正是这些限制，让 MMO 的战斗设计有了自己的味道。下面整理了一些平时思考这个方向时觉得比较有趣的观察角度，写下来算是给自己存档，也希望能抛砖引玉。</p>
+<hr>
+<h2 id="一、反馈的诚实性：看到的和发生的是同一件事吗？"><a href="#一、反馈的诚实性：看到的和发生的是同一件事吗？" class="headerlink" title="一、反馈的诚实性：看到的和发生的是同一件事吗？"></a>一、反馈的诚实性：看到的和发生的是同一件事吗？</h2><p>MMO 战斗中有一个容易被低估的问题，我习惯叫它「反馈的诚实性」。</p>
+<p>想象这样一个场景：你放了一个控制技能，目标怪物播放了浮空或眩晕动画，但它的攻击其实没有被打断——于是你继续站桩输出，然后莫名其妙掉了半管血。事后复盘才发现，动画归动画，逻辑归逻辑，两者从来没对齐过。</p>
+<p>对体验的伤害，可能比”怪物太难了”要大。难，玩家可以练。但被骗，玩家会觉得这游戏不讲道理。</p>
+<p>一个可以尝试的方向是：让画面表现跟逻辑判定保持一致。怪物看起来被控了，逻辑上就应该被控；看起来没被控，逻辑上也别硬来。这里面需要排查的边界 case 不少——不同等级的怪物、不同类型的控制效果、不同网络状况下的动画同步——但方向本身是明确的。</p>
+<p>另一个相关的问题是特效强度与伤害反馈的匹配。一套技能特效飞天遁地、屏幕抖动拉满，结果跳出来的伤害数字还没平 A 高。一次两次玩家可能觉得好笑，多了以后大脑就会学到一件事：不用看特效，反正跟实际伤害没关系。这对沉浸感的伤害比很多技术缺陷都大。</p>
+<p>有一个自己用过的土办法：关掉伤害数字，只靠动画、音效和屏幕反馈来打一场，能不能大致感知到每次攻击的轻重？如果能，这个维度就算及格了。</p>
+<hr>
+<h2 id="二、规则的亲和力：玩家能摸到门道吗？"><a href="#二、规则的亲和力：玩家能摸到门道吗？" class="headerlink" title="二、规则的亲和力：玩家能摸到门道吗？"></a>二、规则的亲和力：玩家能摸到门道吗？</h2><h3 id="「直觉」其实不是玄学"><a href="#「直觉」其实不是玄学" class="headerlink" title="「直觉」其实不是玄学"></a>「直觉」其实不是玄学</h3><p>「符合直觉」是战斗设计里一个高频词，但它很容易被理解成一种不可言说的玄学。我自己的理解是：直觉不是什么神秘的东西，它是玩家在跟这套规则互动了一阵之后，脑子里的认知模型跟系统实际运作方式之间的吻合度。</p>
+<p>举个例子：MOBA 里大部分技能是锁定的，追踪到天涯海角也要打中。很少有人抱怨这个——因为在 MOBA 这个品类里，大家的默认预期就是「放了技能会追踪」，这不违和。但如果在另一个强调走位和闪避的游戏里，出现了大量无法规避的锁定技能，玩家就会觉得有什么地方不对。</p>
+<p>所以与其追求「符合直觉」这个模糊的说法，也许不如追求规则的自洽——同类机制行为一致，不同类机制边界清晰，玩家学了前三条规则后就能自行推断第四条。</p>
+<h3 id="锁定-vs-动作，可能是个伪命题"><a href="#锁定-vs-动作，可能是个伪命题" class="headerlink" title="锁定 vs 动作，可能是个伪命题"></a>锁定 vs 动作，可能是个伪命题</h3><p>讨论区里经常能看到「有锁定等于没操作」「无锁定才叫动作」之类的说法。但仔细想想，好像不是这么回事。</p>
+<p>一个带锁定机制的战斗系统也可以很有操作深度，只要做到几点：锁定本身有条件（距离不够锁不到、被格挡会脱离锁定），存在主动规避手段（闪避、格挡这类），而且用了规避比硬扛要赚。反过来，一个完全没有锁定的系统也可能手感稀烂——如果命中判定模糊、怪物的移动方式不可预测、技能范围提示看不清的话。</p>
+<p>看一些成功的作品会发现，很多广受好评的战斗系统并不以「动作性强不强」来定义自己。回合制的策略空间、FPS 那个「瞄了→打了→中了」的极短闭环，各有各的魅力。MMO 大概不需要成为 ACT，它需要的是在自己的框架里找到那个讲得通、玩得转的平衡点。</p>
+<hr>
+<h2 id="三、节奏的松弛感：打上头了，有没有喘口气的地方？"><a href="#三、节奏的松弛感：打上头了，有没有喘口气的地方？" class="headerlink" title="三、节奏的松弛感：打上头了，有没有喘口气的地方？"></a>三、节奏的松弛感：打上头了，有没有喘口气的地方？</h2><h3 id="刺激这件事是会疲劳的"><a href="#刺激这件事是会疲劳的" class="headerlink" title="刺激这件事是会疲劳的"></a>刺激这件事是会疲劳的</h3><p>持续高潮就没有高潮——这道理好像谁都懂，但在做战斗设计的时候又很容易忘。因为开发者经常是在测试环境下反复调一个技能的反馈，调到觉得「嗯这个够爽」为止。然后把所有调到「够爽」的技能塞进同一个副本，结果就是全程高强度刺激，玩家五分钟就麻了。</p>
+<p>从认知科学的角度看，这是感官耐受的典型表现：同一个强度的刺激，反复接受后会越来越不敏感。这在 MMO 里比单机更致命，因为 MMO 的一场副本可能打几十分钟甚至更久。</p>
+<p>所以设计中有意识地找「收」的时刻会有帮助。不同游戏类型各自摸索出了一些办法：</p>
+<ul>
+<li>MOBA 用技能 CD 来自然制造低谷——放完一套技能后那几秒钟的走位和补刀，就是玩家「重置感官」的时间</li>
+<li>动作游戏让怪物做反制行为——后跳、防御、霸体强行反击——把节奏强行拉一下</li>
+<li>射击游戏的换弹动作，其实也是一个精心设计的节拍器</li>
+</ul>
+<p>MMO 有个自己的小麻烦：角色性能往往给得很足，CD 短、技能多，玩家能一直高强度输出。直接砍 CD 通常会引发玩家反弹（会感觉被削弱了），但可以换个思路——在敌方行为和关卡编排上做变化。比如 Boss 阶段转换时的演出动画，不只是图好看，也是帮玩家把手从键盘上拿开、让感官重置一下的机会。又比如在群怪波次之间插入一小段跑路时间，本身就是天然的呼吸节奏。</p>
+<p>一个用过的实用方法：录一场副本战斗，在时间轴上标 APM 变化曲线。如果从头到尾几乎是一条直线——可能说明节奏上少了一些松弛设计。</p>
+<hr>
+<h2 id="四、对玩家劳动的尊重：努力被看见了吗？"><a href="#四、对玩家劳动的尊重：努力被看见了吗？" class="headerlink" title="四、对玩家劳动的尊重：努力被看见了吗？"></a>四、对玩家劳动的尊重：努力被看见了吗？</h2><h3 id="操作该有回报"><a href="#操作该有回报" class="headerlink" title="操作该有回报"></a>操作该有回报</h3><p>这件事说起来有点虚，但其实是战斗体验的基石。</p>
+<p>如果玩家做了一个正确的操作但依然失败了，这是合理的挑战。但如果玩家做了一个正确的操作、系统却没有给出相应的积极信号——那就是另一回事了。前者让玩家觉得「我还不够强」，去练习、去提升；后者让玩家觉得「这游戏不讲道理」，然后可能就不玩了。</p>
+<p>有三个细节方向，在实际项目里很容易被忽视：</p>
+<p><strong>一个是闪避的价值确认。</strong> 很多 MMO 里闪避就是一段纯位移，没有无敌帧，没有伤害减免。在 PVE 中也确实大多数时候走位就能解决。久而久之玩家就不闪了——不是不会，是没必要。可以尝试的方向是，闪避成功给一个短暂的小增益，哪怕只是下一次平 A 伤害高一点，让「闪完立刻反打」变成一个有意思的战术选项。同时给一个清晰的视听确认信号，让玩家感知到「这把闪得漂亮」。</p>
+<p><strong>一个是控制技能的确定性。</strong> 玩家交一个长 CD 的控制，结果目标看起来中了控但实际上技能结算没停。这种体验比直接被抵抗还要糟糕——抵抗至少是明牌告诉你不行，而动画欺骗是让你以为行了然后被打脸。如果某些怪物确实需要免疫控制，让它看起来就免疫——明确的霸体特效、免疫文字提示——反而比「看起来被控了但实际没被控」更容易接受。</p>
+<p><strong>一个是成长能否被感知到。</strong> 「原来要一套连招才能带走的小怪，现在平 A 两下就没了」——这是战斗中成长感的具象化。但如果在某个等级段换了个地图，怪物属性跟着同步膨胀了，秒杀又变刮痧，玩家就感受不到这种变化了。在关卡设计中有意识地在后期地图保留一些早期怪物，让玩家有机会回头碾压一下，其实是一种很低成本的正反馈。</p>
+<h3 id="多说一句关于正负反馈"><a href="#多说一句关于正负反馈" class="headerlink" title="多说一句关于正负反馈"></a>多说一句关于正负反馈</h3><p>做战斗设计的时候很容易花大量精力在负面反馈上——打不过的惩罚、失误的代价。这当然重要。但如果一场战斗中只有负面反馈没有正面反馈，玩家学到的东西可能是「不管怎么做都是错的」而不是「这样打才是对的」。</p>
+<p>两种反馈各有角色：正面反馈帮玩家确认「这条路可以走」，负面反馈帮玩家知道「这条路走不通」。两者配比失衡的话，战斗体验会很奇怪。</p>
+<hr>
+<h2 id="五、不同的人，不同的战场：系统够不够包容？"><a href="#五、不同的人，不同的战场：系统够不够包容？" class="headerlink" title="五、不同的人，不同的战场：系统够不够包容？"></a>五、不同的人，不同的战场：系统够不够包容？</h2><h3 id="同一个系统，不同场景下是两码事"><a href="#同一个系统，不同场景下是两码事" class="headerlink" title="同一个系统，不同场景下是两码事"></a>同一个系统，不同场景下是两码事</h3><p>一套在 1v1 里很精妙的战斗机制，原封不动扔进 40 人团本，大概率变成灾难——特效堆在一起谁也看不清谁、锁定目标在人群里来回跳、Boss 机制被队友的 UI 遮挡到完全看不到。</p>
+<p>这可能不是系统本身的问题，而是每个战斗规模其实需要自己的表达方式：</p>
+<ul>
+<li>1v1 侧重可读性——技能前摇后摇要看得清，反制窗口要明确</li>
+<li>小队副本侧重分工感——职业之间的差异要能派上用场</li>
+<li>团本侧重信息降噪——同时发生的事太多了，需要帮玩家过滤掉不重要的</li>
+<li>大规模 PVP 侧重生存弹性——控制链不能无限滚雪球，视觉上要有层级</li>
+</ul>
+<h3 id="不同的玩家，不同的乐趣"><a href="#不同的玩家，不同的乐趣" class="headerlink" title="不同的玩家，不同的乐趣"></a>不同的玩家，不同的乐趣</h3><p>MMO 的用户群可能是所有游戏品类里最散的——同一台服务器上，有人每天上线八小时追求极限，有人周末上来看看风景聊聊天。</p>
+<p>让同一套战斗系统同时打动这两拨人，坦率地说不太现实。更可行的思路可能是多给一些玩法出口：</p>
+<ul>
+<li>喜欢挑战的 → 有竞速、有排行榜、有容错极低的高级难度</li>
+<li>普通玩家 → 正常难度下核心机制保留，但犯错代价温和</li>
+<li>轻度玩家 → 可以单刷的剧情模式，战斗的味道在但压力不大</li>
+</ul>
+<p>一个挺有意义的设计方向是：让高操作玩家有展示空间——排行榜、特殊成就、外观这类——但不要把高操作变成体验核心内容的唯一条件。能秀的人有地方秀，秀不动的人也能愉快地玩下去，两种体验不互相伤害。</p>
+<p>另外，MMO 相比纯竞技游戏有个很大的优势：评价体系可以多元。竞技游戏基本只有输赢和段位，MMO 可以用社交、探索、收集、生产、外观这些维度去定义「玩得好」。如果连副本挑战都可以有不同维度的评价——计时成绩、无伤通关、特定条件下的胜利——不同类型玩家就都能找到证明自己的方式。</p>
+<hr>
+<h2 id="收尾"><a href="#收尾" class="headerlink" title="收尾"></a>收尾</h2><p>零零碎碎写了这么多，其实就是围绕五个角度在聊：</p>
+<ol>
+<li><strong>反馈的诚实性</strong> — 画面和逻辑别各说各话</li>
+<li><strong>规则的亲和力</strong> — 一致性比「动作化」更值得追求</li>
+<li><strong>节奏的松弛感</strong> — 别一直高潮，给玩家留个喘息的间隙</li>
+<li><strong>劳动的可见性</strong> — 对了就夸，错了就提示，别让玩家摸黑走路</li>
+<li><strong>出口的多样性</strong> — 不同规模、不同受众，都需要被考虑到</li>
+</ol>
+<p>这些都是平时学习和观察中的一些个人体会，远谈不上成体系的方法论。每一条展开来都有太多细节可以深挖——打击感的多通道反馈怎么做、网络延迟下的受击动画怎么处理、不同职业的操作门槛怎么设置——这些如果有机会以后再慢慢聊。</p>
+<blockquote>
+<p>如果你也在做这个方向，或者对这些话题感兴趣，很希望能交流一下。一个人闷头想总有些盲区，聊着聊着说不定就通了。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>GameDesign</category>
+      </categories>
+      <tags>
+        <tag>GameDesign</tag>
+        <tag>MMO</tag>
+        <tag>CombatDesign</tag>
+        <tag>战斗系统</tag>
+        <tag>游戏策划</tag>
       </tags>
   </entry>
   <entry>
@@ -104,7 +186,7 @@
 </tr>
 </tbody></table>
 <hr>
-<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 UI 系统是一个<strong>四层可组合架构</strong>——其核心不是一个 <code>AHUD</code> 子类，而是一个 <strong>GameplayTag 驱动的发布&#x2F;订阅引擎</strong>（<code>UUIExtensionSubsystem</code>）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的最佳实践参考。</p>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 <code>AHUD</code> 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（<code>UUIExtensionSubsystem</code>）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。</p>
 <hr>
 <h2 id="一，为什么不直接用-UMG-HUD？"><a href="#一，为什么不直接用-UMG-HUD？" class="headerlink" title="一，为什么不直接用 UMG HUD？"></a>一，为什么不直接用 UMG HUD？</h2><p>在传统 UE 项目中，最自然的 UI 做法是：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">AHUD::<span class="built_in">BeginPlay</span>() &#123;</span><br><span class="line">    MainWidget = <span class="built_in">CreateWidget</span>&lt;UMainHUD&gt;(PlayerController, MainHUDClass);</span><br><span class="line">    MainWidget-&gt;<span class="built_in">AddToViewport</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -168,7 +250,7 @@
 <h2 id="六，Indicator-系统：3D-世界-→-2D-屏幕投影"><a href="#六，Indicator-系统：3D-世界-→-2D-屏幕投影" class="headerlink" title="六，Indicator 系统：3D 世界 → 2D 屏幕投影"></a>六，Indicator 系统：3D 世界 → 2D 屏幕投影</h2><p>Lyra 的离屏指示器系统（离屏目标箭头）是 UI 系统中另一个值得学习的独立子系统：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ULyraIndicatorManagerComponent (挂载在 PlayerController)</span><br><span class="line">  ├── IndicatorDescriptor[] — 需要跟踪的目标列表（位置 + 数据）</span><br><span class="line">  └── 通知 SActorCanvas（纯 Slate Panel）</span><br><span class="line">        └── 每帧 ActiveTimer: 3D WorldPos → 2D ScreenPos（ProjectWorldLocationToScreen）</span><br><span class="line">              ├── 在屏幕内 → 显示图标</span><br><span class="line">              └── 在屏幕外 → Clamp + 旋转箭头指向屏幕外方向</span><br></pre></td></tr></table></figure>
 
-<p><strong>为什么用纯 Slate 而非 UMG？</strong></p>
+<p>为什么用纯 Slate 而非 UMG？</p>
 <ul>
 <li>性能：ActorCanvas 每帧遍历所有指示器做 3D→2D 投影。如果用 UMG Widget，每个指示器一个 Widget 对象 → 大量创建&#x2F;销毁开销</li>
 <li><code>FUserWidgetPool</code> 池化：即使只在 Slate 层，Widget 实例仍然从池中获取和归还</li>
@@ -229,7 +311,7 @@
 <td>GameplayTag 发布&#x2F;订阅 + CommonUI 多层级 Stack + 异步注入</td>
 </tr>
 </tbody></table>
-<p><strong>Lyra 在所有这些系统中有同一个设计 DNA：数据驱动注入 + GameplayTag 中介 + 组合优于继承 + 异步不阻塞。</strong> 理解这个 DNA，比记住任何具体类的 API 都重要。</p>
+<p>Lyra 在所有这些系统中有同一个设计 DNA：数据驱动注入 + GameplayTag 中介 + 组合优于继承 + 异步不阻塞。理解这个 DNA，比记住任何具体类的 API 都重要。</p>
 <hr>
 <p><em>这是 Lyra 框架拆解系列的最后一篇。如果你对某个系统的实现细节有更深入的问题，欢迎交流。</em></p>
 ]]></content>
@@ -289,11 +371,11 @@
 </tr>
 </tbody></table>
 <hr>
-<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的网络同步架构不是”用一套方案解决所有问题”——它构建了<strong>四层分层协作体系</strong>，从底层的 Iris 序列化到上层的 VerbMessage 消息广播，每一层解决一个粒度的同步需求。最关键的设计决策：<strong>ReplicationGraph 默认禁用</strong>——先跑起来，性能瓶颈出现时再逐层启用优化。</p>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的网络同步架构不是”用一套方案解决所有问题”——它构建了四层分层协作体系，从底层的 Iris 序列化到上层的 VerbMessage 消息广播，每一层解决一个粒度的同步需求。一个值得注意的设计决策：ReplicationGraph 默认禁用——先跑起来，性能瓶颈出现时再逐层启用优化。</p>
 <hr>
 <h2 id="一，五层同步架构"><a href="#一，五层同步架构" class="headerlink" title="一，五层同步架构"></a>一，五层同步架构</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Gameplay 层:  UPROPERTY(Replicated) / FFastArray / RPC</span><br><span class="line">   ↓          基础同步原语 —— 简单的 float/HUD 走属性，数组走 FastArray，一次性事件走 RPC</span><br><span class="line">消息层:       FLyraVerbMessage（FFastArray + GameplayMessageSubsystem）</span><br><span class="line">   ↓          跨系统的轻量事件广播（击杀广播、助攻消息、控制点占领）</span><br><span class="line">压缩层:       FSharedRepMovement / FLyraReplicatedAcceleration</span><br><span class="line">   ↓          移动数据共享——多个客户端观察同一个角色时，共享序列化结果</span><br><span class="line">LOD 层:       ULyraSignificanceManager</span><br><span class="line">   ↓          基于重要性动态调整复制频率（占位，框架已注册但未完成实现）</span><br><span class="line">路由层:       ULyraReplicationGraph / Iris ObjectReplicationBridge</span><br><span class="line">   ↓          按 Actor 类型分派到不同复制节点 —— 每个连接只收到&quot;相关&quot;的数据</span><br><span class="line">Iris 传输层:   过滤 → 优先级排序 → 序列化 → Delta 压缩 → 带宽分配</span><br></pre></td></tr></table></figure>
 
-<p><strong>核心原则：每一层可以独立替换或禁用。</strong> 这是 Lyra 最务实的网络设计决策——不是”给你一套完美但必须全用的系统”，而是”给你一套可逐层启用的工具集”。</p>
+<p>核心原则：每一层可以独立替换或禁用。 这是 Lyra 最务实的网络设计决策——不是”给你一套完美但必须全用的系统”，而是”给你一套可逐层启用的工具集”。</p>
 <hr>
 <h2 id="二，Iris-与-ReplicationGraph-的分工"><a href="#二，Iris-与-ReplicationGraph-的分工" class="headerlink" title="二，Iris 与 ReplicationGraph 的分工"></a>二，Iris 与 ReplicationGraph 的分工</h2><h3 id="Iris：下一代复制系统"><a href="#Iris：下一代复制系统" class="headerlink" title="Iris：下一代复制系统"></a>Iris：下一代复制系统</h3><p>Iris 是 UE5 新的底层复制框架（替代旧的 <code>UNetDriver</code> 复制管线），在 <code>LyraGame.Build.cs</code> 中通过一行宏启用：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">SetupIrisSupport</span>(Target);</span><br></pre></td></tr></table></figure>
@@ -610,9 +692,9 @@
 <hr>
 <h2 id="八，ARPG-落地要点"><a href="#八，ARPG-落地要点" class="headerlink" title="八，ARPG 落地要点"></a>八，ARPG 落地要点</h2><p>对于 TowerChallenge：</p>
 <ol>
-<li><strong>不要给每个 Ability 创建专属 InputAction</strong>——通过 InputTag 区分。攻击&#x2F;格挡&#x2F;弹反都用同一个按键（右键），但通过 ActivationGroup + 当前状态决定触发哪个 GA</li>
-<li><strong>NativeInputActions 保持最小</strong>——只放移动（WASD）、视角（Mouse）、菜单。战斗全部走 AbilityInputActions</li>
-<li><strong>插件级输入配置放 GameFeature 内</strong>——每个 GameFeature 定义自己的 IMC 和 InputConfig，不污染项目级配置</li>
+<li>通过 InputTag 区分而非给每个 Ability 创建专属 InputAction。攻击&#x2F;格挡&#x2F;弹反都用同一个按键（右键），但通过 ActivationGroup + 当前状态决定触发哪个 GA</li>
+<li>NativeInputActions 保持最小——只放移动（WASD）、视角（Mouse）、菜单。战斗全部走 AbilityInputActions</li>
+<li>插件级输入配置放 GameFeature 内——每个 GameFeature 定义自己的 IMC 和 InputConfig，不污染项目级配置</li>
 </ol>
 <hr>
 <blockquote>
@@ -667,22 +749,22 @@
 
 <p>📦 高清下载: <a href="https://easylink.cc/wuspmt">EasyLink云链</a></p>
 <hr>
-<h2 id="一、架构总览"><a href="#一、架构总览" class="headerlink" title="一、架构总览"></a>一、架构总览</h2><h3 id="1-1-设计思路：C-管数据，蓝图管逻辑"><a href="#1-1-设计思路：C-管数据，蓝图管逻辑" class="headerlink" title="1.1 设计思路：C++ 管数据，蓝图管逻辑"></a>1.1 设计思路：C++ 管数据，蓝图管逻辑</h3><p>初学时面临一个关键选择：逻辑写 C++ 还是蓝图？最终选择 <strong>C++ 定义基类和数据结构 + 蓝图实现全部游戏逻辑</strong>：</p>
+<h2 id="一、架构总览"><a href="#一、架构总览" class="headerlink" title="一、架构总览"></a>一、架构总览</h2><h3 id="1-1-设计思路：C-管数据，蓝图管逻辑"><a href="#1-1-设计思路：C-管数据，蓝图管逻辑" class="headerlink" title="1.1 设计思路：C++ 管数据，蓝图管逻辑"></a>1.1 设计思路：C++ 管数据，蓝图管逻辑</h3><p>初学时面临一个选择：逻辑写 C++ 还是蓝图？最终选择了 C++ 定义基类和数据结构 + 蓝图实现全部游戏逻辑：</p>
 <ul>
 <li><strong>C++ 层</strong>：类继承体系 + DataTable 结构体 + 伤害公式 + Buff 子系统 + 工具函数</li>
 <li><strong>蓝图层</strong>：塔攻击流程、敌人 AI、Hero 技能、HUD 交互、波次调度、存档读取</li>
 </ul>
-<p>这样分工的好处是：数据结构和性能敏感的计算在 C++ 中类型安全且可断点调试，而频繁迭代的游戏逻辑在蓝图中可视化和快速调整。</p>
+<p>这样分工的好处：数据结构和性能敏感的计算在 C++ 中类型安全且可断点调试，而频繁迭代的游戏逻辑在蓝图中可视化和快速调整。</p>
 <h3 id="1-2-类继承体系"><a href="#1-2-类继承体系" class="headerlink" title="1.2 类继承体系"></a>1.2 类继承体系</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ACharacter</span><br><span class="line">  └── ABaseCharacter      ← 所有角色基类（血量/伤害/护甲/Buff 管理）</span><br><span class="line">        ├── ABaseEnemy     ← 敌人（Spline 寻路 + Behavior Tree AI）</span><br><span class="line">        ├── ABaseHero      ← 英雄（技能 + 复活机制）</span><br><span class="line">        └── ABaseSoldier   ← 兵营士兵（复活 + 独立动画）</span><br><span class="line"></span><br><span class="line">AActor</span><br><span class="line">  └── ABaseTower          ← 塔（多级升级 + 投射物 + 范围检测）</span><br></pre></td></tr></table></figure>
 
-<p>关键设计决策：</p>
+<p>架构上的一些选择：</p>
 <ul>
-<li><strong>塔继承 AActor 而非 ACharacter</strong>：塔不需要 CharacterMovementComponent，轻量级 Actor 更合适</li>
-<li><strong>DataTable 属性嵌入到每个子类的专用结构体</strong>：敌人的 <code>FEnemyProperty</code> 里嵌套 <code>FCharacterBaseProperty</code>，每个子类只暴露自己需要的额外字段</li>
+<li>塔继承 AActor 而非 ACharacter：塔不需要 CharacterMovementComponent，轻量级 Actor 更合适</li>
+<li>DataTable 属性嵌入到每个子类的专用结构体：敌人的 <code>FEnemyProperty</code> 里嵌套 <code>FCharacterBaseProperty</code>，每个子类只暴露自己需要的额外字段</li>
 </ul>
 <h3 id="1-3-DataTable-数据驱动"><a href="#1-3-DataTable-数据驱动" class="headerlink" title="1.3 DataTable 数据驱动"></a>1.3 DataTable 数据驱动</h3><p>所有角色属性通过 DataTable 配置，不写在蓝图里。以英雄数据为例：</p>
 <p><img src="/images/portfolio-td/DataTable.jpg" alt="DataTable 结构"></p>
-<p>塔的属性表则更进一步——升级相关的字段全部用<strong>数组索引</strong>存储：</p>
+<p>塔的属性表则更进一步——升级相关的字段全部用数组索引存储：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 塔的属性——每个字段都是按等级索引的数组</span></span><br><span class="line"><span class="built_in">USTRUCT</span>(BlueprintType)</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">FTowerProperty</span> : <span class="keyword">public</span> FTableRowBase &#123;</span><br><span class="line">    TArray&lt;<span class="type">float</span>&gt; AttackRange;       <span class="comment">// [600, 650, 720, 800]</span></span><br><span class="line">    TArray&lt;int32&gt; DamageMin;         <span class="comment">// [20, 28, 38, 50]</span></span><br><span class="line">    TArray&lt;int32&gt; DamageMax;         <span class="comment">// [30, 40, 55, 70]</span></span><br><span class="line">    TArray&lt;int32&gt; Cost;              <span class="comment">// [100, 150, 220, 0]  // 0 = 满级</span></span><br><span class="line">    TArray&lt;UStaticMesh*&gt; StaticMeshes;  <span class="comment">// 每级不同外观</span></span><br><span class="line">    int32 MaxLevel;                  <span class="comment">// 动态配置等级上限</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
 <p>设计意图：新增塔类型只需在 DataTable 加一行，蓝图和代码零改动。</p>
@@ -695,16 +777,16 @@
 
 <p>设计考量：</p>
 <ul>
-<li><strong>0.5s 定时探测</strong>而非每帧 Trace——减少物理查询开销，塔防对实时精度要求不高</li>
-<li><strong>CanAttack bool 锁</strong>：防止同一帧内多次触发攻击，配合 <code>AttackCooldownTime</code> 在攻击完成后重置</li>
+<li>0.5s 定时探测而非每帧 Trace——减少物理查询开销，塔防对实时精度要求不高</li>
+<li>CanAttack bool 锁：防止同一帧内多次触发攻击，配合 <code>AttackCooldownTime</code> 在攻击完成后重置</li>
 </ul>
 <h3 id="2-2-Sphere-Trace-范围检测"><a href="#2-2-Sphere-Trace-范围检测" class="headerlink" title="2.2 Sphere Trace 范围检测"></a>2.2 Sphere Trace 范围检测</h3><p><img src="/images/portfolio-td/Detection1.jpg" alt="Detection——多球体追踪"></p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Detect Event:</span><br><span class="line">    Get Actor Location (self) → Start &amp; End (同一点)</span><br><span class="line">    Get Attack Range → Radius</span><br><span class="line">    Make Array(Object Type: &quot;Enemy&quot;)</span><br><span class="line">    Multi Sphere Trace For Objects:</span><br><span class="line">        Ignore Self: true</span><br><span class="line">    Out Hits → SET DetectedEnemies</span><br></pre></td></tr></table></figure>
 
 <p>使用 <code>Multi Sphere Trace For Objects</code> 而非 <code>GetAllActorsOfClass</code>：</p>
 <ul>
-<li><strong>性能</strong>：物理查询比遍历 Actor 列表快，尤其在敌人数量多时</li>
-<li><strong>灵活性</strong>：<code>Object Type</code> 过滤 + <code>Ignore Self</code>，后续可扩展为锥形&#x2F;扇形</li>
+<li>性能：物理查询比遍历 Actor 列表快，尤其在敌人数量多时</li>
+<li>灵活性：<code>Object Type</code> 过滤 + <code>Ignore Self</code>，后续可扩展为锥形&#x2F;扇形</li>
 </ul>
 <p>实际用 C++ 封装了命中后的有效性验证：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ABaseTower::IsEnemyAttackable</span><span class="params">(ABaseEnemy* Enemy)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Enemy &amp;&amp; !Enemy-&gt;<span class="built_in">IsDead</span>() &amp;&amp;</span><br><span class="line">        (<span class="built_in">GetAttackRange</span>() &gt;= (Enemy-&gt;<span class="built_in">GetActorLocation</span>() - <span class="built_in">GetActorLocation</span>()).<span class="built_in">Length</span>()))</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -715,7 +797,7 @@
 <p>C++ 中的随机伤害与护甲减伤：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 随机伤害（在范围内取随机值）</span></span><br><span class="line"><span class="function">int32 <span class="title">ABaseCharacter::RandomDamage</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> FMath::<span class="built_in">RandRange</span>(<span class="built_in">GetDamageMin</span>(), <span class="built_in">GetDamageMax</span>());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 核心伤害公式</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">ABaseCharacter::LoseHealth</span><span class="params">(int32 Damage, EDamageType DamageType)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (bIsDead) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">switch</span> (DamageType) &#123;</span><br><span class="line">        <span class="keyword">case</span> Physical:</span><br><span class="line">            Health -= Damage * (<span class="number">1</span> - CharacterData.PhysicalArmor * <span class="number">0.15f</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> Magical:</span><br><span class="line">            Health -= Damage * (<span class="number">1</span> - CharacterData.MagicalArmor);  <span class="comment">// 魔抗全效率</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    OnHealthChange.<span class="built_in">Broadcast</span>();  <span class="comment">// 通知 UI 更新血条</span></span><br><span class="line">    <span class="keyword">if</span> (Health &lt;= <span class="number">0</span>) &#123; bIsDead = <span class="literal">true</span>; <span class="built_in">Dead</span>(); &#125;</span><br><span class="line">    <span class="keyword">return</span> Health &lt;= <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>物抗每点减 15% × 护甲值点数的物理伤害，魔抗每点减 100% × 护甲值点数——<strong>物理护甲比魔抗”软”</strong>，这引导玩家对不同敌人选择不同塔类型。</p>
+<p>物抗每点减 15% × 护甲值点数的物理伤害，魔抗每点减 100% × 护甲值点数——物理护甲比魔抗”软”，这引导玩家对不同敌人选择不同塔类型。</p>
 <hr>
 <h2 id="三、敌人系统：Spline-Behavior-Tree"><a href="#三、敌人系统：Spline-Behavior-Tree" class="headerlink" title="三、敌人系统：Spline + Behavior Tree"></a>三、敌人系统：Spline + Behavior Tree</h2><p><img src="/images/portfolio-td/EnemyBase.jpg" alt="EnemyBase——攻击动画与状态处理"></p>
 <p>敌人通过 Behavior Tree 驱动三件事：</p>
@@ -728,22 +810,22 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>沿路径移动</strong></td>
+<td>沿路径移动</td>
 <td>Spline + <code>BTTask_GetNextPoint</code></td>
 <td>从 DataTable 读取移动速度</td>
 </tr>
 <tr>
-<td><strong>攻击终点</strong></td>
+<td>攻击终点</td>
 <td><code>BTTask_EnemyAttack</code></td>
 <td>调用 <code>OnAttackAnimNotify</code> → Play Montage → 伤害事件</td>
 </tr>
 <tr>
-<td><strong>被击杀</strong></td>
+<td>被击杀</td>
 <td><code>OnTakeDamage</code> → 血量检查 → <code>Dead()</code></td>
 <td><code>BlueprintImplementableEvent</code>，蓝图中播死亡动画 + 延迟销毁</td>
 </tr>
 </tbody></table>
-<p>Spline 路径还有一个有趣的应用——<strong>投射物贝塞尔曲线</strong>。塔生成的子弹不是直线飞行，而是沿 Bezier 曲线移动，增强了视觉表现力。</p>
+<p>Spline 路径还有一个应用——投射物贝塞尔曲线。塔生成的子弹不是直线飞行，而是沿 Bezier 曲线移动，增强了视觉表现力。</p>
 <hr>
 <h2 id="四、Buff-子系统：WorldSubsystem-工厂模式"><a href="#四、Buff-子系统：WorldSubsystem-工厂模式" class="headerlink" title="四、Buff 子系统：WorldSubsystem + 工厂模式"></a>四、Buff 子系统：WorldSubsystem + 工厂模式</h2><p>这是项目中 C++ 架构最完整的一个系统：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">UMyBuffSubsystem (UWorldSubsystem)</span><br><span class="line">  └── CreateBuff(EBuffType, Rate, Duration) → UBuff*</span><br><span class="line">        ├── USpeedBuff::Attach()     → MaxWalkSpeed *= Rate</span><br><span class="line">        ├── UAttackSpeedBuff::Attach() → AttackCoolDownTime *= Rate</span><br><span class="line">        └── UShieldBuff::Attach()    → PhysicalArmor/MagicalArmor *= Rate</span><br></pre></td></tr></table></figure>
@@ -764,12 +846,12 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>局内</strong></td>
+<td>局内</td>
 <td><code>WBP_GameHUD</code>, <code>WBP_BuildPanel</code>, <code>WBP_HealthBar_Info</code>, <code>WBP_SkillPanel</code>, <code>WBP_NextWaveBTN</code></td>
 <td>实时血量、防御塔建造、技能释放、波次推进</td>
 </tr>
 <tr>
-<td><strong>局外</strong></td>
+<td>局外</td>
 <td><code>WBP_StartPanel</code>, <code>WBP_MenuPanel</code>, <code>WBP_HeroPanel</code>, <code>WBP_TowerPanel1</code>, <code>WBP_LoadPanel</code></td>
 <td>关卡选择、英雄&#x2F;塔图鉴、存档加载</td>
 </tr>
@@ -791,18 +873,18 @@
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Event Tick:</span><br><span class="line">    Is Last Wave? AND Generated Enemies IS EMPTY?</span><br><span class="line">        True → Victory → Open WinPanel</span><br></pre></td></tr></table></figure>
 
 <hr>
-<h2 id="七、踩坑记录"><a href="#七、踩坑记录" class="headerlink" title="七、踩坑记录"></a>七、踩坑记录</h2><h3 id="1-Behavior-Tree-Task-Finish-必须手动标记-Success"><a href="#1-Behavior-Tree-Task-Finish-必须手动标记-Success" class="headerlink" title="1. Behavior Tree Task Finish 必须手动标记 Success"></a>1. Behavior Tree Task Finish 必须手动标记 Success</h3><p><strong>现象</strong>：AI 走到第一个路径点后停止不动。</p>
-<p><strong>原因</strong>：<code>BTTask_GetNextPoint</code> 的 <code>Finish Execute</code> 节点没有勾选 <code>Success</code>，导致 BT 认为 Task 仍在运行中。这是 UE Behavior Tree 最常见的坑——Task 不返回 Success，后续节点永远不会执行。</p>
-<p><strong>Git 记录</strong>：</p>
+<h2 id="七、踩过的坑"><a href="#七、踩过的坑" class="headerlink" title="七、踩过的坑"></a>七、踩过的坑</h2><h3 id="1-Behavior-Tree-Task-Finish-必须手动标记-Success"><a href="#1-Behavior-Tree-Task-Finish-必须手动标记-Success" class="headerlink" title="1. Behavior Tree Task Finish 必须手动标记 Success"></a>1. Behavior Tree Task Finish 必须手动标记 Success</h3><p>现象：AI 走到第一个路径点后停止不动。</p>
+<p>原因：<code>BTTask_GetNextPoint</code> 的 <code>Finish Execute</code> 节点没有勾选 <code>Success</code>，导致 BT 认为 Task 仍在运行中。这是 UE Behavior Tree 一个很容易遇到的坑——Task 不返回 Success，后续节点永远不会执行。</p>
+<p>Git 记录：</p>
 <blockquote>
 <p><code>paramove to spline and random spawn point, fix ai malfunction (in task finish, success unchecked)</code></p>
 </blockquote>
-<h3 id="2-碰撞预设导致的检测失效"><a href="#2-碰撞预设导致的检测失效" class="headerlink" title="2. 碰撞预设导致的检测失效"></a>2. 碰撞预设导致的检测失效</h3><p><strong>现象</strong>：<code>Multi Sphere Trace For Objects</code> 永远返回空数组。</p>
-<p><strong>原因</strong>：敌人角色的 Collision Preset 中 <code>Object Type</code> 不是 “Enemy” 通道。在 Project Settings 创建了自定义 Object Channel 后，忘记在 Enemy 蓝图上设置 Collision Preset。</p>
-<p><strong>教训</strong>：自定义物理通道需要在每个相关 Actor 上确认 Collision 设置，不能只在代码中写过滤逻辑就假设能工作。</p>
-<h3 id="3-移动端构建错误"><a href="#3-移动端构建错误" class="headerlink" title="3. 移动端构建错误"></a>3. 移动端构建错误</h3><p><strong>现象</strong>：<code>Makefile error</code>，项目无法编译。</p>
-<p><strong>原因</strong>：引擎版本从 5.5 升级到 5.6 后，<code>.uproject</code> 中残留了一个已禁用的插件引用（<code>&quot;Cargo&quot;: {&quot;Enabled&quot;: false}</code>），UBT 在处理时产生兼容性问题。</p>
-<p><strong>解决</strong>：清理 <code>.uproject</code> 中无效的插件声明即可。</p>
+<h3 id="2-碰撞预设导致的检测失效"><a href="#2-碰撞预设导致的检测失效" class="headerlink" title="2. 碰撞预设导致的检测失效"></a>2. 碰撞预设导致的检测失效</h3><p>现象：<code>Multi Sphere Trace For Objects</code> 永远返回空数组。</p>
+<p>原因：敌人角色的 Collision Preset 中 <code>Object Type</code> 不是 “Enemy” 通道。在 Project Settings 创建了自定义 Object Channel 后，忘记在 Enemy 蓝图上设置 Collision Preset。</p>
+<p>经验：自定义物理通道需要在每个相关 Actor 上确认 Collision 设置，不能只在代码中写过滤逻辑就假设能工作。</p>
+<h3 id="3-移动端构建错误"><a href="#3-移动端构建错误" class="headerlink" title="3. 移动端构建错误"></a>3. 移动端构建错误</h3><p>现象：<code>Makefile error</code>，项目无法编译。</p>
+<p>原因：引擎版本从 5.5 升级到 5.6 后，<code>.uproject</code> 中残留了一个已禁用的插件引用（<code>&quot;Cargo&quot;: {&quot;Enabled&quot;: false}</code>），UBT 在处理时产生兼容性问题。</p>
+<p>解决：清理 <code>.uproject</code> 中无效的插件声明即可。</p>
 <hr>
 <h2 id="八、架构可改进点"><a href="#八、架构可改进点" class="headerlink" title="八、架构可改进点"></a>八、架构可改进点</h2><table>
 <thead>
@@ -813,32 +895,32 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>等级数组越界</strong></td>
+<td>等级数组越界</td>
 <td><code>TowerData.DamageMin[Level-1]</code> 无边界检查</td>
 <td>封装 <code>GetValueAtLevel()</code> 加 <code>check()</code> 断言</td>
 </tr>
 <tr>
-<td><strong>BaseCharacter 不必要地继承 ACharacter</strong></td>
+<td>BaseCharacter 不必要地继承 ACharacter</td>
 <td>所有角色继承 <code>ACharacter</code>，塔防不需要 SkeletalMesh 和物理</td>
 <td>轻量级角色可改为继承 <code>APawn</code> 或自定义 <code>UObject</code></td>
 </tr>
 <tr>
-<td><strong>Buff 直接修改 CharacterData</strong></td>
+<td>Buff 直接修改 CharacterData</td>
 <td><code>AttackSpeedBuff</code> 直接改了 <code>CharacterData.AttackCoolDownTime</code>，如果多个 Buff 叠加可能出错</td>
 <td>引入属性快照机制，Buff 修改前保存原始值</td>
 </tr>
 <tr>
-<td><strong>缺少网络同步</strong></td>
+<td>缺少网络同步</td>
 <td>单机项目，未考虑 RPC 和属性复制</td>
 <td>如需多人模式，需要在 GameMode 加 Server RPC，GameState 加 Replicated 属性</td>
 </tr>
 <tr>
-<td><strong>波次系统耦合在 GameMode 蓝图中</strong></td>
+<td>波次系统耦合在 GameMode 蓝图中</td>
 <td>波次逻辑、敌人创建、UI 更新全部在一个蓝图里</td>
 <td>拆分为独立的 <code>WaveManager</code> Component</td>
 </tr>
 <tr>
-<td><strong>DataTable Init 传原始指针</strong></td>
+<td>DataTable Init 传原始指针</td>
 <td><code>Init(FName, UDataTable*)</code> 无空指针检查</td>
 <td>用 <code>TObjectPtr&lt;UDataTable&gt;</code> + <code>ensure()</code></td>
 </tr>
@@ -905,7 +987,7 @@
 </tr>
 </tbody></table>
 <hr>
-<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 Equipment&#x2F;Inventory 系统用<strong>三层分离架构</strong>实现了”武器切换 &#x3D; AbilitySet 的 GiveTo + TakeFrom”——Inventory 管”你拥有什么”，Equipment 管”你正装备什么”，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了”武器类膨胀到 5000 行”的噩梦。</p>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 Equipment&#x2F;Inventory 系统用三层分离架构实现了”武器切换 &#x3D; AbilitySet 的 GiveTo + TakeFrom”——Inventory 管”你拥有什么”，Equipment 管”你正装备什么”，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了”武器类膨胀到 5000 行”的问题。</p>
 <hr>
 <h2 id="一，三层架构全景"><a href="#一，三层架构全景" class="headerlink" title="一，三层架构全景"></a>一，三层架构全景</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Inventory（数据容器层）—— &quot;你拥有什么&quot;</span><br><span class="line">  ULyraInventoryManagerComponent (挂载在 PlayerState)</span><br><span class="line">  ├── FLyraInventoryList (FFastArraySerializer 网络复制)</span><br><span class="line">  │   └── ULyraInventoryItemInstance[] (运行时实例)</span><br><span class="line">  └── 物品定义: ULyraInventoryItemDefinition（Fragment 数组）</span><br><span class="line"></span><br><span class="line">          │  玩家按&quot;3&quot;切武器</span><br><span class="line">          ▼</span><br><span class="line"></span><br><span class="line">QuickBar（策略桥接层）—— &quot;你选哪个&quot;</span><br><span class="line">  ULyraQuickBarComponent (挂载在 Controller)</span><br><span class="line">  ├── Slots[] → InventoryItemInstance</span><br><span class="line">  ├── ActiveSlotIndex</span><br><span class="line">  └── EquipItemInSlot(7步流程)</span><br><span class="line"></span><br><span class="line">          │  调用 EquipmentManager</span><br><span class="line">          ▼</span><br><span class="line"></span><br><span class="line">Equipment（能力授予层）—— &quot;装备怎么生效&quot;</span><br><span class="line">  ULyraEquipmentManagerComponent (挂载在 Pawn)</span><br><span class="line">  ├── ULyraEquipmentDefinition → InstanceType + AbilitySetsToGrant + ActorsToSpawn</span><br><span class="line">  └── ULyraEquipmentInstance → OnEquipped/OnUnequipped 事件</span><br></pre></td></tr></table></figure>
 
@@ -985,7 +1067,7 @@
 
 <p><strong>为什么需要 QuickBar 这一层？</strong> 因为 Inventory 不知道 Equipment 的存在（你不背包里所有东西都装备），Equipment 不知道 Inventory 的存在（它只管”当前装备了什么”）。QuickBar 是唯一的”知道两边”的协调层。</p>
 <hr>
-<h2 id="五，SourceObject-反向引用链：被低估的设计"><a href="#五，SourceObject-反向引用链：被低估的设计" class="headerlink" title="五，SourceObject 反向引用链：被低估的设计"></a>五，SourceObject 反向引用链：被低估的设计</h2><p>当 Ability 需要知道自己来自哪个装备时（例如：射击技能需要获取武器弹药信息），Lyra 不用全局 Manager 查找，而是用 GAS 原生的 <code>SourceObject</code> 字段：</p>
+<h2 id="五，SourceObject-反向引用链"><a href="#五，SourceObject-反向引用链" class="headerlink" title="五，SourceObject 反向引用链"></a>五，SourceObject 反向引用链</h2><p>当 Ability 需要知道自己来自哪个装备时（例如：射击技能需要获取武器弹药信息），Lyra 不用全局 Manager 查找，而是用 GAS 原生的 <code>SourceObject</code> 字段：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GameplayAbility（GA_WeaponFire）</span><br><span class="line">  → CurrentAbilitySpec.SourceObject → ULyraEquipmentInstance</span><br><span class="line">    → GetInstigator() → ULyraInventoryItemInstance</span><br><span class="line">      → GetStatTagStackCount(TAG_Ammo) → 当前弹药数</span><br></pre></td></tr></table></figure>
 
 <p>这一设计的优势：</p>
@@ -1211,10 +1293,10 @@
 <hr>
 <h2 id="八，ARPG-落地要点"><a href="#八，ARPG-落地要点" class="headerlink" title="八，ARPG 落地要点"></a>八，ARPG 落地要点</h2><p>对于 TowerChallenge 的 Souls-like 战斗系统，我们直接利用了这些 Lyra 封装：</p>
 <ol>
-<li><strong>每种武器 &#x3D; 一个 AbilitySet</strong>：装备时 GiveTo，卸下时 TakeFrom。武器的 GA（轻攻&#x2F;重攻&#x2F;战技）都在 AbilitySet 中</li>
-<li><strong>体力消耗用 GAS 原生 Cost GE</strong>：而非在 GA 中手动检查属性。<code>UGameplayAbility::GetCostGameplayEffect()</code> 返回体力消耗 GE</li>
-<li><strong>弹反&#x2F;处决用 ActivationGroup</strong>：弹反 GA 设为 <code>Exclusive_Replaceable</code>（同一按键下不同窗口阶段自动切换），处决 GA 设为 <code>Exclusive_Blocking</code>（执行中不可打断）</li>
-<li><strong>不要创建 UTowerGameplayAbility</strong>：直接继承 <code>ULyraGameplayAbility</code>。我们曾误判 MinimalAPI + UE_API virtual 的含义，以为不可跨模块子类化——实际上可以。踩坑详见 <a href="/2026/08/06/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6">Lyra-WarTower 复盘</a>。</li>
+<li>每种武器 &#x3D; 一个 AbilitySet：装备时 GiveTo，卸下时 TakeFrom。武器的 GA（轻攻&#x2F;重攻&#x2F;战技）都在 AbilitySet 中</li>
+<li>体力消耗用 GAS 原生 Cost GE：而非在 GA 中手动检查属性。<code>UGameplayAbility::GetCostGameplayEffect()</code> 返回体力消耗 GE</li>
+<li>弹反&#x2F;处决用 ActivationGroup：弹反 GA 设为 <code>Exclusive_Replaceable</code>（同一按键下不同窗口阶段自动切换），处决 GA 设为 <code>Exclusive_Blocking</code>（执行中不可打断）</li>
+<li>直接继承 <code>ULyraGameplayAbility</code> 而非创建 <code>UTowerGameplayAbility</code>。我们曾误判 MinimalAPI + UE_API virtual 的含义，以为不可跨模块子类化——实际上可以。踩坑详见 <a href="/2026/08/06/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6">Lyra-WarTower 复盘</a>。</li>
 </ol>
 <hr>
 <blockquote>
@@ -1277,7 +1359,7 @@
 </tr>
 </tbody></table>
 <hr>
-<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p><strong>ALyraCharacter 不是一个”角色”，而是一个”插槽”</strong>——它只做三件事：创建核心 Component、转发接口调用、初始化死亡流程。所有真正的游戏逻辑全部下沉到独立的 PawnComponent 中，由 GameplayTag 驱动的 InitState 状态机协调初始化顺序。</p>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>ALyraCharacter 不是一个”角色”，而是一个”插槽”——它只做三件事：创建核心 Component、转发接口调用、初始化死亡流程。所有真正的游戏逻辑全部下沉到独立的 PawnComponent 中，由 GameplayTag 驱动的 InitState 状态机协调初始化顺序。</p>
 <hr>
 <h2 id="一，继承链：从-Engine-到-Lyra"><a href="#一，继承链：从-Engine-到-Lyra" class="headerlink" title="一，继承链：从 Engine 到 Lyra"></a>一，继承链：从 Engine 到 Lyra</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ACharacter (Engine)</span><br><span class="line">  └─ AModularCharacter (ModularGameplayActors 插件)</span><br><span class="line">       └─ ALyraCharacter (LyraGame)</span><br></pre></td></tr></table></figure>
 
@@ -1329,10 +1411,10 @@
 <hr>
 <h2 id="六，ARPG-落地要点"><a href="#六，ARPG-落地要点" class="headerlink" title="六，ARPG 落地要点"></a>六，ARPG 落地要点</h2><p>对于 TowerChallenge：</p>
 <ol>
-<li><strong>不要为 Character 创建 C++ 子类</strong>——这是 Lyra 架构的核心约束。我们吃过亏：430 行 <code>ATowerCharacter</code> 全量返工，最终 ~90 行 Component 解决了同样的问题。</li>
-<li><strong>ASC 放 PlayerState 上</strong>——这是 Lyra 的选择，不是标准 GAS 做法。优点：Respawn 不丢失 GAS 状态。缺点：<code>GetASC()</code> 需要经过 <code>PlayerState</code> 间接访问。</li>
-<li><strong>自定义 InitState 中间状态</strong>——如果某个 Feature 需要等待 DLC 资产加载，定义 <code>InitState_DLC_AssetsLoaded</code> Tag，在 <code>CanChangeInitState</code> 中检查即可。</li>
-<li><strong>PawnData 的三级覆盖</strong>：Experience.DefaultPawnData → ActionSet.PawnData → 运行时覆盖。设计师通过切换 DataAsset 实现不同爬塔阶段的角色配置。</li>
+<li>为 Character 创建 C++ 子类在 Lyra 体系中通常是反模式——这是框架的核心约束。我们有过教训：430 行 <code>ATowerCharacter</code> 全量返工，最终 ~90 行 Component 解决了同样的问题。</li>
+<li>ASC 放 PlayerState 上——这是 Lyra 的选择，不是标准 GAS 做法。优点：Respawn 不丢失 GAS 状态。缺点：<code>GetASC()</code> 需要经过 <code>PlayerState</code> 间接访问。</li>
+<li>自定义 InitState 中间状态——如果某个 Feature 需要等待 DLC 资产加载，定义 <code>InitState_DLC_AssetsLoaded</code> Tag，在 <code>CanChangeInitState</code> 中检查即可。</li>
+<li>PawnData 的三级覆盖：Experience.DefaultPawnData → ActionSet.PawnData → 运行时覆盖。设计师通过切换 DataAsset 实现不同爬塔阶段的角色配置。</li>
 </ol>
 <hr>
 <blockquote>
@@ -1395,7 +1477,7 @@
 </tr>
 </tbody></table>
 <hr>
-<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p><strong>Experience 是一张”玩法配方表”</strong>——它用一个 DataAsset 回答了”这场游戏玩什么”：激活哪些 GameFeature 插件、执行哪些初始化动作、玩家用什么样的 Pawn。</p>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Experience 是一张”玩法配方表”——它用一个 DataAsset 回答了”这场游戏玩什么”：激活哪些 GameFeature 插件、执行哪些初始化动作、玩家用什么样的 Pawn。</p>
 <hr>
 <h2 id="一，问题：GameMode-子类为何不够"><a href="#一，问题：GameMode-子类为何不够" class="headerlink" title="一，问题：GameMode 子类为何不够"></a>一，问题：GameMode 子类为何不够</h2><p>在 Standard UE 中，为不同模式创建不同的 <code>AGameModeBase</code> 子类是标准做法：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 传统方案：每增加一个模式 = 一个新类</span></span><br><span class="line">AGameModeBase</span><br><span class="line">  ├── AGameMode_TDM        → PawnClass = B_Hero_TDM, HUDClass = B_HUD_TDM</span><br><span class="line">  ├── AGameMode_CP         → PawnClass = B_Hero_CP,  HUDClass = B_HUD_CP</span><br><span class="line">  └── AGameMode_Race       → PawnClass = B_Hero_Race, HUDClass = B_HUD_Race</span><br></pre></td></tr></table></figure>
@@ -1483,12 +1565,12 @@
 </tbody></table>
 <p>它们共享<strong>完全相同的</strong> <code>ALyraGameMode</code> 和 <code>ALyraCharacter</code> C++ 类。TDM 和控制点之间的差异全部在 DataAsset 和蓝图层面解决。</p>
 <hr>
-<h2 id="八，ARPG-落地要点"><a href="#八，ARPG-落地要点" class="headerlink" title="八，ARPG 落地要点"></a>八，ARPG 落地要点</h2><p>对于 TowerChallenge（我们的 ARPG 项目），Experience 层的配置需要关注：</p>
+<h2 id="八，ARPG-落地要点"><a href="#八，ARPG-落地要点" class="headerlink" title="八，ARPG 落地要点"></a>八，ARPG 落地要点</h2><p>对于 TowerChallenge（我们的 ARPG 项目），Experience 层的配置有一些值得关注的点：</p>
 <ol>
-<li><strong><code>DefaultGame.ini</code> 的 AssetManager 扫描路径</strong>：确保 <code>/TowerChallenge/Experiences</code> 在 <code>LyraExperienceDefinition</code> 的扫描列表中</li>
-<li><strong>ActionSet 复用策略</strong>：将通用系统（输入绑定、基础 HUD）打包为 ActionSet，模式专属逻辑放 Experience 自身 Actions</li>
-<li><strong>GameFeature 按需加载</strong>：塔层数&#x2F;难度对应的内容放独立 GameFeature，高层才激活</li>
-<li><strong>PawnData 覆盖</strong>：不同职业&#x2F;爬塔阶段的 PawnData 可通过 Experience 或运行时覆盖</li>
+<li><code>DefaultGame.ini</code> 的 AssetManager 扫描路径：确保 <code>/TowerChallenge/Experiences</code> 在 <code>LyraExperienceDefinition</code> 的扫描列表中</li>
+<li>ActionSet 复用策略：将通用系统（输入绑定、基础 HUD）打包为 ActionSet，模式专属逻辑放 Experience 自身 Actions</li>
+<li>GameFeature 按需加载：塔层数&#x2F;难度对应的内容放独立 GameFeature，高层才激活</li>
+<li>PawnData 覆盖：不同职业&#x2F;爬塔阶段的 PawnData 可通过 Experience 或运行时覆盖</li>
 </ol>
 <hr>
 <blockquote>
@@ -1501,10 +1583,10 @@
       <tags>
         <tag>Lyra</tag>
         <tag>Unreal</tag>
-        <tag>GameFeature</tag>
-        <tag>ModularGameplay</tag>
         <tag>Experience</tag>
+        <tag>GameFeature</tag>
         <tag>DataAsset</tag>
+        <tag>ModularGameplay</tag>
       </tags>
   </entry>
   <entry>
@@ -1551,7 +1633,7 @@
 </tr>
 </tbody></table>
 <hr>
-<h2 id="一句话理解-Lyra"><a href="#一句话理解-Lyra" class="headerlink" title="一句话理解 Lyra"></a>一句话理解 Lyra</h2><p><strong>Lyra 不是”一个游戏”，而是一套”做游戏的游戏”</strong>——它是 Epic 在 UE5 时代给模块化多人游戏的参考答案。它的核心命题是：</p>
+<h2 id="一句话理解-Lyra"><a href="#一句话理解-Lyra" class="headerlink" title="一句话理解 Lyra"></a>一句话理解 Lyra</h2><p>Lyra 不是”一个游戏”，而是一套”做游戏的游戏”——它是 Epic 在 UE5 时代给模块化多人游戏的参考答案。它的核心命题是：</p>
 <blockquote>
 <p>如何在不为每个游戏模式写一个 <code>AGameMode</code> 子类的前提下，让同一个 <code>ALyraCharacter</code> 在射击模式、探索模式、TopDown 模式下呈现完全不同的能力组合？</p>
 </blockquote>
@@ -1559,18 +1641,18 @@
 <hr>
 <h2 id="一，四层架构全景图"><a href="#一，四层架构全景图" class="headerlink" title="一，四层架构全景图"></a>一，四层架构全景图</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌──────────────────────────────────────────────┐</span><br><span class="line">│        Layer 0: Experience（配方层）           │</span><br><span class="line">│  &quot;这场游戏玩什么？&quot;                              │</span><br><span class="line">│  ULyraExperienceDefinition (DataAsset)         │</span><br><span class="line">│  → 激活哪些 GameFeature？                       │</span><br><span class="line">│  → 执行哪些初始化动作？                          │</span><br><span class="line">│  → 生成什么 Pawn？                              │</span><br><span class="line">└──────────────────┬───────────────────────────┘</span><br><span class="line">                   │ GameFeaturesToEnable</span><br><span class="line">┌──────────────────▼───────────────────────────┐</span><br><span class="line">│       Layer 1: GameFeature（原料层）            │</span><br><span class="line">│  物理隔离的玩法容器（独立 .uplugin）             │</span><br><span class="line">│  ShooterCore / TopDownArena / TowerChallenge  │</span><br><span class="line">│  → C++ 模块（可选）+ 蓝图资产 + 配置            │</span><br><span class="line">└──────────────────┬───────────────────────────┘</span><br><span class="line">                   │ GameFeatureAction</span><br><span class="line">┌──────────────────▼───────────────────────────┐</span><br><span class="line">│      Layer 2: Component（能力层）              │</span><br><span class="line">│  &quot;薄 Actor + 厚 Component&quot;                     │</span><br><span class="line">│  ALyraCharacter (~500行) = 事件转发器           │</span><br><span class="line">│  → PawnExtensionComponent：状态机指挥官         │</span><br><span class="line">│  → HeroComponent：输入 + 相机代理               │</span><br><span class="line">│  → HealthComponent：血量 + 死亡状态机           │</span><br><span class="line">│  → CameraComponent：CameraMode 栈              │</span><br><span class="line">└──────────────────┬───────────────────────────┘</span><br><span class="line">                   │ 能力通过 AbilitySet 授予</span><br><span class="line">┌──────────────────▼───────────────────────────┐</span><br><span class="line">│      Layer 3: GAS / Input / UI / Net          │</span><br><span class="line">│  被注入的具体游戏能力                           │</span><br><span class="line">│  → AbilitySet：GA + GE + AttributeSet 打包     │</span><br><span class="line">│  → InputConfig：InputAction → GameplayTag     │</span><br><span class="line">│  → UIExtension：GameplayTag 驱动 Widget 注入   │</span><br><span class="line">│  → ReplicationGraph：节点化复制策略             │</span><br><span class="line">└──────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
 
-<p><strong>关键设计决策</strong>：每一层只知道下一层的接口，不知道下一层的具体实现。Experience 不知道 ShooterCore 的 C++ 类长什么样；ALyraCharacter 不知道有哪些 GameFeature 会给它注入 Component。这就是 Lyra 实现”同一套 C++ 代码支持多种游戏模式”的根本原因。</p>
+<p>一个值得注意的设计决策：每一层只知道下一层的接口，不知道下一层的具体实现。Experience 不知道 ShooterCore 的 C++ 类长什么样；ALyraCharacter 不知道有哪些 GameFeature 会给它注入 Component。这就是 Lyra 实现”同一套 C++ 代码支持多种游戏模式”的根本原因。</p>
 <hr>
 <h2 id="二，薄-Actor-厚-Component：最核心的架构决策"><a href="#二，薄-Actor-厚-Component：最核心的架构决策" class="headerlink" title="二，薄 Actor + 厚 Component：最核心的架构决策"></a>二，薄 Actor + 厚 Component：最核心的架构决策</h2><p>传统 UE 项目中，Character 类往往是”万恶之源”——血量管理、武器切换、技能逻辑、输入处理、相机控制全部堆在一个类里，轻松突破 3000 行。</p>
-<p>Lyra 的做法是<strong>把 Actor 变成一个”插槽”</strong>：</p>
+<p>Lyra 的做法是把 Actor 变成一个”插槽”：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ALyraCharacter 构造函数 —— 这就是它的全部&quot;主动行为&quot;</span></span><br><span class="line">PawnExtComp = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraPawnExtensionComponent&gt;(<span class="string">&quot;PawnExtension&quot;</span>);</span><br><span class="line">HealthComp  = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraHealthComponent&gt;(<span class="string">&quot;HealthComponent&quot;</span>);</span><br><span class="line">CameraComp  = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraCameraComponent&gt;(<span class="string">&quot;CameraComponent&quot;</span>);</span><br></pre></td></tr></table></figure>
 
-<p>注意什么<strong>不在</strong>这里：<code>ULyraHeroComponent</code>（输入绑定 + 相机代理）不在 Character 的 C++ 构造函数中——它在蓝图 <code>B_Hero_ShooterMannequin</code> 中添加，甚至可以通过 GameFeatureAction 动态注入。</p>
-<p><strong>这意味着不同的 GameFeature 可以给同一个 Character 类注入不同的 Component 组合</strong>，而 Character 代码完全不需要修改。</p>
+<p>注意什么不在这里：<code>ULyraHeroComponent</code>（输入绑定 + 相机代理）不在 Character 的 C++ 构造函数中——它在蓝图 <code>B_Hero_ShooterMannequin</code> 中添加，甚至可以通过 GameFeatureAction 动态注入。</p>
+<p>这意味着不同的 GameFeature 可以给同一个 Character 类注入不同的 Component 组合，而 Character 代码完全不需要修改。</p>
 <h3 id="第二层解耦：GameFrameworkComponentManager-的-ExtensionHandler"><a href="#第二层解耦：GameFrameworkComponentManager-的-ExtensionHandler" class="headerlink" title="第二层解耦：GameFrameworkComponentManager 的 ExtensionHandler"></a>第二层解耦：GameFrameworkComponentManager 的 ExtensionHandler</h3><p>更进一步，GameFeatureAction 通过 <code>AddExtensionHandler(ActorClass, Delegate)</code> 机制，在运行时检测到特定类型 Actor 创建时动态注入 Component：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GameFeatureAction 注册 Handler(&quot;ALyraCharacter&quot;, SpawnDelegate)</span><br><span class="line">         │</span><br><span class="line">         ▼</span><br><span class="line">GameFrameworkComponentManager 检测到 ALyraCharacter 生成</span><br><span class="line">         │</span><br><span class="line">         ▼</span><br><span class="line">SpawnDelegate 执行 → 给这个 Actor 动态添加 Component + 授予 AbilitySet</span><br></pre></td></tr></table></figure>
 
-<p><strong>ALyraCharacter 从头到尾不知道是哪个插件给它加了什么能力。</strong></p>
+<p>ALyraCharacter 从头到尾不知道是哪个插件给它加了什么能力。</p>
 <hr>
 <h2 id="三，Experience：配方表-vs-GameMode-子类"><a href="#三，Experience：配方表-vs-GameMode-子类" class="headerlink" title="三，Experience：配方表 vs GameMode 子类"></a>三，Experience：配方表 vs GameMode 子类</h2><h3 id="传统方案的问题"><a href="#传统方案的问题" class="headerlink" title="传统方案的问题"></a>传统方案的问题</h3><p>如果你要为同一个项目做三个模式（团队死斗、控制点、竞速），传统做法是：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AGameModeBase</span><br><span class="line">  ├─ AGameMode_TDM      （配置 TDM 专属 Pawn/HUD/规则）</span><br><span class="line">  ├─ AGameMode_CP       （配置 CP 专属 Pawn/HUD/规则）</span><br><span class="line">  └─ AGameMode_Race     （配置 Race 专属 Pawn/HUD/规则）</span><br></pre></td></tr></table></figure>
@@ -1585,7 +1667,7 @@
 <li><code>B_Experience_ControlPoint</code> → 控制点模式</li>
 <li><code>B_Experience_Perf</code> → 性能测试模式</li>
 </ul>
-<p><strong>它们使用的是同一个 <code>ALyraGameMode</code> 类</strong>，差异全部在 DataAsset 和 GameFeature 层面。</p>
+<p>它们使用的是同一个 <code>ALyraGameMode</code> 类，差异全部在 DataAsset 和 GameFeature 层面。</p>
 <hr>
 <h2 id="四，InitState：用-GameplayTag-替代-BeginPlay-时序"><a href="#四，InitState：用-GameplayTag-替代-BeginPlay-时序" class="headerlink" title="四，InitState：用 GameplayTag 替代 BeginPlay 时序"></a>四，InitState：用 GameplayTag 替代 BeginPlay 时序</h2><p>这是 Lyra 最巧妙也最容易被忽视的设计。在多组件 + 网络复制的环境下，<code>BeginPlay</code> 的调用顺序是不可靠的：</p>
 <ul>
@@ -1593,11 +1675,11 @@
 <li>客户端上 Component B 可能先复制到，Component A 还没创建</li>
 <li>某个 Component 依赖 PawnData 设置完毕 → 但 PawnData 在服务器上通过 RPC 设置，客户端何时收到不确定</li>
 </ul>
-<p>Lyra 的解决方案是用 <strong>GameplayTag 驱动的显式状态机</strong>替代隐式时序依赖：</p>
+<p>Lyra 的解决方案是用 GameplayTag 驱动的显式状态机替代隐式时序依赖：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">InitState_Spawned           ← Actor 已生成，Component 已注册</span><br><span class="line">        │</span><br><span class="line">        ▼  (条件：PawnData 已设置 + Controller 就绪)</span><br><span class="line">InitState_DataAvailable     ← 数据已就绪，可以开始读取配置</span><br><span class="line">        │</span><br><span class="line">        ▼  (条件：所有 Feature 都达到 DataAvailable)</span><br><span class="line">InitState_DataInitialized   ← 所有 Feature 的数据都就绪了</span><br><span class="line">        │</span><br><span class="line">        ▼  (无条件通过)</span><br><span class="line">InitState_GameplayReady     ← 开始正常游戏逻辑</span><br></pre></td></tr></table></figure>
 
 <p>每个 Component 实现 <code>IGameFrameworkInitStateInterface</code>，声明自己的 Feature 名称和当前状态。<code>ULyraPawnExtensionComponent</code> 作为”指挥”，监听所有 Feature 的状态变化，在条件满足时推进整体状态链。</p>
-<p><strong>为什么用 GameplayTag 而非枚举？</strong> 因为 GameFeature 插件可以定义自己的中间状态（如 <code>InitState_DLC_AssetsLoaded</code>），无需修改引擎代码。</p>
+<p>为什么用 GameplayTag 而非枚举？因为 GameFeature 插件可以定义自己的中间状态（如 <code>InitState_DLC_AssetsLoaded</code>），无需修改引擎代码。</p>
 <hr>
 <h2 id="五，GameFeature-插件：物理隔离的玩法容器"><a href="#五，GameFeature-插件：物理隔离的玩法容器" class="headerlink" title="五，GameFeature 插件：物理隔离的玩法容器"></a>五，GameFeature 插件：物理隔离的玩法容器</h2><p>GameFeature 是 Lyra 实现”按需加载”和”团队并行开发”的物理基础。每个 GameFeature 是一个独立的 <code>.uplugin</code>：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ShooterCore/</span><br><span class="line">  ├── ShooterCore.uplugin   ← ExplicitlyLoaded: true, EnabledByDefault: false</span><br><span class="line">  ├── Source/               ← C++ 模块（可选，ShooterCore 有 15 个类）</span><br><span class="line">  ├── Content/              ← 蓝图资产（武器/角色/HUD/输入）</span><br><span class="line">  └── Config/Tags/          ← 插件级 GameplayTag 定义</span><br></pre></td></tr></table></figure>
@@ -1612,9 +1694,9 @@
 </ul>
 <h3 id="插件分层"><a href="#插件分层" class="headerlink" title="插件分层"></a>插件分层</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Layer 0: LyraGame (C++ 核心框架，非 GameFeature)</span><br><span class="line">Layer 1: ShooterCore (C++ + Content)  ← 射击基础</span><br><span class="line">Layer 2: ShooterExplorer, ShooterMaps (纯 Content)  ← 依赖 ShooterCore</span><br><span class="line">Layer 3: ShooterTests (C++ + Content)  ← 自动化测试</span><br><span class="line">独立游戏: TopDownArena, TowerChallenge  ← 不依赖 ShooterCore</span><br></pre></td></tr></table></figure>
 
-<p><strong>TowerChallenge（我们的 ARPG）与 ShooterCore 完全独立</strong>——两者都依赖 LyraGame 核心框架，但彼此无依赖关系。</p>
+<p>TowerChallenge（我们的 ARPG）与 ShooterCore 完全独立——两者都依赖 LyraGame 核心框架，但彼此无依赖关系。</p>
 <hr>
-<h2 id="六，C-职责边界：”三问决策”"><a href="#六，C-职责边界：”三问决策”" class="headerlink" title="六，C++ 职责边界：”三问决策”"></a>六，C++ 职责边界：”三问决策”</h2><p>Lyra 不是”把所有东西都写成 C++”——正相反，它大量使用蓝图。ShooterCore 只有 15 个 C++ 类，TopDownArena 只有 4 个。判断一个功能是否该写成 C++ 的”三问决策”：</p>
+<h2 id="六，C-职责边界：一个判断框架"><a href="#六，C-职责边界：一个判断框架" class="headerlink" title="六，C++ 职责边界：一个判断框架"></a>六，C++ 职责边界：一个判断框架</h2><p>Lyra 不是”把所有东西都写成 C++”——正相反，它大量使用蓝图。ShooterCore 只有 15 个 C++ 类，TopDownArena 只有 4 个。判断一个功能是否该写成 C++ 的参考维度：</p>
 <table>
 <thead>
 <tr>
@@ -1639,16 +1721,16 @@
 <td>自定义游戏模式逻辑</td>
 </tr>
 </tbody></table>
-<p><strong>关键约束：不要为 Lyra 框架类创建 C++ 子类</strong>。Lyra 的扩展点是 <code>UGameplayMessageProcessor</code>、<code>UGameStateComponent</code>、<code>UInputModifier</code> 这类专门的基类，而非 <code>AGameMode</code>、<code>ACharacter</code>、<code>AGameState</code> 这些核心 Actor。</p>
+<p>一个值得注意的约束：Lyra 的扩展点是 <code>UGameplayMessageProcessor</code>、<code>UGameStateComponent</code>、<code>UInputModifier</code> 这类专门的基类，而非 <code>AGameMode</code>、<code>ACharacter</code>、<code>AGameState</code> 这些核心 Actor。为这些框架类创建 C++ 子类在 Lyra 体系中通常是反模式。</p>
 <hr>
-<h2 id="七，Lyra-的”不变量”清单"><a href="#七，Lyra-的”不变量”清单" class="headerlink" title="七，Lyra 的”不变量”清单"></a>七，Lyra 的”不变量”清单</h2><p>在深入研究各个子系统之前，先记住 Lyra 框架中那些<strong>从不改变</strong>的东西：</p>
+<h2 id="七，Lyra-的”不变量”清单"><a href="#七，Lyra-的”不变量”清单" class="headerlink" title="七，Lyra 的”不变量”清单"></a>七，Lyra 的”不变量”清单</h2><p>在深入研究各个子系统之前，先记住 Lyra 框架中那些从不改变的东西：</p>
 <ol>
-<li><strong>同一个 <code>ALyraGameMode</code></strong> — 不按模式子类化</li>
-<li><strong>同一个 <code>ALyraCharacter</code></strong> — 不按角色类型子类化</li>
-<li><strong>数据驱动注入</strong> — 能力不硬编码在 Actor 构造函数中</li>
-<li><strong>GameplayTag 中介</strong> — Input → Tag → GAS，不直接引用 InputAction</li>
-<li><strong>组合优于继承</strong> — Component + GameFeatureAction，不用 C++ 继承链表达玩法差异</li>
-<li><strong>InitState 状态机</strong> — 不用 <code>BeginPlay</code> 时序假设替代显式状态推进</li>
+<li>同一个 <code>ALyraGameMode</code> — 不按模式子类化</li>
+<li>同一个 <code>ALyraCharacter</code> — 不按角色类型子类化</li>
+<li>数据驱动注入 — 能力不硬编码在 Actor 构造函数中</li>
+<li>GameplayTag 中介 — Input → Tag → GAS，不直接引用 InputAction</li>
+<li>组合优于继承 — Component + GameFeatureAction，不用 C++ 继承链表达玩法差异</li>
+<li>InitState 状态机 — 不用 <code>BeginPlay</code> 时序假设替代显式状态推进</li>
 </ol>
 <p>理解这些不变量，就理解了 Lyra 一半的设计意图。</p>
 <hr>
@@ -1706,20 +1788,20 @@
 <td>2026.07.13 — 至今（持续迭代）</td>
 </tr>
 </tbody></table>
-<p>这是一个<strong>为 Vibe Coding 设计的 UE5 开发框架</strong>——不是传统意义上的游戏项目，而是一套让 AI 能可靠地参与 UE5 游戏开发的工程基础设施。它回答了”当 AI 写游戏代码时，怎么保证架构正确、编译通过、资产就位、行为验收？”这个问题。</p>
+<p>这是一个为 Vibe Coding 设计的 UE5 开发框架——不是传统意义上的游戏项目，而是一套让 AI 能可靠地参与 UE5 游戏开发的工程基础设施。它试图回答一个问题：当 AI 写游戏代码时，怎么保证架构正确、编译通过、资产就位、行为验收？</p>
 <hr>
 <h2 id="一、问题定义：Vibe-Coding-在-UE5-中的三个断层"><a href="#一、问题定义：Vibe-Coding-在-UE5-中的三个断层" class="headerlink" title="一、问题定义：Vibe Coding 在 UE5 中的三个断层"></a>一、问题定义：Vibe Coding 在 UE5 中的三个断层</h2><p>“Vibe Coding”——用自然语言描述意图，AI 生成代码——在小规模项目中已相当好用。但在 UE5 这种重度框架 + 编辑器资产 + 二进制蓝图混合的生态中，存在三个根本断层：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">用户意图（自然语言）</span><br><span class="line">    │</span><br><span class="line">    ▼  ❌ 断层 1：意图 → 架构设计</span><br><span class="line">    │     &quot;加一个弹反&quot; → 该不该创建 Character 子类？</span><br><span class="line">    │     还是用 Component + GameFeatureAction？</span><br><span class="line">    │</span><br><span class="line">    ▼  ❌ 断层 2：代码 → 编辑器资产</span><br><span class="line">    │     C++ 写完了，DataAsset 创建了吗？</span><br><span class="line">    │     InputMappingContext 配置了吗？</span><br><span class="line">    │     BP 壳设置了 IUnLuaInterface 吗？</span><br><span class="line">    │</span><br><span class="line">    ▼  ❌ 断层 3：资产 → 运行时验证</span><br><span class="line">          编译过了 ≠ 能进 PIE</span><br><span class="line">          进了 PIE ≠ 功能正确</span><br><span class="line">          单人正确 ≠ 网络同步正确</span><br></pre></td></tr></table></figure>
 
-<p>Lyra-WarTower 的核心命题就是：<strong>用工程化手段填补这三个断层</strong>。</p>
+<p>Lyra-WarTower 的核心命题就是：用工程化手段填补这三个断层。</p>
 <hr>
 <h2 id="二、架构总览"><a href="#二、架构总览" class="headerlink" title="二、架构总览"></a>二、架构总览</h2><h3 id="2-1-整体拓扑"><a href="#2-1-整体拓扑" class="headerlink" title="2.1 整体拓扑"></a>2.1 整体拓扑</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────┐</span><br><span class="line">│                    协调者（主 Claude）                  │</span><br><span class="line">│  意图路由 → 级联调度 → 中断仲裁 → 质量门放行            │</span><br><span class="line">└──────────┬──────────────────────────┬────────────────┘</span><br><span class="line">           │                          │</span><br><span class="line">    ┌──────▼──────┐           ┌──────▼──────┐</span><br><span class="line">    │  知识层 (6)  │           │  执行层 (9)  │</span><br><span class="line">    │             │           │             │</span><br><span class="line">    │ concept-*   │  ──REQ──▶ │ architect   │</span><br><span class="line">    │ requirement │           │ gameplay    │</span><br><span class="line">    │ archivist   │  ◀──归档── │ animation   │</span><br><span class="line">    │ doc-writer  │           │ blueprint   │</span><br><span class="line">    │             │           │ lua-module  │</span><br><span class="line">    └─────────────┘           │ tools       │</span><br><span class="line">                              │ build-verify│</span><br><span class="line">    ┌─────────────┐           │ code-review │</span><br><span class="line">    │ Lyra 知识层  │           │ debugger    │</span><br><span class="line">    │    (6)      │           └──────┬──────┘</span><br><span class="line">    │             │                  │</span><br><span class="line">    │ qa-navigator│  ◀── 横向服务 ──┘</span><br><span class="line">    │ cpp-advisor │       MCP 直连 UE Editor</span><br><span class="line">    │ code-advisor│       23 工具：资产/蓝图/GAS</span><br><span class="line">    │ cpp-writer  │       /动画/PIE/编译</span><br><span class="line">    │ integrity   │</span><br><span class="line">    │ gdd-writer  │</span><br><span class="line">    └─────────────┘</span><br></pre></td></tr></table></figure>
 
-<h3 id="2-2-三层抽象：从灵感到工单"><a href="#2-2-三层抽象：从灵感到工单" class="headerlink" title="2.2 三层抽象：从灵感到工单"></a>2.2 三层抽象：从灵感到工单</h3><p>这是整个框架最重要的设计决策。借鉴软件工程中的需求层级，我将游戏开发需求也拆为三层：</p>
+<h3 id="2-2-三层抽象：从灵感到工单"><a href="#2-2-三层抽象：从灵感到工单" class="headerlink" title="2.2 三层抽象：从灵感到工单"></a>2.2 三层抽象：从灵感到工单</h3><p>借鉴软件工程中的需求层级，将游戏开发需求拆为三层：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Concept（GDC 演讲级）     Order/GDD（技术规格级）    REQ（工单级）</span><br><span class="line">───────────────────     ──────────────────────    ──────────────</span><br><span class="line">&quot;要什么体验&quot;             &quot;用什么技术实现&quot;           &quot;具体改哪些文件/类&quot;</span><br><span class="line"></span><br><span class="line">&quot;前期 DS3 立回体验，      体力是第一公民，          创建 UTowerStaminaSet</span><br><span class="line"> 后期 黑夜君临成型流派&quot;    用 GAS Cost 机制消耗      继承 ULyraAttributeSet</span><br><span class="line">                         体力，空精触发力竭 Tag     实现体力消耗/回复/力竭</span><br><span class="line">                                                    检测，3 个 GE + 5 个</span><br><span class="line">                          负责：concept-critic       委托回调</span><br><span class="line"> 负责：concept-writer</span><br><span class="line">       concept-analyst                              负责：requirement-analyst</span><br></pre></td></tr></table></figure>
 
-<p>并且支持<strong>多对多关系</strong>：一个 Concept 可以产出多个 Order，多个 Concept 可以共享一个 Order。进度沿全链路向上聚合。</p>
-<h3 id="2-3-最小充分链路原则"><a href="#2-3-最小充分链路原则" class="headerlink" title="2.3 最小充分链路原则"></a>2.3 最小充分链路原则</h3><p>并非所有任务都要走 Concept → Order → REQ → 实现 → 归档的全链。协调者根据用户意图做<strong>路由判断</strong>：</p>
+<p>并且支持多对多关系：一个 Concept 可以产出多个 Order，多个 Concept 可以共享一个 Order。进度沿全链路向上聚合。</p>
+<h3 id="2-3-最小充分链路原则"><a href="#2-3-最小充分链路原则" class="headerlink" title="2.3 最小充分链路原则"></a>2.3 最小充分链路原则</h3><p>并非所有任务都要走 Concept → Order → REQ → 实现 → 归档的全链。协调者根据用户意图做路由判断：</p>
 <table>
 <thead>
 <tr>
@@ -1754,7 +1836,7 @@
 <td>0 agent</td>
 </tr>
 </tbody></table>
-<p><strong>只调用达成目标所必需的 agent，不强制走全链。</strong></p>
+<p>只调用达成目标所必需的 agent，不强制走全链。</p>
 <hr>
 <h2 id="三、核心设计一：MCP-直连——让-AI-操作-UE-Editor"><a href="#三、核心设计一：MCP-直连——让-AI-操作-UE-Editor" class="headerlink" title="三、核心设计一：MCP 直连——让 AI 操作 UE Editor"></a>三、核心设计一：MCP 直连——让 AI 操作 UE Editor</h2><p>这是整个框架最”硬核”的部分。通过 <a href="https://github.com/ChiR24/Unreal_mcp">Unreal-MCP</a> 插件（v0.5.30），Claude Code 可以通过 HTTP&#x2F;SSE 协议直接控制 UE Editor。</p>
 <h3 id="3-1-MCP-工具矩阵（23-工具）"><a href="#3-1-MCP-工具矩阵（23-工具）" class="headerlink" title="3.1 MCP 工具矩阵（23 工具）"></a>3.1 MCP 工具矩阵（23 工具）</h3><table>
@@ -1766,47 +1848,47 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>system_control</strong></td>
+<td>system_control</td>
 <td>UBT 编译、控制台命令、Python 脚本、日志订阅</td>
 <td>编译门 + 诊断</td>
 </tr>
 <tr>
-<td><strong>control_editor</strong></td>
+<td>control_editor</td>
 <td>PIE 启动&#x2F;停止、截图、相机控制</td>
 <td>运行时验证</td>
 </tr>
 <tr>
-<td><strong>manage_asset</strong></td>
+<td>manage_asset</td>
 <td>资产 CRUD、搜索、依赖分析</td>
 <td>资产完整性检查</td>
 </tr>
 <tr>
-<td><strong>manage_blueprint</strong></td>
+<td>manage_blueprint</td>
 <td>BP 创建、编译、SCS 组件、UMG Widget</td>
 <td>编辑器自动化</td>
 </tr>
 <tr>
-<td><strong>manage_gas</strong></td>
+<td>manage_gas</td>
 <td>GA&#x2F;GE&#x2F;AttributeSet&#x2F;Cue 创建配置</td>
 <td>GAS 资产配置</td>
 </tr>
 <tr>
-<td><strong>manage_networking</strong></td>
+<td>manage_networking</td>
 <td>Input Action&#x2F;Mapping Context、Replication 配置</td>
 <td>输入 + 网络</td>
 </tr>
 <tr>
-<td><strong>inspect</strong></td>
+<td>inspect</td>
 <td>Object&#x2F;CDO 内省、属性读写、组件列表</td>
 <td>验证 + 调试</td>
 </tr>
 <tr>
-<td><strong>control_actor</strong></td>
+<td>control_actor</td>
 <td>Actor 生成&#x2F;删除&#x2F;Transform、物理</td>
 <td>PIE 场景操作</td>
 </tr>
 <tr>
-<td><strong>animation_physics</strong></td>
+<td>animation_physics</td>
 <td>AnimBP、Montage、BlendSpace、IK</td>
 <td>动画系统</td>
 </tr>
@@ -1814,10 +1896,10 @@
 <h3 id="3-2-MCP-分级使用策略"><a href="#3-2-MCP-分级使用策略" class="headerlink" title="3.2 MCP 分级使用策略"></a>3.2 MCP 分级使用策略</h3><p>不是所有 MCP 工具都同等对待：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Level 1 — 资产验证（强制）</span><br><span class="line">    build-verifier 编译通过后必须通过 MCP 检查资产完整性</span><br><span class="line">    code-reviewer 必须先执行 MCP 资产验证门（阻断级）</span><br><span class="line">    MCP 不可用时标记为 🔴阻断，而非跳过</span><br><span class="line"></span><br><span class="line">Level 2 — 编辑器自动化（尽力）</span><br><span class="line">    coder 优先通过 MCP 直接执行资产创建、BP 配置、Input 映射</span><br><span class="line">    MCP 不可用时回退为 ✋手动清单</span><br></pre></td></tr></table></figure>
 
-<p>这个分级的核心思想是：<strong>验证不允许降级，自动化允许回退</strong>。编译门和资产完整性检查是质量的最后防线，不能因为”编辑器没启动”就跳过。</p>
+<p>这个分级的核心思想：验证不允许降级，自动化允许回退。编译门和资产完整性检查是质量的最后防线，不能因为”编辑器没启动”就跳过。</p>
 <hr>
 <h2 id="四、核心设计二：双清单体系——编辑器配置-≠-PIE-验证"><a href="#四、核心设计二：双清单体系——编辑器配置-≠-PIE-验证" class="headerlink" title="四、核心设计二：双清单体系——编辑器配置 ≠ PIE 验证"></a>四、核心设计二：双清单体系——编辑器配置 ≠ PIE 验证</h2><p>传统 AI 辅助开发中，C++ 代码写完就认为”功能完成了”。但在 UE5 中，代码只是第一步。</p>
-<p>我设计了两份<strong>性质不同</strong>的清单，由不同 agent 负责产出和验证：</p>
+<p>设计了两份性质不同的清单，由不同 agent 负责产出和验证：</p>
 <table>
 <thead>
 <tr>
@@ -1827,34 +1909,34 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>性质</strong></td>
+<td>性质</td>
 <td>前置条件——不做则功能不存在</td>
 <td>后置验证——确认行为正确</td>
 </tr>
 <tr>
-<td><strong>时机</strong></td>
+<td>时机</td>
 <td>code-reviewer 审查前</td>
 <td>编辑器配置完成后</td>
 </tr>
 <tr>
-<td><strong>内容</strong></td>
+<td>内容</td>
 <td>DataAsset 创建、BP 壳、Input 映射、Details 面板配置</td>
 <td>运行时行为、交互验证、多人同步</td>
 </tr>
 <tr>
-<td><strong>执行方式</strong></td>
+<td>执行方式</td>
 <td>MCP 自动优先，不可用则 ✋手动</td>
 <td>MCP 辅助：截图&#x2F;日志&#x2F;属性检查</td>
 </tr>
 <tr>
-<td><strong>责任人</strong></td>
+<td>责任人</td>
 <td>各 coder 产出 → build-verifier 初检 → code-reviewer 聚合</td>
 <td>code-reviewer 产出 → 用户执行</td>
 </tr>
 </tbody></table>
-<p><strong>关键洞察</strong>：把”让功能存在”和”让功能正确”分开，避免了”编译通过了但 PIE 进不去”的死循环。</p>
+<p>核心观察：把”让功能存在”和”让功能正确”分开，避免了”编译通过了但 PIE 进不去”的死循环。</p>
 <hr>
-<h2 id="五、核心设计三：流程-Bug-反馈闭环"><a href="#五、核心设计三：流程-Bug-反馈闭环" class="headerlink" title="五、核心设计三：流程 Bug 反馈闭环"></a>五、核心设计三：流程 Bug 反馈闭环</h2><p>这是框架中最独特的机制——<strong>Bug 不仅是代码 bug，也包括流程 bug、架构决策 bug</strong>。</p>
+<h2 id="五、核心设计三：流程-Bug-反馈闭环"><a href="#五、核心设计三：流程-Bug-反馈闭环" class="headerlink" title="五、核心设计三：流程 Bug 反馈闭环"></a>五、核心设计三：流程 Bug 反馈闭环</h2><p>这是框架中比较独特的机制——Bug 不仅是代码 bug，也包括流程 bug、架构决策 bug。</p>
 <h3 id="5-1-六条流程-Bug-实录（精选）"><a href="#5-1-六条流程-Bug-实录（精选）" class="headerlink" title="5.1 六条流程 Bug 实录（精选）"></a>5.1 六条流程 Bug 实录（精选）</h3><p>在短短两周的开发中，框架自身捕获并修复了 6 条流程级缺陷：</p>
 <table>
 <thead>
@@ -1866,31 +1948,31 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>PROC-BUG-0001</strong></td>
+<td>PROC-BUG-0001</td>
 <td>Architect 未评估 Lyra 方案，直接创建 Character 子类</td>
 <td>Agent 定义缺少架构对齐约束</td>
 <td>architect 增加 BLOCKING 级「Lyra 架构对齐评估」节</td>
 </tr>
 <tr>
-<td><strong>PROC-BUG-0002</strong></td>
+<td>PROC-BUG-0002</td>
 <td>430 行错误代码通过了 15 维审查</td>
 <td>Code-reviewer 维度缺少架构对齐检查</td>
 <td>新增维度 0（阻断）：Lyra 架构对齐，扩展至 16 维</td>
 </tr>
 <tr>
-<td><strong>PROC-BUG-0004</strong></td>
+<td>PROC-BUG-0004</td>
 <td>因 LYRAGAME_API 缺失误判，创建了 ~285 行不必要的平行类</td>
 <td>混淆了”编辑器实例化”与”C++ 子类化”</td>
 <td>区分能力矩阵：MinimalAPI+UE_API virtual &#x3D; 可子类化</td>
 </tr>
 <tr>
-<td><strong>PROC-BUG-0005</strong></td>
+<td>PROC-BUG-0005</td>
 <td>UTowerExperienceDefinition 是不必要的 C++ 子类 + 缺少 ActionSet 复用层</td>
 <td>重演 LYRA-API 误判 + 不了解 ActionSet 机制</td>
 <td>删除子类，改用 Lyra 原生 DataAsset + ActionSet</td>
 </tr>
 <tr>
-<td><strong>PROC-BUG-0006</strong></td>
+<td>PROC-BUG-0006</td>
 <td>误判 MinimalAPI 类不可跨模块子类化</td>
 <td>对 UE 导出宏机制理解不完整</td>
 <td>文档化 MinimalAPI 判定矩阵，修正 REQ-0005</td>
@@ -1898,10 +1980,10 @@
 </tbody></table>
 <h3 id="5-2-反馈闭环设计"><a href="#5-2-反馈闭环设计" class="headerlink" title="5.2 反馈闭环设计"></a>5.2 反馈闭环设计</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">生产事故 → Bug 知识条目 → Agent 定义更新 → 规范文档更新</span><br><span class="line">                                        │</span><br><span class="line">                    ┌───────────────────┘</span><br><span class="line">                    ▼</span><br><span class="line">            下一次同类请求 → Agent 自动遵循新规则</span><br></pre></td></tr></table></figure>
 
-<p>每条流程 Bug 的修复都涉及<strong>两层变更</strong>：</p>
+<p>每条流程 Bug 的修复都涉及两层变更：</p>
 <ol>
-<li><strong>Agent 定义层</strong>：修改 <code>.claude/agents/</code> 中的 agent prompt</li>
-<li><strong>共享规范层</strong>：修改 <code>conventions.md</code> 中的编码约定</li>
+<li>Agent 定义层：修改 <code>.claude/agents/</code> 中的 agent prompt</li>
+<li>共享规范层：修改 <code>conventions.md</code> 中的编码约定</li>
 </ol>
 <p>这保证了”同样的错误不会犯两次”——不是靠人记忆，而是靠 agent 定义形成硬约束。</p>
 <hr>
@@ -1940,9 +2022,9 @@
 </tbody></table>
 <h3 id="6-2-属性集（5-个）"><a href="#6-2-属性集（5-个）" class="headerlink" title="6.2 属性集（5 个）"></a>6.2 属性集（5 个）</h3><p><code>UTowerStaminaSet</code> &#x2F; <code>UTowerHealthSet</code> &#x2F; <code>UTowerManaSet</code> &#x2F; <code>UTowerBuildStatsSet</code> &#x2F; 复用 <code>ULyraHealthSet</code></p>
 <p>其中 <code>UTowerBuildStatsSet</code> 实现了 Souls-like 的 6 属性成长体系（力&#x2F;敏&#x2F;智&#x2F;信 + 经验等级），带保底曲线 + Bonus GE + 6 委托回调。</p>
-<h3 id="6-3-输入配置"><a href="#6-3-输入配置" class="headerlink" title="6.3 输入配置"></a>6.3 输入配置</h3><p>10 个 InputAction + IMC + <code>ULyraInputConfig</code> 完整链路，<strong>零新 C++ 类</strong>——全部复用 Lyra 原生框架。</p>
+<h3 id="6-3-输入配置"><a href="#6-3-输入配置" class="headerlink" title="6.3 输入配置"></a>6.3 输入配置</h3><p>10 个 InputAction + IMC + <code>ULyraInputConfig</code> 完整链路，零新 C++ 类——全部复用 Lyra 原生框架。</p>
 <hr>
-<h2 id="七、踩坑记录"><a href="#七、踩坑记录" class="headerlink" title="七、踩坑记录"></a>七、踩坑记录</h2><h3 id="7-1-UE5-6-迁移：4-轮迭代"><a href="#7-1-UE5-6-迁移：4-轮迭代" class="headerlink" title="7.1 UE5.6 迁移：4 轮迭代"></a>7.1 UE5.6 迁移：4 轮迭代</h3><p>从 UE5.4 迁移到 5.6 时遇到的编译问题：</p>
+<h2 id="七、踩过的坑"><a href="#七、踩过的坑" class="headerlink" title="七、踩过的坑"></a>七、踩过的坑</h2><h3 id="7-1-UE5-6-迁移：4-轮迭代"><a href="#7-1-UE5-6-迁移：4-轮迭代" class="headerlink" title="7.1 UE5.6 迁移：4 轮迭代"></a>7.1 UE5.6 迁移：4 轮迭代</h3><p>从 UE5.4 迁移到 5.6 时遇到的编译问题：</p>
 <ul>
 <li><code>CppCompileWarningSettings</code> Build.cs API 弃用</li>
 <li>UHT 裸指针强制 <code>TObjectPtr</code></li>
@@ -1950,14 +2032,14 @@
 <li>UnLua 全量替换至 v2.3.6</li>
 </ul>
 <h3 id="7-2-GameFeature-资产搜索路径"><a href="#7-2-GameFeature-资产搜索路径" class="headerlink" title="7.2 GameFeature 资产搜索路径"></a>7.2 GameFeature 资产搜索路径</h3><p>PIE 启动时 <code>GameFeatureData is missing</code>。根因是引擎的 GF 搜索路径有首选&#x2F;备选两级——<code>/Game/</code> 和 <code>/Plugins/GameFeatures/&lt;PluginName&gt;/</code>。解决：在备选路径创建同名 DataAsset，而非修改引擎配置。</p>
-<h3 id="7-3-ULyraExperienceDefinition-的-API-导出"><a href="#7-3-ULyraExperienceDefinition-的-API-导出" class="headerlink" title="7.3 ULyraExperienceDefinition 的 API 导出"></a>7.3 <code>ULyraExperienceDefinition</code> 的 API 导出</h3><p>Lyra 核心类没有 <code>LYRAGAME_API</code> 导出宏，意味着<strong>不能从外部 GameFeature 插件的 C++ 代码中继承它</strong>。正确做法是用蓝图 DataAsset 实例化，而非 C++ 子类化。</p>
+<h3 id="7-3-ULyraExperienceDefinition-的-API-导出"><a href="#7-3-ULyraExperienceDefinition-的-API-导出" class="headerlink" title="7.3 ULyraExperienceDefinition 的 API 导出"></a>7.3 <code>ULyraExperienceDefinition</code> 的 API 导出</h3><p>Lyra 核心类没有 <code>LYRAGAME_API</code> 导出宏，意味着不能从外部 GameFeature 插件的 C++ 代码中继承它。正确做法是用蓝图 DataAsset 实例化，而非 C++ 子类化。</p>
 <h3 id="7-4-MinimalAPI-UE-API-virtual-的微妙语义"><a href="#7-4-MinimalAPI-UE-API-virtual-的微妙语义" class="headerlink" title="7.4 MinimalAPI + UE_API virtual 的微妙语义"></a>7.4 MinimalAPI + UE_API virtual 的微妙语义</h3><p><code>MinimalAPI</code> 不等于”不可用”。关键区别：</p>
 <ul>
-<li><code>MinimalAPI</code> + <code>virtual</code> + <code>UE_API</code> &#x3D; 可以从外部 DLL <strong>跨模块子类化</strong></li>
+<li><code>MinimalAPI</code> + <code>virtual</code> + <code>UE_API</code> &#x3D; 可以从外部 DLL 跨模块子类化</li>
 <li>无 API 导出 &#x3D; 只能在本模块使用</li>
 </ul>
 <p>这个误判导致了一次 ~150 行不必要代码的教训（PROC-BUG-0006）。</p>
-<h3 id="7-5-架构审查盲区"><a href="#7-5-架构审查盲区" class="headerlink" title="7.5 架构审查盲区"></a>7.5 架构审查盲区</h3><p>最有价值的教训：<strong>代码审查的 15 个维度全过了，但架构选型是错的</strong>。430 行 <code>ATowerCharacter</code> 通过了所有审查标准——代码风格、GC 安全、网络同步、GAS 模式——但本质上是错的，因为在 Lyra 体系中，创建 Character C++ 子类是反模式。这暴露了”审查维度完备 ≠ 审查结论正确”，需要在维度之上加一层架构级硬约束。</p>
+<h3 id="7-5-架构审查盲区"><a href="#7-5-架构审查盲区" class="headerlink" title="7.5 架构审查盲区"></a>7.5 架构审查盲区</h3><p>比较有收获的一个教训：代码审查的 15 个维度全过了，但架构选型是错的。430 行 <code>ATowerCharacter</code> 通过了所有审查标准——代码风格、GC 安全、网络同步、GAS 模式——但本质上是错的，因为在 Lyra 体系中，创建 Character C++ 子类是反模式。这暴露了”审查维度完备 ≠ 审查结论正确”，需要在维度之上加一层架构级硬约束。</p>
 <hr>
 <h2 id="八、架构可改进点"><a href="#八、架构可改进点" class="headerlink" title="八、架构可改进点"></a>八、架构可改进点</h2><table>
 <thead>
@@ -1968,39 +2050,39 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>Agent 上下文重复加载</strong></td>
+<td>Agent 上下文重复加载</td>
 <td>每个 Agent 启动时都需读取 conventions.md（~200 行）</td>
 <td>Claude Code 的 prompt caching 可缓解，但跨 agent 不共享。考虑将高频规范编译为子提示词模板</td>
 </tr>
 <tr>
-<td><strong>编辑器自动化成功率</strong></td>
+<td>编辑器自动化成功率</td>
 <td>MCP 工具覆盖率高，但部分操作（如复杂的 DataAsset 字段填充）仍需手动</td>
 <td>持续向 MCP 上游贡献工具增强；编写项目级 MCP 包装脚本</td>
 </tr>
 <tr>
-<td><strong>PIE 阻塞链</strong></td>
+<td>PIE 阻塞链</td>
 <td>REQ-0005&#x2F;0006&#x2F;0008 的 PIE 验收因动画系统未完成而阻塞</td>
 <td>引入 Mock 策略——在动画就位前用数据化替代方案验证核心逻辑</td>
 </tr>
 <tr>
-<td><strong>多 REQ 并发时的文件冲突</strong></td>
+<td>多 REQ 并发时的文件冲突</td>
 <td>当前靠 architect 预分配文件所有权</td>
 <td>引入 worktree 隔离 + 合并仲裁 agent</td>
 </tr>
 <tr>
-<td><strong>Lyra 版本同步</strong></td>
+<td>Lyra 版本同步</td>
 <td>当前手动跟踪 LyraStarterGame 更新</td>
 <td>自动化 diff 检测 + 影响分析（可利用 GitNexus 技能）</td>
 </tr>
 <tr>
-<td><strong>测试覆盖</strong></td>
+<td>测试覆盖</td>
 <td>当前依赖 PIE 手动验收，无自动化测试</td>
 <td>引入 Gauntlet 功能测试 + GAS 单元测试框架</td>
 </tr>
 </tbody></table>
 <hr>
 <blockquote>
-<p>这个项目的核心收获是：<strong>AI 辅助开发的瓶颈不在 AI 能力，而在工程流程设计</strong>。21 个 Agent 写出能编译的 C++ 不难，难的是写出”符合 Lyra 架构、资产就位、网络同步安全、PIE 可验收”的完整功能。填这个坑的不是更强的模型，而是流程约束、MCP 自动化、双清单体系和 Bug 反馈闭环。</p>
+<p>这个项目的核心收获是：AI 辅助开发的瓶颈不在 AI 能力，而在工程流程设计。21 个 Agent 写出能编译的 C++ 不难，难的是写出”符合 Lyra 架构、资产就位、网络同步安全、PIE 可验收”的完整功能。填这个坑的不是更强的模型，而是流程约束、MCP 自动化、双清单体系和 Bug 反馈闭环。</p>
 </blockquote>
 <hr>
 <p><em>Lyra-WarTower 持续迭代中。如果你对 AI 辅助 UE5 开发、多智能体编排、或 MCP 编辑器自动化感兴趣，欢迎交流。</em></p>
@@ -2080,12 +2162,12 @@
 <hr>
 <h2 id="一、核心差异：表现丰富度-vs-通信精度"><a href="#一、核心差异：表现丰富度-vs-通信精度" class="headerlink" title="一、核心差异：表现丰富度 vs 通信精度"></a>一、核心差异：表现丰富度 vs 通信精度</h2><p>两个项目的设计目标决定了它们走向了不同的动画架构：</p>
 <ul>
-<li><p><strong>TPS Tutorial</strong> 的目标是”学会 UE5 动画系统能做什么”——所以它把 Blend Space、状态机、AimOffset、Montage 全部搭了一遍。结果是<strong>动画表现极其丰富</strong>（八向移动 × 多种姿态 × 过渡动画），但 Gameplay 通信层很薄（一个 LineTrace 完事）。</p>
+<li><p>TPS Tutorial 的目标是”学会 UE5 动画系统能做什么”——所以它把 Blend Space、状态机、AimOffset、Montage 全部搭了一遍。结果是动画表现极其丰富（八向移动 × 多种姿态 × 过渡动画），但 Gameplay 通信层很薄（一个 LineTrace 完事）。</p>
 </li>
-<li><p><strong>Crunch</strong> 的目标是”做出能联网的近战战斗”——所以它的动画资产很少（Paragon 自带），但 <strong>Gameplay 通信层极其精密</strong>：自定义 AnimNotify 在特定帧做 SphereTrace → 打包 TargetData → 发 GameplayEvent → GAS Ability 收到后施加 GE。</p>
+<li><p>Crunch 的目标是”做出能联网的近战战斗”——所以它的动画资产很少（Paragon 自带），但 Gameplay 通信层极其精密：自定义 AnimNotify 在特定帧做 SphereTrace → 打包 TargetData → 发 GameplayEvent → GAS Ability 收到后施加 GE。</p>
 </li>
 </ul>
-<p>一句话概括：<strong>TPS 的动画系统是”展示型”的，Crunch 的动画系统是”功能型”的。</strong></p>
+<p>可以这样概括：TPS 的动画系统偏向”展示型”，Crunch 的动画系统偏向”功能型”。</p>
 <hr>
 <h2 id="二、同一功能，两种实现"><a href="#二、同一功能，两种实现" class="headerlink" title="二、同一功能，两种实现"></a>二、同一功能，两种实现</h2><h3 id="2-1-方向计算"><a href="#2-1-方向计算" class="headerlink" title="2.1 方向计算"></a>2.1 方向计算</h3><p><strong>TPS — AnimBP Event Graph 内置函数：</strong></p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 在蓝图里一行搞定</span></span><br><span class="line">Direction = <span class="built_in">CalculateDirection</span>(Velocity, ActorRotation);  <span class="comment">// 返回 -180~180</span></span><br><span class="line">Speed = Velocity.<span class="built_in">Size</span>();</span><br></pre></td></tr></table></figure>
@@ -2165,7 +2247,7 @@
 <td>全部在一个 <code>.cpp</code> 文件中</td>
 </tr>
 </tbody></table>
-<p>Crunch 方式的核心优势：<strong>一个 Combo 技能的全部逻辑（动画播放 → 等待输入 → AnimNotify 事件 → 段位切换 → 伤害施加 → 技能结束）都在一个 <code>UGA_Combo</code> 类里</strong>。审阅或调试时不需要在 AnimBP 蓝图和 C++ 之间来回跳。</p>
+<p>Crunch 方式的一个优势：一个 Combo 技能的全部逻辑（动画播放 → 等待输入 → AnimNotify 事件 → 段位切换 → 伤害施加 → 技能结束）都在一个 <code>UGA_Combo</code> 类里。审阅或调试时不需要在 AnimBP 蓝图和 C++ 之间来回跳。</p>
 <h3 id="2-3-伤害判定时机"><a href="#2-3-伤害判定时机" class="headerlink" title="2.3 伤害判定时机"></a>2.3 伤害判定时机</h3><p>这是被 Gameplay 类型决定的差异——不是”谁做得更好”，而是”谁更适合自己做的事”。</p>
 <p><strong>TPS — 即时命中（Hitscan）：</strong></p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">ABaseGun::ShootOnce</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 按下扳机的同一帧 → LineTrace → 伤害</span></span><br><span class="line">    FVector StartLoc = CameraManager-&gt;<span class="built_in">GetCameraLocation</span>();</span><br><span class="line">    FVector EndLoc = StartLoc + SpreadRotator.<span class="built_in">RotateVector</span>(</span><br><span class="line">        CameraManager-&gt;<span class="built_in">GetActorForwardVector</span>()) * <span class="number">2000</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">bool</span> bHit = <span class="built_in">GetWorld</span>()-&gt;<span class="built_in">LineTraceSingleByChannel</span>(</span><br><span class="line">        Hit, StartLoc, EndLoc, ECC_Visibility, Params);</span><br><span class="line">    <span class="keyword">if</span> (bHit)</span><br><span class="line">        MyCharacter-&gt;<span class="built_in">OnGunHit</span>(Hit, <span class="keyword">this</span>);  <span class="comment">// → 蓝图事件</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -2214,22 +2296,20 @@
 <p><strong>Crunch</strong> 使用 GameplayTag 作为中间层：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 初始化时注册 GameplayTag 监听</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAnimInstance::NativeInitializeAnimation</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UAbilitySystemComponent* OwnerASC =</span><br><span class="line">        UAbilitySystemBlueprintLibrary::<span class="built_in">GetAbilitySystemComponent</span>(<span class="built_in">TryGetPawnOwner</span>());</span><br><span class="line">    <span class="keyword">if</span> (OwnerASC)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Aim 状态通过 GameplayTag 同步</span></span><br><span class="line">        OwnerASC-&gt;<span class="built_in">RegisterGameplayTagEvent</span>(</span><br><span class="line">            UCAbilitySystemStatics::<span class="built_in">GetAimStatsTag</span>()</span><br><span class="line">        ).<span class="built_in">AddUObject</span>(<span class="keyword">this</span>, &amp;UCAnimInstance::OwnerAimTagChanged);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Tag 变化 → 动画状态</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAnimInstance::OwnerAimTagChanged</span><span class="params">(<span class="type">const</span> FGameplayTag Tag, int32 NewCount)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    bIsAiming = NewCount != <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><strong>为什么 Crunch 需要这一层？</strong></p>
-<p>因为 Crunch 的角色状态（瞄准&#x2F;死亡&#x2F;眩晕&#x2F;无敌）不是简单的 <code>bool</code>，而是 GAS 的 <code>FGameplayTag</code> ——一个角色可以同时持有多个 Tag，且这些 Tag 通过网络自动复制。<code>bIsAiming</code> 在客户端和服务端通过同一个机制同步，不需要额外的手动 RPC。</p>
+<p>Crunch 选择这一层是因为角色状态（瞄准&#x2F;死亡&#x2F;眩晕&#x2F;无敌）不是简单的 <code>bool</code>，而是 GAS 的 <code>FGameplayTag</code>——一个角色可以同时持有多个 Tag，且这些 Tag 通过网络自动复制。<code>bIsAiming</code> 在客户端和服务端通过同一个机制同步，不需要额外的手动 RPC。</p>
 <p>TPS 不需要这层间接——它不做网络同步，<code>bIsCrouching</code> 本身就是 CharacterMovement 的同步属性。</p>
 <hr>
 <h2 id="三、线程模型：AnimBP-游戏线程-vs-C-工作线程"><a href="#三、线程模型：AnimBP-游戏线程-vs-C-工作线程" class="headerlink" title="三、线程模型：AnimBP 游戏线程 vs C++ 工作线程"></a>三、线程模型：AnimBP 游戏线程 vs C++ 工作线程</h2><p>Crunch 的 <code>CAnimInstance</code> 明确区分了两个更新函数：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// NativeUpdateAnimation — 游戏线程</span></span><br><span class="line"><span class="comment">// 只做数据收集：读 Velocity、算 Speed、算 Yaw</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">NativeUpdateAnimation</span><span class="params">(<span class="type">float</span> DeltaSeconds)</span> <span class="keyword">override</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NativeThreadSafeUpdateAnimation — 工作线程</span></span><br><span class="line"><span class="comment">// 在 Anim Graph 更新前执行，可以做混合计算</span></span><br><span class="line"><span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">NativeThreadSafeUpdateAnimation</span><span class="params">(<span class="type">float</span> DeltaSeconds)</span> <span class="keyword">override</span></span>;</span><br></pre></td></tr></table></figure>
 
 <p>TPS 因为完全在 AnimBP 的 Event Graph 中做计算，所有 Update 都在游戏线程的 Blueprint 虚拟机上执行——没有利用 UE5 的动画工作线程。</p>
-<p><strong>什么时候这个区别重要？</strong></p>
-<p>当场景中有 50+ 个角色同时播放动画时，游戏线程的 AnimBP 计算会成为瓶颈。把数据收集放在游戏线程、混合计算放在工作线程，是 UE5 推荐的做法。但对于单机 Demo 来说，这个优化是过早的。</p>
+<p>什么时候这个区别开始重要？当场景中有 50+ 个角色同时播放动画时，游戏线程的 AnimBP 计算会成为瓶颈。把数据收集放在游戏线程、混合计算放在工作线程，是 UE5 推荐的做法。但对于单机 Demo 来说，这个优化是过早的。</p>
 <hr>
 <h2 id="四、AnimNotify：TPS-没有，Crunch-有"><a href="#四、AnimNotify：TPS-没有，Crunch-有" class="headerlink" title="四、AnimNotify：TPS 没有，Crunch 有"></a>四、AnimNotify：TPS 没有，Crunch 有</h2><p>TPS 不需要自定义 AnimNotify——它的 Montage 不向 Gameplay 系统发送信息。开火是 C++ 端主动触发的，换弹也是 C++ 端的 Timer 管理，动画只需要”看起来对”。</p>
 <p>Crunch 有两个自定义 AnimNotify，它们是动画系统和 GAS 之间的桥梁：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// AN_SendGameplayEvent：在动画特定帧向 ASC 发送 GameplayEvent</span></span><br><span class="line"><span class="comment">// 用于 Combo 段位切换（&quot;Combo1 → Combo2&quot;的切换帧）</span></span><br><span class="line">UAN_SendGameplayEvent::<span class="built_in">Notify</span>(...) &#123;</span><br><span class="line">    UAbilitySystemBlueprintLibrary::<span class="built_in">SendGameplayEventToActor</span>(</span><br><span class="line">        MeshComp-&gt;<span class="built_in">GetOwner</span>(), GameplayEventTag, <span class="built_in">FGameplayEventData</span>());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AN_SendTargetGroup：在动画特定帧做伤害判定</span></span><br><span class="line"><span class="comment">// 用于 Combo 伤害帧（&quot;拳头命中&quot;那一帧）</span></span><br><span class="line">UAN_SendTargetGroup::<span class="built_in">Notify</span>(...) &#123;</span><br><span class="line">    <span class="comment">// SphereTrace → 筛选敌对阵营 → 发送 GameplayEvent + GameplayCue</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><strong>设计原则：AnimNotify 不做 Gameplay 逻辑，它只负责”在正确的时刻发消息”。</strong> 收到消息后怎么做——伤害多少、施加什么 GE——全部在 GAS Ability 中决定。这意味着同一个 AnimNotify 可以用在不同的技能里，伤害逻辑由各自的 Ability 处理。</p>
+<p>一个值得注意的设计：AnimNotify 不做 Gameplay 逻辑，它只负责”在正确的时刻发消息”。收到消息后怎么做——伤害多少、施加什么 GE——全部在 GAS Ability 中决定。这意味着同一个 AnimNotify 可以用在不同的技能里，伤害逻辑由各自的 Ability 处理。</p>
 <hr>
 <h2 id="五、动画资产组织"><a href="#五、动画资产组织" class="headerlink" title="五、动画资产组织"></a>五、动画资产组织</h2><table>
 <thead>
@@ -2267,61 +2347,61 @@
 </tbody></table>
 <p>TPS 的动画组织是”从下往上”——从最基本的移动动画开始，一层层叠加（Additive AimOffset → LayeredBlendPerBone 武器姿态 → Montage 插播）。Crunch 是”从上往下”——从技能设计开始（Combo 要有 3 段 → 每段一个 Section → Section 之间用 AnimNotify 桥接），移动动画只是技能的”默认背景层”。</p>
 <hr>
-<h2 id="六、适用场景与选择建议"><a href="#六、适用场景与选择建议" class="headerlink" title="六、适用场景与选择建议"></a>六、适用场景与选择建议</h2><table>
+<h2 id="六、适用场景参考"><a href="#六、适用场景参考" class="headerlink" title="六、适用场景参考"></a>六、适用场景参考</h2><table>
 <thead>
 <tr>
 <th>场景</th>
-<th>推荐方向</th>
+<th>倾向</th>
 <th>原因</th>
 </tr>
 </thead>
 <tbody><tr>
 <td>学习动画系统本身</td>
-<td><strong>TPS 方式</strong></td>
+<td>TPS 方式</td>
 <td>手搭 Blend Space + 状态机 + Montage 全流程</td>
 </tr>
 <tr>
 <td>射击游戏（Hitscan）</td>
-<td><strong>TPS 方式</strong></td>
+<td>TPS 方式</td>
 <td>C++ LineTrace，动画只管表现</td>
 </tr>
 <tr>
 <td>近战动作游戏</td>
-<td><strong>Crunch 方式</strong></td>
+<td>Crunch 方式</td>
 <td>AnimNotify 帧判定 + GAS 管理技能生命周期</td>
 </tr>
 <tr>
 <td>需要联网多人</td>
-<td><strong>Crunch 方式</strong></td>
+<td>Crunch 方式</td>
 <td>GAS 的 Tag&#x2F;Attribute 自动复制，AnimNotify 发 Event</td>
 </tr>
 <tr>
 <td>团队以蓝图为主</td>
-<td><strong>TPS 方式</strong></td>
+<td>TPS 方式</td>
 <td>AnimBP Event Graph 承担大部分工作</td>
 </tr>
 <tr>
 <td>技能需要复杂逻辑</td>
-<td><strong>Crunch 方式</strong></td>
+<td>Crunch 方式</td>
 <td>自定义 C++ AnimInstance + AbilityTask 管理一切</td>
 </tr>
 <tr>
 <td>大量 AI 角色同时存在</td>
-<td><strong>Crunch 方式</strong></td>
+<td>Crunch 方式</td>
 <td>工作线程 Update + 少量 Blend Space → 性能更好</td>
 </tr>
 </tbody></table>
 <hr>
-<h2 id="七、为什么两套方案不矛盾"><a href="#七、为什么两套方案不矛盾" class="headerlink" title="七、为什么两套方案不矛盾"></a>七、为什么两套方案不矛盾</h2><p>做实际项目时，你不会只选一种——你会把两者的优势结合起来：</p>
+<h2 id="七、为什么两套方案不矛盾"><a href="#七、为什么两套方案不矛盾" class="headerlink" title="七、为什么两套方案不矛盾"></a>七、为什么两套方案不矛盾</h2><p>做实际项目时，通常不会只选一种——而是把两者的优势结合起来：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">项目动画系统 = TPS 的 Blend Space 移动层</span><br><span class="line">              + Crunch 的 GAS + AnimNotify 技能层</span><br><span class="line">              + 自定义 C++ AnimInstance 数据层</span><br></pre></td></tr></table></figure>
 
 <p>具体来说：</p>
 <ul>
-<li><strong>移动系统</strong>用 TPS 的方案：状态机驱动 + 丰富的 Blend Space 过渡</li>
-<li><strong>战斗技能</strong>用 Crunch 的方案：GAS AbilityTask 管理 Montage 生命周期 + AnimNotify 发 GameplayEvent 做帧判定</li>
-<li><strong>数据层</strong>统一在 C++ AnimInstance 中计算，GameplayTag 监听 Gameplay 状态</li>
+<li>移动系统用 TPS 的方案：状态机驱动 + 丰富的 Blend Space 过渡</li>
+<li>战斗技能用 Crunch 的方案：GAS AbilityTask 管理 Montage 生命周期 + AnimNotify 发 GameplayEvent 做帧判定</li>
+<li>数据层统一在 C++ AnimInstance 中计算，GameplayTag 监听 Gameplay 状态</li>
 </ul>
-<p>两个项目合在一起，覆盖了 UE5 角色动画的三大支柱：<strong>Blend Space 状态机</strong>（表现力）、<strong>Montage + AnimNotify 事件系统</strong>（功能性）、<strong>C++ AnimInstance + GameplayTag</strong>（数据通信）。</p>
+<p>两个项目合在一起，覆盖了 UE5 角色动画的三大支柱：Blend Space 状态机（表现力）、Montage + AnimNotify 事件系统（功能性）、C++ AnimInstance + GameplayTag（数据通信）。</p>
 <hr>
 <blockquote>
 <p>如果你也在用 UE5 搭建角色动画系统，或者对这两种架构有自己的实践经验，欢迎交流。</p>
@@ -2365,7 +2445,7 @@
 <td>Animation Blueprint · Blend Space · Montage · IK Retargeting · Enhanced Input</td>
 </tr>
 </tbody></table>
-<p>一个聚焦 UE5 动画系统的 TPS 角色 Demo。核心产物是一个完整的 <strong>Animation Blueprint</strong>（ABP_MyCharacter），包含完整的移动状态机、7 个 Blend Space、4 个 Animation Montage，配合 IK Retargeter 将 Mannequin 动画重定向到自定义角色模型。</p>
+<p>一个聚焦 UE5 动画系统的 TPS 角色 Demo。核心产物是一个完整的 Animation Blueprint（ABP_MyCharacter），包含完整的移动状态机、7 个 Blend Space、4 个 Animation Montage，配合 IK Retargeter 将 Mannequin 动画重定向到自定义角色模型。</p>
 <hr>
 <h2 id="一、Animation-Blueprint-总体架构"><a href="#一、Animation-Blueprint-总体架构" class="headerlink" title="一、Animation Blueprint 总体架构"></a>一、Animation Blueprint 总体架构</h2><p>ABP 是 UE 动画系统的枢纽。本项目的 ABP_MyCharacter 设计分三层：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ABP_MyCharacter</span><br><span class="line">├── Event Graph          ← 每帧从 C++ / BP 拿数据，更新动画变量</span><br><span class="line">├── Anim Graph (主输出)</span><br><span class="line">│   ├── Locomotion State Machine  ← 移动状态机</span><br><span class="line">│   │   ├── Idle ──→ Walk ──→ Run</span><br><span class="line">│   │   ├── Idle ──→ Crouch</span><br><span class="line">│   │   ├── Idle ──→ Jump ──→ Fall ──→ Land</span><br><span class="line">│   │   └── TurnInPlace</span><br><span class="line">│   └── Layered Blend Per Bone    ← 上半身 Montage 叠加</span><br><span class="line">│       ├── Base (Locomotion)</span><br><span class="line">│       └── Upper Body Slot (Fire/Reload/Punch)</span><br><span class="line">└── Post Process Anim BP          ← Control Rig Foot IK</span><br></pre></td></tr></table></figure>
@@ -2375,14 +2455,14 @@
 
 <p>Anim BP 的 Event Graph 中做方向计算：</p>
 <ul>
-<li><strong>Speed</strong> &#x3D; <code>Velocity.Size()</code> — 区分 Idle &#x2F; Walk &#x2F; Run</li>
-<li><strong>Direction</strong> &#x3D; <code>CalculateDirection(Velocity, ActorRotation)</code> — Blend Space 的横轴</li>
-<li><strong>bIsCrouching</strong> &#x3D; <code>CharacterMovement.IsCrouching()</code></li>
-<li><strong>bIsInAir</strong> &#x3D; <code>CharacterMovement.IsFalling()</code></li>
-<li><strong>WeaponType</strong> &#x3D; 从 <code>BaseGun::GetWeaponType()</code> 取值，决定武器动画分支</li>
+<li>Speed &#x3D; <code>Velocity.Size()</code> — 区分 Idle &#x2F; Walk &#x2F; Run</li>
+<li>Direction &#x3D; <code>CalculateDirection(Velocity, ActorRotation)</code> — Blend Space 的横轴</li>
+<li>bIsCrouching &#x3D; <code>CharacterMovement.IsCrouching()</code></li>
+<li>bIsInAir &#x3D; <code>CharacterMovement.IsFalling()</code></li>
+<li>WeaponType &#x3D; 从 <code>BaseGun::GetWeaponType()</code> 取值，决定武器动画分支</li>
 </ul>
 <hr>
-<h2 id="二、八向移动的实现步骤"><a href="#二、八向移动的实现步骤" class="headerlink" title="二、八向移动的实现步骤"></a>二、八向移动的实现步骤</h2><p>八向移动的核心思路：<strong>用 Blend Space 把方向离散化，再用 Animation BP 的 State Machine 按速度分状态。</strong></p>
+<h2 id="二、八向移动的实现步骤"><a href="#二、八向移动的实现步骤" class="headerlink" title="二、八向移动的实现步骤"></a>二、八向移动的实现步骤</h2><p>八向移动的核心思路：用 Blend Space 把方向离散化，再用 Animation BP 的 State Machine 按速度分状态。</p>
 <h3 id="Step-1：准备动画资产"><a href="#Step-1：准备动画资产" class="headerlink" title="Step 1：准备动画资产"></a>Step 1：准备动画资产</h3><p>为每个移动状态准备 8 个方向的动画序列：</p>
 <table>
 <thead>
@@ -2446,7 +2526,7 @@
 <h3 id="Step-2：创建-Blend-Space"><a href="#Step-2：创建-Blend-Space" class="headerlink" title="Step 2：创建 Blend Space"></a>Step 2：创建 Blend Space</h3><p>为每个移动模式创建 Blend Space（水平轴 &#x3D; Direction，范围 -180~180）：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">BS_Walk:  [ -180° | -135° | -90° | -45° | 0° | 45° | 90° | 135° | 180° ]</span><br><span class="line">BS_Run:   [ -180° | -135° | -90° | -45° | 0° | 45° | 90° | 135° | 180° ]</span><br><span class="line">BS_Crouch:[ -180° | -135° | -90° | -45° | 0° | 45° | 90° | 135° | 180° ]</span><br></pre></td></tr></table></figure>
 
-<p><strong>关键设置：</strong></p>
+<p>一些设置建议：</p>
 <ul>
 <li>Interpolation Time：尽量小（0.1~0.2s），否则方向切换有”飘”感</li>
 <li>每个动画的权重区域不要过大，否则相邻动画会被错误激活</li>
@@ -2455,26 +2535,26 @@
 <h3 id="Step-3：过渡-Blend-Space"><a href="#Step-3：过渡-Blend-Space" class="headerlink" title="Step 3：过渡 Blend Space"></a>Step 3：过渡 Blend Space</h3><p>Idle 和 Move 之间不能直接切换——需要过渡动画：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">BS_IdleToWalk:   [ Idle → Walk (8 dir)  ]</span><br><span class="line">BS_IdleToRun:    [ Idle → Run (8 dir)   ]</span><br><span class="line">BS_IdleToCrouch: [ Idle → Crouch (8 dir)]</span><br></pre></td></tr></table></figure>
 
-<p>这些过渡 Blend Space 在 State Machine 中作为 <strong>Transition Rule 的 Blend 资产</strong> 使用——当状态切换时，过渡阶段播放它们而不是立刻切到目标 Blend Space。</p>
+<p>这些过渡 Blend Space 在 State Machine 中作为 Transition Rule 的 Blend 资产使用——当状态切换时，过渡阶段播放它们而不是立刻切到目标 Blend Space。</p>
 <h3 id="Step-4：构建-State-Machine"><a href="#Step-4：构建-State-Machine" class="headerlink" title="Step 4：构建 State Machine"></a>Step 4：构建 State Machine</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">        ┌─────────────────────────────┐</span><br><span class="line">        │         Idle State          │</span><br><span class="line">        │   (BS_Idle, BS_Turn)        │</span><br><span class="line">        └──────┬──────────┬───────────┘</span><br><span class="line">    Speed&gt;150  │          │  Speed&gt;10,&lt;150</span><br><span class="line">               ▼          ▼</span><br><span class="line">┌──────────┐       ┌──────────────┐</span><br><span class="line">│ Run State│       │  Walk State   │</span><br><span class="line">│ (BS_Run) │       │ (BS_Walk)     │</span><br><span class="line">└────┬─────┘       └──────┬───────┘</span><br><span class="line">     │     Speed&lt;150     │</span><br><span class="line">     └───────────────────┘ Speed&lt;10</span><br><span class="line">               │</span><br><span class="line"> Speed&lt;10      ▼</span><br><span class="line">┌──────────────────────┐</span><br><span class="line">│  IdleToRun/WalkStop  │  ← Transition Blend Space</span><br><span class="line">└──────────────────────┘</span><br></pre></td></tr></table></figure>
 
-<p><strong>状态机设计要点：</strong></p>
+<p>状态机设计上注意几点：</p>
 <ol>
-<li><strong>Idle 作为 Hub</strong>：所有移动状态最终都回到 Idle，避免状态爆炸</li>
-<li><strong>Speed 阈值驱动流转</strong>：<code>Speed &lt; 10</code> → Idle，<code>10 &lt; Speed &lt; 150</code> → Walk，<code>Speed &gt; 150</code> → Run</li>
-<li><strong>过渡使用 Blend Space 而非硬切</strong>：Transition 的 <code>Blend Logic</code> 设为 <code>BlendSpace</code> 类型，引用对应的 IdleToMove Blend Space</li>
-<li><strong>Crouch 独立子状态机</strong>：<code>bIsCrouching</code> 触发进入 Crouch 子树，避免和站立状态交叉污染</li>
+<li>Idle 作为 Hub：所有移动状态最终都回到 Idle，避免状态爆炸</li>
+<li>Speed 阈值驱动流转：<code>Speed &lt; 10</code> → Idle，<code>10 &lt; Speed &lt; 150</code> → Walk，<code>Speed &gt; 150</code> → Run</li>
+<li>过渡使用 Blend Space 而非硬切：Transition 的 <code>Blend Logic</code> 设为 <code>BlendSpace</code> 类型，引用对应的 IdleToMove Blend Space</li>
+<li>Crouch 独立子状态机：<code>bIsCrouching</code> 触发进入 Crouch 子树，避免和站立状态交叉污染</li>
 </ol>
-<h3 id="Step-5：叠加武器姿态"><a href="#Step-5：叠加武器姿态" class="headerlink" title="Step 5：叠加武器姿态"></a>Step 5：叠加武器姿态</h3><p>移动状态只管下半身。上半身的武器姿态通过 <strong>Layered Blend Per Bone</strong> 叠加：</p>
+<h3 id="Step-5：叠加武器姿态"><a href="#Step-5：叠加武器姿态" class="headerlink" title="Step 5：叠加武器姿态"></a>Step 5：叠加武器姿态</h3><p>移动状态只管下半身。上半身的武器姿态通过 Layered Blend Per Bone 叠加：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Final Animation Pose</span><br><span class="line">├── Base Pose: Locomotion State Machine (全身)</span><br><span class="line">└── Blend Weight = 1.0, Bone Filter: Spine_01 ~ Head</span><br><span class="line">    └── Blend Poses by Enum (WeaponType)</span><br><span class="line">        ├── PistolAnim → AO_Aim_Pistol + anim_idle_aim</span><br><span class="line">        └── RifleAnim  → AO_Aim_Rifle + anim_idle_aimAR</span><br></pre></td></tr></table></figure>
 
-<p><strong>关键节点：</strong></p>
+<p>用到的关键节点：</p>
 <ul>
 <li><code>Layered Blend Per Bone (Branch Filter = Spine_01)</code> — 上半身叠加，不影响移动</li>
 <li><code>Blend Poses by Enum</code> — 按 <code>EWeaponAnimType</code> 枚举切换手枪&#x2F;步枪动画集</li>
 <li>每个武器分支内部再用 <code>BlendSpace (AimOffset)</code> 处理 9 方向瞄准</li>
 </ul>
-<h3 id="八向移动常见坑"><a href="#八向移动常见坑" class="headerlink" title="八向移动常见坑"></a>八向移动常见坑</h3><table>
+<h3 id="八向移动中遇到过的问题"><a href="#八向移动中遇到过的问题" class="headerlink" title="八向移动中遇到过的问题"></a>八向移动中遇到过的问题</h3><table>
 <thead>
 <tr>
 <th>问题</th>
@@ -2504,7 +2584,7 @@
 </tr>
 </tbody></table>
 <hr>
-<h2 id="三、Animation-Montage-的搭建步骤"><a href="#三、Animation-Montage-的搭建步骤" class="headerlink" title="三、Animation Montage 的搭建步骤"></a>三、Animation Montage 的搭建步骤</h2><p>Montage 用于”一次性动作”——开火、换弹、闪避、近战。它是<strong>插播式</strong>的，播完自动退出，不会影响 Locomotion 状态机。</p>
+<h2 id="三、Animation-Montage-的搭建步骤"><a href="#三、Animation-Montage-的搭建步骤" class="headerlink" title="三、Animation Montage 的搭建步骤"></a>三、Animation Montage 的搭建步骤</h2><p>Montage 用于”一次性动作”——开火、换弹、闪避、近战。它是插播式的，播完自动退出，不会影响 Locomotion 状态机。</p>
 <h3 id="Step-1：创建-Montage-资产"><a href="#Step-1：创建-Montage-资产" class="headerlink" title="Step 1：创建 Montage 资产"></a>Step 1：创建 Montage 资产</h3><p>每个动作一个 Montage，设置 Slot：</p>
 <table>
 <thead>
@@ -2545,13 +2625,13 @@
 <td>0.15s</td>
 </tr>
 </tbody></table>
-<p><strong>Slot 设计方案：</strong></p>
+<p>Slot 设计方案：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DefaultGroup.UpperBody   ← 上半身动作（Fire / Reload），不打断移动</span><br><span class="line">DefaultGroup.FullBody    ← 全身动作（Dodge / Punch），覆盖移动</span><br></pre></td></tr></table></figure>
 
 <h3 id="Step-2：Anim-Graph-中配置-Slot-节点"><a href="#Step-2：Anim-Graph-中配置-Slot-节点" class="headerlink" title="Step 2：Anim Graph 中配置 Slot 节点"></a>Step 2：Anim Graph 中配置 Slot 节点</h3><p>在 Anim Graph 的输出 Pose 链路中插入 Slot 节点：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Locomotion State Machine (Output Pose)</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Slot &quot;UpperBody&quot; ──→ LayeredBlendPerBone (BoneFilter: Spine_01 ~ Head)</span><br><span class="line">    │                        │</span><br><span class="line">    │  Base Pose (full body) │  Blend Weight = Montage 激活时 → 1.0</span><br><span class="line">    │                        │</span><br><span class="line">    ▼                        ▼</span><br><span class="line">Slot &quot;FullBody&quot; ──→ BlendWeights = 1.0 (覆盖全身)</span><br><span class="line">    │</span><br><span class="line">    ▼</span><br><span class="line">Output Pose</span><br></pre></td></tr></table></figure>
 
-<p><strong>重点：</strong> <code>UpperBody</code> Slot 在 Layered Blend Per Bone 之后、输出之前接入——这样 Montage 播上半身动画时，下半身继续播 Locomotion Pose。而 <code>FullBody</code> Slot 直接覆盖整个输出链。</p>
+<p>注意：<code>UpperBody</code> Slot 在 Layered Blend Per Bone 之后、输出之前接入——这样 Montage 播上半身动画时，下半身继续播 Locomotion Pose。而 <code>FullBody</code> Slot 直接覆盖整个输出链。</p>
 <h3 id="Step-3：在-Montage-中组织-Section"><a href="#Step-3：在-Montage-中组织-Section" class="headerlink" title="Step 3：在 Montage 中组织 Section"></a>Step 3：在 Montage 中组织 Section</h3><p>以 <code>AM_Fire</code> 为例：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Section: &quot;FireStart&quot;  →  Section: &quot;FireLoop&quot;  →  Section: &quot;FireEnd&quot;</span><br><span class="line">    (举枪 0.1s)            (射击循环)              (收枪)</span><br></pre></td></tr></table></figure>
 
@@ -2563,11 +2643,11 @@
 
 <p>这里有两层动画：</p>
 <ol>
-<li><strong>角色 Montage</strong>（<code>AM_Fire</code>）— 在 Character 的 Animation BP 中播放，控制角色身体姿态</li>
-<li><strong>枪械动画</strong>（<code>FireAnimationAsset</code>）— 在 Gun 的 SkeletalMeshComponent 上播放，控制枪械自身的套筒&#x2F;弹匣运动</li>
+<li>角色 Montage（<code>AM_Fire</code>）— 在 Character 的 Animation BP 中播放，控制角色身体姿态</li>
+<li>枪械动画（<code>FireAnimationAsset</code>）— 在 Gun 的 SkeletalMeshComponent 上播放，控制枪械自身的套筒&#x2F;弹匣运动</li>
 </ol>
 <p>两者通过 Anim BP 中的 Notify 或者 BP 端逻辑做同步。</p>
-<h3 id="Montage-常见坑"><a href="#Montage-常见坑" class="headerlink" title="Montage 常见坑"></a>Montage 常见坑</h3><table>
+<h3 id="Montage-中遇到过的问题"><a href="#Montage-中遇到过的问题" class="headerlink" title="Montage 中遇到过的问题"></a>Montage 中遇到过的问题</h3><table>
 <thead>
 <tr>
 <th>问题</th>
@@ -2609,15 +2689,15 @@
 </thead>
 <tbody><tr>
 <td>所有移动动画都是手动导入的序列帧</td>
-<td>用 <strong>Motion Matching</strong>（UE 5.4+）替代手配 Blend Space，减少动画数量 + 提升表现</td>
+<td>用 Motion Matching（UE 5.4+）替代手配 Blend Space，减少动画数量 + 提升表现</td>
 </tr>
 <tr>
 <td>Montage 和 C++ 之间靠 <code>bIsReloading</code> 等 bool 变量同步</td>
-<td>改用 <strong>Gameplay Tags</strong> 做动作状态标记，更解耦</td>
+<td>改用 Gameplay Tags 做动作状态标记，更解耦</td>
 </tr>
 <tr>
 <td>枪械动画和角色 Montage 分开播放，同步靠 BP 端 Tick</td>
-<td>用 <strong>Sync Group</strong> 或 <strong>Notify State</strong> 做精确帧同步</td>
+<td>用 Sync Group 或 Notify State 做精确帧同步</td>
 </tr>
 <tr>
 <td>Control Rig Foot IK 只用在后处理</td>
@@ -2672,7 +2752,7 @@
 <td><code>GAS</code> <code>Network Replication</code> <code>Combo System</code> <code>RPG Attributes</code> <code>Enhanced Input</code></td>
 </tr>
 </tbody></table>
-<p>一个从零搭建的 Unreal 动作游戏 Demo。角色是 Paragon 的 Crunch——一个近战拳击手，核心战斗围绕<strong>轻击连招、浮空 UpperCut、地面 AOE 轰炸</strong>展开。底层完全基于 <strong>Gameplay Ability System</strong> 搭建，”服务器权威”模型做网络同步。</p>
+<p>一个从零搭建的 Unreal 动作游戏 Demo。角色是 Paragon 的 Crunch——一个近战拳击手，核心战斗围绕轻击连招、浮空 UpperCut、地面 AOE 轰炸展开。底层完全基于 Gameplay Ability System 搭建，”服务器权威”模型做网络同步。</p>
 <iframe src="//player.bilibili.com/player.html?bvid=BV1DfMC6cELg" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" width="100%" height="480"></iframe>
 
 <blockquote>
@@ -2689,34 +2769,34 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>手写状态机</strong></td>
+<td>手写状态机</td>
 <td>完全可控，无黑盒</td>
 <td>技能一多，状态爆炸；Buff&#x2F;Debuff 要自己写一套</td>
 </tr>
 <tr>
-<td><strong>插件&#x2F;中间件</strong></td>
+<td>插件&#x2F;中间件</td>
 <td>开箱即用</td>
 <td>文档质量参差不齐，升级引擎时可能被 break</td>
 </tr>
 <tr>
-<td><strong>Epic GAS</strong></td>
+<td>Epic GAS</td>
 <td>为多人游戏设计，内置网络同步，与引擎深度集成</td>
 <td>学习曲线陡峭，纯 C++ 开发，没有蓝图节点面板</td>
 </tr>
 </tbody></table>
-<p>选 GAS 的核心原因：<strong>网络同步是”内置”的，不是”后加”的</strong>。</p>
-<p>做技能系统时，如果你的 Actor 需要 <code>HasAuthority()</code> → 做伤害 → 再手动 <code>Client_RPC</code> 去播特效，这个模式写三五个技能还行，写到第十个的时候一定会出问题——要么忘了权限判断导致作弊，要么忘了客户端回调导致特效不播。</p>
-<p>GAS 把”技能激活 → 伤害计算 → 效果应用 → 状态同步”这条链路标准化了。网络同步发生在 <strong>GameplayEffect</strong> 和 <strong>GameplayTag</strong> 这两个层级，而这些是 GAS 自动帮你处理的。你不用在每个技能里写 RPC。</p>
+<p>选 GAS 的主要考虑：网络同步是”内置”的，不是”后加”的。</p>
+<p>做技能系统时，如果你的 Actor 需要 <code>HasAuthority()</code> → 做伤害 → 再手动 <code>Client_RPC</code> 去播特效，这个模式写三五个技能还行，写到第十个的时候容易出问题——要么忘了权限判断导致作弊，要么忘了客户端回调导致特效不播。</p>
+<p>GAS 把”技能激活 → 伤害计算 → 效果应用 → 状态同步”这条链路标准化了。网络同步发生在 GameplayEffect 和 GameplayTag 这两个层级，而这些是 GAS 自动帮你处理的。你不用在每个技能里写 RPC。</p>
 <h3 id="1-2-整体架构"><a href="#1-2-整体架构" class="headerlink" title="1.2 整体架构"></a>1.2 整体架构</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────┐</span><br><span class="line">│                     ACPlayerCharacter                     │</span><br><span class="line">│  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │</span><br><span class="line">│  │ Enhanced    │  │ Camera +     │  │ Inventory      │  │</span><br><span class="line">│  │ Input       │  │ SpringArm    │  │ Component      │  │</span><br><span class="line">│  └──────┬──────┘  └──────────────┘  └────────────────┘  │</span><br><span class="line">│         │                                                │</span><br><span class="line">│  ┌──────▼──────────────────────────────────────────────┐ │</span><br><span class="line">│  │            UCAbilitySystemComponent (ASC)            │ │</span><br><span class="line">│  │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │ │</span><br><span class="line">│  │  │ Abilities│  │ Basic    │  │ Passive          │  │ │</span><br><span class="line">│  │  │ (技能)   │  │ Abilities│  │ Abilities        │  │ │</span><br><span class="line">│  │  └──────────┘  └──────────┘  └──────────────────┘  │ │</span><br><span class="line">│  │  ┌──────────────────────────────────────────────┐   │ │</span><br><span class="line">│  │  │               AttributeSets                  │   │ │</span><br><span class="line">│  │  │  UCAttributeSet     │  UCHeroAttributeSet    │   │ │</span><br><span class="line">│  │  │  Health / Mana      │  Level / Exp / Intel   │   │ │</span><br><span class="line">│  │  │  AttackDamage / Def │  Strength / Gold       │   │ │</span><br><span class="line">│  │  └──────────────────────────────────────────────┘   │ │</span><br><span class="line">│  └─────────────────────────────────────────────────────┘ │</span><br><span class="line">└─────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
 
-<p><strong>双层 AttributeSet 设计</strong>是这个项目的一个关键架构决策：</p>
+<p>双层 AttributeSet 设计是这个项目的一个架构决策：</p>
 <ul>
 <li><strong><code>UCAttributeSet</code></strong> — 战斗属性：Health、Mana、AttackDamage、Armor、MoveSpeed。所有角色共用，包括 AI 小兵。</li>
 <li><strong><code>UCHeroAttributeSet</code></strong> — 英雄属性：Level、Experience、Intelligence、Strength、Gold、UpgradePoint。只挂在玩家角色上。</li>
 </ul>
 <p>这样做的原因是：AI 小兵不需要等级和金币系统。如果全部塞进一个 AttributeSet，每个 Minion 身上都会挂着无意义的 <code>Gold</code> 和 <code>Experience</code> 属性——浪费网络带宽，也污染语义。</p>
 <hr>
-<h2 id="二、GAS-核心实现"><a href="#二、GAS-核心实现" class="headerlink" title="二、GAS 核心实现"></a>二、GAS 核心实现</h2><h3 id="2-1-自定义-ASC：ServerSideInit-ClientSideInit"><a href="#2-1-自定义-ASC：ServerSideInit-ClientSideInit" class="headerlink" title="2.1 自定义 ASC：ServerSideInit &#x2F; ClientSideInit"></a>2.1 自定义 ASC：ServerSideInit &#x2F; ClientSideInit</h3><p>这是整个项目最关键的网络架构模式。看一下 <code>CCharacter</code> 的初始化流程：</p>
+<h2 id="二、GAS-核心实现"><a href="#二、GAS-核心实现" class="headerlink" title="二、GAS 核心实现"></a>二、GAS 核心实现</h2><h3 id="2-1-自定义-ASC：ServerSideInit-ClientSideInit"><a href="#2-1-自定义-ASC：ServerSideInit-ClientSideInit" class="headerlink" title="2.1 自定义 ASC：ServerSideInit &#x2F; ClientSideInit"></a>2.1 自定义 ASC：ServerSideInit &#x2F; ClientSideInit</h3><p>这是整个项目比较核心的网络架构模式。看一下 <code>CCharacter</code> 的初始化流程：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ── 服务器端：PossessedBy 时调用（AI 角色在服务器被接管）</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ACCharacter::PossessedBy</span><span class="params">(AController* NewController)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Super::<span class="built_in">PossessedBy</span>(NewController);</span><br><span class="line">    <span class="keyword">if</span> (NewController &amp;&amp; !NewController-&gt;<span class="built_in">IsPlayerController</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">ServerSideInit</span>();  <span class="comment">// AI 角色走这条路</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ── 客户端：PostNetInit 时调用（复制体到达客户端后）</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">ACCharacter::PostNetInit</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    Super::<span class="built_in">PostNetInit</span>();</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">GetLocalRole</span>() != ROLE_Authority)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">ClientSideInit</span>();  <span class="comment">// 客户端复制体走这条路</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p><code>ServerSideInit()</code> 做了三件事：</p>
@@ -2724,12 +2804,12 @@
 
 <p><code>ClientSideInit()</code> 只做一件事：调用 <code>InitAbilityActorInfo(this, this)</code>，把 ASC 的 ActorInfo 绑定好，这样客户端才能收到属性复制和 GameplayTag 更新。</p>
 <blockquote>
-<p><strong>关键设计原则：服务器初始化”数据”，客户端只初始化”连接”</strong>。服务器拥有权威数据（属性、技能列表、效果），客户端通过 GAS 内置的属性复制机制自动同步，不需要手动 RPC 把属性一个个发过去。</p>
+<p>设计思路：服务器初始化”数据”，客户端只初始化”连接”。服务器拥有权威数据（属性、技能列表、效果），客户端通过 GAS 内置的属性复制机制自动同步，不需要手动 RPC 把属性一个个发过去。</p>
 </blockquote>
 <h3 id="2-2-自定义-GameplayAbility-基类"><a href="#2-2-自定义-GameplayAbility-基类" class="headerlink" title="2.2 自定义 GameplayAbility 基类"></a>2.2 自定义 GameplayAbility 基类</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UCLASS</span>()</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">UCGameplayAbility</span> : <span class="keyword">public</span> UGameplayAbility</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ── 通用工具方法，所有技能继承</span></span><br><span class="line">    <span class="function">TArray&lt;FHitResult&gt; <span class="title">GetHitResultsFromSweepLocationTargetData</span><span class="params">(...)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">PushTarget</span><span class="params">(AActor* InTarget, <span class="type">const</span> FVector&amp; InVelocity)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">PushTargets</span><span class="params">(<span class="type">const</span> TArray&lt;AActor*&gt;&amp; InTargets, <span class="type">const</span> FVector&amp; PushVelocity)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">ApplyGameplayEffectToHitResultActor</span><span class="params">(<span class="type">const</span> FHitResult&amp; Hit, ...)</span></span>;</span><br><span class="line">    <span class="function">ACharacter* <span class="title">GetOwningAvatarCharacter</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
 <p>每个技能都需要的操作——从 TargetData 取命中结果、对命中目标施加击退、对命中目标施加 GE——封装到基类里。实际技能只需要关注自己的逻辑。</p>
-<h3 id="2-3-Combo-连招系统"><a href="#2-3-Combo-连招系统" class="headerlink" title="2.3 Combo 连招系统"></a>2.3 Combo 连招系统</h3><p>Combo 是这个项目最复杂的技能逻辑，核心思路是 <strong>GameplayEvent 链式驱动</strong>：</p>
+<h3 id="2-3-Combo-连招系统"><a href="#2-3-Combo-连招系统" class="headerlink" title="2.3 Combo 连招系统"></a>2.3 Combo 连招系统</h3><p>Combo 是这个项目最复杂的技能逻辑，核心思路是 GameplayEvent 链式驱动：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">玩家按下攻击键</span><br><span class="line">    → GA_Combo::ActivateAbility()</span><br><span class="line">    → 播放 ComboMontage（动画）</span><br><span class="line">    → AnimNotifier 在特定帧触发 ComboChangedEvent</span><br><span class="line">    → ComboChangedEventReceived() 切换 Combo 段位</span><br><span class="line">    → AnimNotifier 在伤害判定帧触发 ComboTargetEvent</span><br><span class="line">    → DoDamage() 对扇形范围内的敌人施加对应段位的 GE</span><br><span class="line">    → 等待下一次按键输入 → TryCommitCombo() 进入下一段</span><br></pre></td></tr></table></figure>
 
 <p>关键代码——按键等待与 Combo 切换：</p>
@@ -2738,20 +2818,20 @@
 <p>不同 Combo 段位施加不同的 GameplayEffect（伤害系数不同），通过 <code>DamageEffectMap</code> 配置：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(EditDefaultsOnly)</span><br><span class="line">TMap&lt;FName, TSubclassOf&lt;UGameplayEffect&gt;&gt; DamageEffectMap;</span><br><span class="line"><span class="comment">// &quot;Combo1&quot; → GE_Combo1_Damage</span></span><br><span class="line"><span class="comment">// &quot;Combo2&quot; → GE_Combo2_Damage  (伤害递增)</span></span><br><span class="line"><span class="comment">// &quot;Combo3&quot; → GE_Combo3_Damage  (终结段最大伤害)</span></span><br></pre></td></tr></table></figure>
 
-<h3 id="2-4-UpperCut-浮空-Combo-整合"><a href="#2-4-UpperCut-浮空-Combo-整合" class="headerlink" title="2.4 UpperCut 浮空 + Combo 整合"></a>2.4 UpperCut 浮空 + Combo 整合</h3><p>UpperCut 不仅是一个独立技能，它还能<strong>接入 Combo 系统</strong>——在 Combo 的任意段位之后接 UpperCut，伤害系数随 Combo 段位变化：</p>
+<h3 id="2-4-UpperCut-浮空-Combo-整合"><a href="#2-4-UpperCut-浮空-Combo-整合" class="headerlink" title="2.4 UpperCut 浮空 + Combo 整合"></a>2.4 UpperCut 浮空 + Combo 整合</h3><p>UpperCut 不仅是一个独立技能，它还能接入 Combo 系统——在 Combo 的任意段位之后接 UpperCut，伤害系数随 Combo 段位变化：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(EditDefaultsOnly, Category=<span class="string">&quot;Combo&quot;</span>)</span><br><span class="line">TMap&lt;FName, FGenericDamageEffectDef&gt; ComboDamageMap;</span><br><span class="line"><span class="comment">// 从 Combo1/Combo2/Combo3 接 UpperCut → 不同的伤害值</span></span><br></pre></td></tr></table></figure>
 
 <p>UpperCut 的浮空效果通过 <code>LaunchDamageEffect</code>（一个 GE）实现——给目标施加一个向上的速度：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">UPROPERTY</span>(EditDefaultsOnly, Category=<span class="string">&quot;Launch&quot;</span>)</span><br><span class="line"><span class="type">float</span> UpperCutLaunchSpeed = <span class="number">1000.f</span>;     <span class="comment">// 浮空初速度</span></span><br><span class="line"><span class="type">float</span> UpperCutComboHoldSpeed = <span class="number">0.f</span>;     <span class="comment">// 后续段减速→滞空</span></span><br></pre></td></tr></table></figure>
 
-<h3 id="2-5-Ground-Blast-地面-AOE"><a href="#2-5-Ground-Blast-地面-AOE" class="headerlink" title="2.5 Ground Blast 地面 AOE"></a>2.5 Ground Blast 地面 AOE</h3><p>这个技能展示了 GAS 的 <strong>TargetActor</strong> 机制——先用 GroundPick TargetActor 在地面上选点，确认后再释放：</p>
+<h3 id="2-5-Ground-Blast-地面-AOE"><a href="#2-5-Ground-Blast-地面-AOE" class="headerlink" title="2.5 Ground Blast 地面 AOE"></a>2.5 Ground Blast 地面 AOE</h3><p>这个技能展示了 GAS 的 TargetActor 机制——先用 GroundPick TargetActor 在地面上选点，确认后再释放：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">UGA_GroundBlast::ActivateAbility</span><span class="params">(...)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// ① 生成 TargetActor，玩家通过光标/摇杆在地面选点</span></span><br><span class="line">    <span class="comment">// ② TargetActor 返回 TargetData（包含选中位置）</span></span><br><span class="line">    <span class="comment">// ③ TargetConfirmed() → 在目标位置播放 GameplayCue（特效）→ 施加伤害</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <hr>
 <h2 id="三、网络同步模型"><a href="#三、网络同步模型" class="headerlink" title="三、网络同步模型"></a>三、网络同步模型</h2><h3 id="3-1-核心原则：Server-Authoritative"><a href="#3-1-核心原则：Server-Authoritative" class="headerlink" title="3.1 核心原则：Server Authoritative"></a>3.1 核心原则：Server Authoritative</h3><p>整个项目的网络模型遵循 UE 的标准 Server-Authoritative 模型：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">┌──────────────────────┐         ┌──────────────────────┐</span><br><span class="line">│        SERVER         │         │        CLIENT         │</span><br><span class="line">│  ┌────────────────┐   │  Replicate  │  ┌────────────────┐  │</span><br><span class="line">│  │ AttributeSet   │───┼───────────→│  │ AttributeSet   │  │</span><br><span class="line">│  │ (权威数据)     │   │  OnRep     │  │ (只读副本)     │  │</span><br><span class="line">│  └────────────────┘   │            │  └────────────────┘  │</span><br><span class="line">│  ┌────────────────┐   │            │  ┌────────────────┐  │</span><br><span class="line">│  │ GameplayTags   │───┼───────────→│  │ GameplayTags   │  │</span><br><span class="line">│  │ (权威状态)     │   │  Replicate │  │ (只读副本)     │  │</span><br><span class="line">│  └────────────────┘   │            │  └────────────────┘  │</span><br><span class="line">│         ▲              │            │         │             │</span><br><span class="line">│         │              │            │         │             │</span><br><span class="line">│  Server RPC ◄──────────┼────────────┼─────────┘             │</span><br><span class="line">│  (技能升级/购买)       │   Client→  │   (按键输入)          │</span><br><span class="line">│                         │   Server   │                       │</span><br><span class="line">└──────────────────────┘         └──────────────────────┘</span><br></pre></td></tr></table></figure>
 
-<p><strong>伤害计算、死亡判定、等级提升全部发生在服务器</strong>。客户端只负责：</p>
+<p>伤害计算、死亡判定、等级提升全部发生在服务器。客户端只负责：</p>
 <ol>
 <li>发送输入（通过 Enhanced Input → Ability Input Tag）</li>
 <li>接收属性同步（OnRep 回调驱动 UI）</li>
@@ -2764,9 +2844,9 @@
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UI 绑定：一行代码完成</span></span><br><span class="line">AbilitySystemComponent-&gt;<span class="built_in">GetGameplayAttributeValueChangeDelegate</span>(</span><br><span class="line">    UCAttributeSet::<span class="built_in">GetHealthAttribute</span>()</span><br><span class="line">).<span class="built_in">AddUObject</span>(<span class="keyword">this</span>, &amp;UStatsGauge::OnHealthChanged);</span><br></pre></td></tr></table></figure>
 
 <h3 id="3-3-关键权限判断模式"><a href="#3-3-关键权限判断模式" class="headerlink" title="3.3 关键权限判断模式"></a>3.3 关键权限判断模式</h3><p>代码中有大量 <code>HasAuthority()</code> 判断，确保逻辑只在正确的端执行：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ✅ 经验升级——只在服务器计算</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAbilitySystemComponent::OnExperienceUpdated</span><span class="params">(<span class="type">const</span> FOnAttributeChangeData&amp; ChangeData)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">GetOwner</span>() || !<span class="built_in">GetOwner</span>()-&gt;<span class="built_in">HasAuthority</span>())</span><br><span class="line">        <span class="keyword">return</span>;  <span class="comment">// 客户端直接返回，不做升级计算</span></span><br><span class="line">    <span class="comment">// ...曲线查表、升级逻辑...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ✅ 死亡触发——只在服务器判定</span></span><br><span class="line"><span class="keyword">if</span> (ChangeData.NewValue &lt;= <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 施加 Death GE → 发送 Dead Event → 触发死亡序列</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ✅ 技能升级——客户端 RPC → 服务器执行 → 客户端回调</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAbilitySystemComponent::Server_UpgradeAbilityWithID_Implementation</span><span class="params">(ECAbilityInputID InputID)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 服务器：检查升级点数 → 提升技能等级 → MarkAbilitySpecDirty</span></span><br><span class="line">    <span class="built_in">Client_AbilitySpecLevelUpdated</span>(AbilitySpec-&gt;Handle, AbilitySpec-&gt;Level);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 经验升级——只在服务器计算</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAbilitySystemComponent::OnExperienceUpdated</span><span class="params">(<span class="type">const</span> FOnAttributeChangeData&amp; ChangeData)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">GetOwner</span>() || !<span class="built_in">GetOwner</span>()-&gt;<span class="built_in">HasAuthority</span>())</span><br><span class="line">        <span class="keyword">return</span>;  <span class="comment">// 客户端直接返回，不做升级计算</span></span><br><span class="line">    <span class="comment">// ...曲线查表、升级逻辑...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 死亡触发——只在服务器判定</span></span><br><span class="line"><span class="keyword">if</span> (ChangeData.NewValue &lt;= <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 施加 Death GE → 发送 Dead Event → 触发死亡序列</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 技能升级——客户端 RPC → 服务器执行 → 客户端回调</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">UCAbilitySystemComponent::Server_UpgradeAbilityWithID_Implementation</span><span class="params">(ECAbilityInputID InputID)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 服务器：检查升级点数 → 提升技能等级 → MarkAbilitySpecDirty</span></span><br><span class="line">    <span class="built_in">Client_AbilitySpecLevelUpdated</span>(AbilitySpec-&gt;Handle, AbilitySpec-&gt;Level);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="3-4-完全不用手动-RPC-的地方"><a href="#3-4-完全不用手动-RPC-的地方" class="headerlink" title="3.4 完全不用手动 RPC 的地方"></a>3.4 完全不用手动 RPC 的地方</h3><p>以下流程<strong>完全由 GAS 自动处理</strong>，不需要写一行 RPC：</p>
+<h3 id="3-4-完全不用手动-RPC-的地方"><a href="#3-4-完全不用手动-RPC-的地方" class="headerlink" title="3.4 完全不用手动 RPC 的地方"></a>3.4 完全不用手动 RPC 的地方</h3><p>以下流程完全由 GAS 自动处理，不需要写一行 RPC：</p>
 <table>
 <thead>
 <tr>
@@ -2801,21 +2881,21 @@
 </blockquote>
 <p>GameplayCue 在 UE5 中默认是 RPC 方式发送的（<code>AddGameplayCueToOwner</code>），在连招频繁触发伤害判定时，多个 Cue 的 RPC 会堆积。这条 commit 把 Cue 改为本地触发——既然 Cue 不涉及 Gameplay 逻辑，完全可以在客户端本地播放，不需要绕服务器一圈。</p>
 <blockquote>
-<p><strong>教训：GAS 的默认设置不一定适合你的场景</strong>。GameplayCue 默认走 RPC 是为了保证服务器也能”看见” Cue 做后续逻辑，但如果你的 Cue 纯视觉，local 就足够了。</p>
+<p>经验：GAS 的默认设置不一定适合你的场景。GameplayCue 默认走 RPC 是为了保证服务器也能”看见” Cue 做后续逻辑，但如果你的 Cue 纯视觉，local 就足够了。</p>
 </blockquote>
 <hr>
-<h2 id="四、关键踩坑记录"><a href="#四、关键踩坑记录" class="headerlink" title="四、关键踩坑记录"></a>四、关键踩坑记录</h2><h3 id="5-1-GAS-的”纯-C-”代价"><a href="#5-1-GAS-的”纯-C-”代价" class="headerlink" title="5.1 GAS 的”纯 C++”代价"></a>5.1 GAS 的”纯 C++”代价</h3><p>GAS 不像很多 UE 系统那样有蓝图面板。技能激活逻辑、GE 效果计算、属性变化回调——全部在 C++ 里。好处是代码可读、可调试、可 diff；坏处是每改一个伤害公式都要重新编译。</p>
+<h2 id="四、一些踩过的坑"><a href="#四、一些踩过的坑" class="headerlink" title="四、一些踩过的坑"></a>四、一些踩过的坑</h2><h3 id="4-1-GAS-的”纯-C-”代价"><a href="#4-1-GAS-的”纯-C-”代价" class="headerlink" title="4.1 GAS 的”纯 C++”代价"></a>4.1 GAS 的”纯 C++”代价</h3><p>GAS 不像很多 UE 系统那样有蓝图面板。技能激活逻辑、GE 效果计算、属性变化回调——全部在 C++ 里。好处是代码可读、可调试、可 diff；坏处是每改一个伤害公式都要重新编译。</p>
 <blockquote>
-<p>平衡策略：<strong>逻辑写 C++，配置写蓝图&#x2F;DataAsset</strong>。技能的 <code>EditDefaultsOnly</code> 属性（伤害系数、动画蒙太奇、GE 映射表）都暴露给蓝图，策划配置不需要动 C++。</p>
+<p>平衡策略：逻辑写 C++，配置写蓝图&#x2F;DataAsset。技能的 <code>EditDefaultsOnly</code> 属性（伤害系数、动画蒙太奇、GE 映射表）都暴露给蓝图，策划配置不需要动 C++。</p>
 </blockquote>
-<h3 id="5-2-属性同步的”抖动”问题"><a href="#5-2-属性同步的”抖动”问题" class="headerlink" title="5.2 属性同步的”抖动”问题"></a>5.2 属性同步的”抖动”问题</h3><p><code>PreAttributeChange</code> 是实现属性 Clamp 的地方（Health &#x3D; Clamp(NewValue, 0, MaxHealth)），但文档写得很清楚：<strong>不要在这里触发 Gameplay 逻辑</strong>。因为 <code>PreAttributeChange</code> 可能在属性复制的中间状态被调用，此时 MaxHealth 可能还没同步过来。</p>
-<p>正确做法：在 <code>PostGameplayEffectExecute</code> 里做逻辑响应（死亡判定、UI 更新）。</p>
-<h3 id="5-3-死亡状态机与-GAS-的配合"><a href="#5-3-死亡状态机与-GAS-的配合" class="headerlink" title="5.3 死亡状态机与 GAS 的配合"></a>5.3 死亡状态机与 GAS 的配合</h3><p>死亡不是”Health ≤ 0 → 播死亡动画”这么简单。这里涉及：</p>
+<h3 id="4-2-属性同步的”抖动”问题"><a href="#4-2-属性同步的”抖动”问题" class="headerlink" title="4.2 属性同步的”抖动”问题"></a>4.2 属性同步的”抖动”问题</h3><p><code>PreAttributeChange</code> 是实现属性 Clamp 的地方（Health &#x3D; Clamp(NewValue, 0, MaxHealth)），但文档写得很清楚：不要在这里触发 Gameplay 逻辑。因为 <code>PreAttributeChange</code> 可能在属性复制的中间状态被调用，此时 MaxHealth 可能还没同步过来。</p>
+<p>正确的做法：在 <code>PostGameplayEffectExecute</code> 里做逻辑响应（死亡判定、UI 更新）。</p>
+<h3 id="4-3-死亡状态机与-GAS-的配合"><a href="#4-3-死亡状态机与-GAS-的配合" class="headerlink" title="4.3 死亡状态机与 GAS 的配合"></a>4.3 死亡状态机与 GAS 的配合</h3><p>死亡不是”Health ≤ 0 → 播死亡动画”这么简单。这里涉及：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Health ≤ 0</span><br><span class="line">  → AddLooseGameplayTag(Dead)       // 标记死亡</span><br><span class="line">  → Apply GE_Death (Infinite)        // 施加无限时长死亡 GE（阻止所有技能）</span><br><span class="line">  → SendGameplayEvent(Dead)          // 广播死亡事件</span><br><span class="line">  → DeathTagUpdated()                // GameplayTag 回调</span><br><span class="line">      → CancelAllAbilities()         // 取消所有进行中的技能</span><br><span class="line">      → PlayDeathAnimation()         // 播放死亡蒙太奇</span><br><span class="line">      → SetRagdollEnabled(true)      // 开始 Ragdoll 物理</span><br></pre></td></tr></table></figure>
 
-<p>复活时倒序执行，并且<strong>只在服务器</strong>移除死亡 GE、重置位置到 StartSpot。</p>
+<p>复活时倒序执行，并且只在服务器移除死亡 GE、重置位置到 StartSpot。</p>
 <hr>
-<h2 id="五、架构可改进点"><a href="#五、架构可改进点" class="headerlink" title="五、架构可改进点"></a>五、架构可改进点</h2><p>写给自己看的反思，也是给面试官展示”我知道哪里还不够好”：</p>
+<h2 id="五、架构可改进点"><a href="#五、架构可改进点" class="headerlink" title="五、架构可改进点"></a>五、架构可改进点</h2><p>写给自己看的反思：</p>
 <table>
 <thead>
 <tr>
@@ -2824,40 +2904,40 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>技能配置分散</strong> — DataTable + DataAsset + 蓝图各自管一部分</td>
+<td>技能配置分散 — DataTable + DataAsset + 蓝图各自管一部分</td>
 <td>统一用 DataAsset 做技能定义，一个 DA 描述一个技能的全部参数</td>
 </tr>
 <tr>
-<td><strong>缺少 GameplayAbility 的蓝图层</strong> — 所有 GA 都是 C++ 子类</td>
+<td>缺少 GameplayAbility 的蓝图层 — 所有 GA 都是 C++ 子类</td>
 <td>用 <code>UGameplayAbility</code> 基类 + <code>AbilityTask</code> 可以在蓝图中组装大部分技能</td>
 </tr>
 <tr>
-<td><strong>没有 GAS 的单元测试</strong></td>
+<td>没有 GAS 的单元测试</td>
 <td>利用 UE 的 Functional Test + Gauntlet 对技能效果做自动化验证</td>
 </tr>
 <tr>
-<td><strong>Inventory 不应该和 GAS 紧耦合</strong></td>
+<td>Inventory 不应该和 GAS 紧耦合</td>
 <td>把库存系统抽象为独立模块，通过事件系统和 GAS 通信</td>
 </tr>
 <tr>
-<td><strong>Combo 系统缺少”取消窗口”</strong></td>
+<td>Combo 系统缺少”取消窗口”</td>
 <td>参考格斗游戏的 Cancel Window 设计，让连招手感和响应更灵敏</td>
 </tr>
 <tr>
-<td><strong>GameplayCue 参数传递混乱</strong> — 有些走 EventData，有些走 TargetData</td>
+<td>GameplayCue 参数传递混乱 — 有些走 EventData，有些走 TargetData</td>
 <td>统一 Cue 参数规范，全部用 <code>FGameplayCueParameters</code> 的标准化字段</td>
 </tr>
 </tbody></table>
 <hr>
-<h2 id="后续计划"><a href="#后续计划" class="headerlink" title="后续计划"></a>后续计划</h2><p>Crunch 是一个”做给自己看”的 Demo——验证 GAS 架构思路，踩一遍网络同步的坑。下一个项目计划侧重：</p>
+<h2 id="后续计划"><a href="#后续计划" class="headerlink" title="后续计划"></a>后续计划</h2><p>Crunch 是一个验证 GAS 架构思路、踩一遍网络同步的坑的 Demo。下一个项目计划侧重：</p>
 <ul>
-<li><strong>联网多人战斗</strong> — Crunch 目前只有一个本地玩家，联网的实际体验还没验证</li>
-<li><strong>更完整的 Combat Loop</strong> — 受击反馈、屏幕震动、HitStop、取消窗口</li>
-<li><strong>技能配置工程化</strong> — 从”写 C++ 子类”迁移到”DataAsset 驱动 + 蓝图组装”</li>
+<li>联网多人战斗 — Crunch 目前只有一个本地玩家，联网的实际体验还没验证</li>
+<li>更完整的 Combat Loop — 受击反馈、屏幕震动、HitStop、取消窗口</li>
+<li>技能配置工程化 — 从”写 C++ 子类”迁移到”DataAsset 驱动 + 蓝图组装”</li>
 </ul>
 <hr>
 <blockquote>
-<p><strong>如果你也在做 UE 动作游戏，或对 GAS 感兴趣</strong>——欢迎交流。</p>
+<p>如果你也在做 UE 动作游戏，或对 GAS 感兴趣——欢迎交流。</p>
 </blockquote>
 ]]></content>
       <categories>
@@ -2866,10 +2946,10 @@
       <tags>
         <tag>Unreal</tag>
         <tag>GAS</tag>
+        <tag>CombatDesign</tag>
         <tag>GameplayAbilitySystem</tag>
         <tag>Portfolio</tag>
         <tag>NetworkReplication</tag>
-        <tag>CombatDesign</tag>
         <tag>ARPG</tag>
       </tags>
   </entry>
