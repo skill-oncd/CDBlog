@@ -110,6 +110,8 @@ search:
 encrypt:
   enable: true
   theme: 'default'
+  password: mianshi01
+  session: true
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment

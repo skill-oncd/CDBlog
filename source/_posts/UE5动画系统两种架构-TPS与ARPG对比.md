@@ -13,7 +13,7 @@ tags:
   - Portfolio
 categories:
   - Portfolio
-password: mianshi01
+encrypt: true
 description: 对比两个 UE5 项目的动画系统架构——TPS 教程的 Blend Space 八向移动状态机 vs Crunch ARPG 的 GAS AbilityTask + AnimNotify 事件驱动。分析 C++ AnimInstance、Montage 生命周期、伤害判定时机、线程模型的差异与适用场景。
 ---
 
