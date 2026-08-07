@@ -10,3 +10,6 @@ series:
 inject:
   head:
     - <link rel="stylesheet" href="/css/custom.css">
+  bottom:
+    - <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    - <script src="/js/gaming-charts.js"></script>

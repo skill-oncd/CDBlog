@@ -67,6 +67,9 @@ index_generator:
 # Category & Tag
 default_category: uncategorized
 category_map:
+  Portfolio: 作品集
+  GameDesign: 游戏设计
+  Career: 职业
 tag_map:
 
 # Metadata elements

@@ -18,10 +18,12 @@ nav:
   fixed: false
 
 menu:
-  Home: / || fas fa-home
-  About: /about/ || fas fa-user
-  Archives: /archives/ || fas fa-archive
-  Categories: /categories/ || fas fa-folder
+  首页: / || fas fa-home
+  关于: /about/ || fas fa-user
+  游戏经历: /gaming/ || fas fa-gamepad
+  作品集: /categories/作品集/ || fas fa-briefcase
+  归档: /archives/ || fas fa-archive
+  分类: /categories/ || fas fa-folder
 
 # --------------------------------------
 # Code Blocks Settings

@@ -24,6 +24,8 @@ description: 以 UE5.3 TPS 项目为例，拆解 Animation Blueprint 状态机�
 
 一个聚焦 UE5 动画系统的 TPS 角色 Demo。核心产物是一个完整的 Animation Blueprint（ABP_MyCharacter），包含完整的移动状态机、7 个 Blend Space、4 个 Animation Montage，配合 IK Retargeter 将 Mannequin 动画重定向到自定义角色模型。
 
+> 📺 **演示录屏**：[Bilibili 视频链接](https://www.bilibili.com/video/BV11kuW6PEbv/)
+
 ---
 
 ## 一、Animation Blueprint 总体架构
