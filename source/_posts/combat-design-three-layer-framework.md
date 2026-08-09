@@ -10,6 +10,7 @@ tags:
   - Hitbox
   - Stagger
   - InputBuffer
+  - Portfolio
 categories:
   - Portfolio
   - GameDesign
