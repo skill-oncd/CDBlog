@@ -1,0 +1,524 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【DEMO展示】实习期间制作的部分技能展示（可外放） | CD = CoolDown · CountDown · CombatDesign</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="实习期间参与设计的两个战斗技能实机片段，已随版本上线，素材来源于官方宣传视频。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【DEMO展示】实习期间制作的部分技能展示（可外放）">
+<meta property="og:url" content="https://cd-cd.top/2026/08/10/nsh-internship-combat-skills/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="实习期间参与设计的两个战斗技能实机片段，已随版本上线，素材来源于官方宣传视频。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-08-10T10:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T18:23:30.702Z">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="CombatDesign">
+<meta property="article:tag" content="MMO">
+<meta property="article:tag" content="Portfolio">
+<meta property="article:tag" content="战斗设计">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【DEMO展示】实习期间制作的部分技能展示（可外放）",
+  "url": "https://cd-cd.top/2026/08/10/nsh-internship-combat-skills/",
+  "image": "https://cd-cd.top/img/avatar.jpg",
+  "datePublished": "2026-08-10T10:00:00.000Z",
+  "dateModified": "2026-08-09T18:23:30.702Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "CD",
+      "url": "https://cd-cd.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/2026/08/10/nsh-internship-combat-skills/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【DEMO展示】实习期间制作的部分技能展示（可外放）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2">
+<style id="hbe-custom-style">
+/* ============================================================
+ * 毛玻璃密码门禁 — 覆盖 hexo-blog-encrypt default 主题
+ * ============================================================ */
+
+/* --- 容器：毛玻璃卡片 --- */
+.hbe-container {
+  position: relative;
+  max-width: 420px;
+  margin: 2.5rem auto 1.2rem auto;
+  padding: 2rem 2rem 1rem 2rem;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.30);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+}
+
+/* --- 顶部标题 --- */
+.hbe-container::before {
+  content: "此内容访问受限";
+  display: block;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+/* --- 表单 --- */
+.hbe-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+/* ===== 彻底干掉 default 主题的动画 label ===== */
+.hbe-input-default {
+  overflow: visible !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+.hbe-input-label-default {
+  display: none !important;
+}
+.hbe-input-label-default::before,
+.hbe-input-label-default::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* --- 提示文字：隐藏（placeholder 已说明） --- */
+.hbe-input-label-content-default {
+  display: none !important;
+}
+
+/* --- 输入框 --- */
+.hbe-input-field-default {
+  display: block !important;
+  width: 100% !important;
+  float: none !important;
+  padding: 0.7rem 1rem !important;
+  margin: 0 !important;
+  background: rgba(245,245,245,0.85) !important;
+  color: #333 !important;
+  border: 1.5px solid rgba(0,0,0,0.10) !important;
+  border-radius: 10px !important;
+  font-size: 1rem !important;
+  opacity: 1 !important;
+  outline: none !important;
+  z-index: auto !important;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s !important;
+}
+.hbe-input-field-default::placeholder {
+  color: #bbb;
+  font-size: 0.95rem;
+}
+.hbe-input-field-default:focus {
+  border-color: #4d8df0 !important;
+  background: rgba(255,255,255,0.95) !important;
+  box-shadow: 0 0 0 3px rgba(77,141,240,0.15) !important;
+}
+.hbe-input-field-default:focus::placeholder {
+  color: #ccc;
+}
+
+/* --- 解密按钮 --- */
+.hbe-button {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  padding: 0.7rem 1.5rem !important;
+  background: #2a7ae2 !important;
+  color: #fff !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  text-indent: 0 !important;
+  text-shadow: none !important;
+  box-shadow: 0 2px 8px rgba(42,122,226,0.30) !important;
+  cursor: pointer !important;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s !important;
+  margin: 0 auto !important;
+}
+.hbe-button:hover {
+  background: #1c5db8 !important;
+  box-shadow: 0 4px 14px rgba(42,122,226,0.40) !important;
+}
+.hbe-button:active {
+  transform: scale(0.98);
+}
+.hbe-button::after {
+  display: none !important;
+  content: none !important;
+}
+.hbe-button-hidden {
+  display: none !important;
+}
+
+/* --- 错误提示 --- */
+.hbe-error {
+  text-align: center;
+  color: #d93025 !important;
+  font-size: 0.88rem !important;
+  min-height: 1.2em;
+  margin-top: 0.2rem;
+}
+
+/* --- spinner --- */
+.hbe-button[aria-busy="true"]::after {
+  content: "";
+  display: inline-block;
+  margin-left: 0.5em;
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.15em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: hbe-spin 0.7s linear infinite;
+}
+@keyframes hbe-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+ * 暗色模式 — 匹配 Butterfly [data-theme="dark"]
+ * ============================================================ */
+[data-theme="dark"] .hbe-container,
+html[data-theme="dark"] .hbe-container {
+  background: rgba(20,22,36,0.35);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.40), 0 1px 3px rgba(0,0,0,0.15);
+}
+[data-theme="dark"] .hbe-container::before,
+html[data-theme="dark"] .hbe-container::before {
+  color: #c8ccd4;
+}
+[data-theme="dark"] .hbe-input-label-content-default,
+html[data-theme="dark"] .hbe-input-label-content-default {
+  color: #c8ccd4 !important;
+}
+[data-theme="dark"] .hbe-input-field-default,
+html[data-theme="dark"] .hbe-input-field-default {
+  background: rgba(40,42,54,0.85) !important;
+  color: #e6e6e6 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .hbe-input-field-default:focus,
+html[data-theme="dark"] .hbe-input-field-default:focus {
+  border-color: #6ba1f5 !important;
+  background: rgba(40,42,54,0.95) !important;
+  box-shadow: 0 0 0 3px rgba(107,161,245,0.20) !important;
+}
+[data-theme="dark"] .hbe-button,
+html[data-theme="dark"] .hbe-button {
+  background: #4d8df0 !important;
+  box-shadow: 0 2px 8px rgba(77,141,240,0.35) !important;
+}
+[data-theme="dark"] .hbe-button:hover,
+html[data-theme="dark"] .hbe-button:hover {
+  background: #6ba1f5 !important;
+}
+[data-theme="dark"] .hbe-error,
+html[data-theme="dark"] .hbe-error {
+  color: #ff7a7a !important;
+}
+
+/* ============================================================
+ * 移动端
+ * ============================================================ */
+@media (max-width: 520px) {
+  .hbe-container {
+    margin: 1.2rem 0.6rem;
+    padding: 2rem 1.2rem;
+    border-radius: 14px;
+  }
+  .hbe-container::before {
+    font-size: 2rem;
+    margin-bottom: 0.7rem;
+  }
+  .hbe-input-label-content-default {
+    font-size: 0.98rem !important;
+  }
+}
+</style>
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">23</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">88</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【DEMO展示】实习期间制作的部分技能展示（可外放）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【DEMO展示】实习期间制作的部分技能展示（可外放）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-10T10:00:00.000Z" title="Created 2026-08-10 18:00:00">2026-08-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T18:23:30.702Z" title="Updated 2026-08-10 02:23:30">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div class="hbe hbe-container" id="hexo-blog-encrypt"
+     data-hbe-format="4"
+     data-wpm="密码不正确，请重试"
+     data-whm="密码不正确，请重试"
+     data-salt="f0932e74904b4ba391a4e1a9a35df8967db73c5802453b157e273dcdcb67978f"
+     data-nonce="a2468068fb7f0e5ec1885c14"
+     data-kdf-iterations="250000"
+     data-auto-save="true">
+  <script id="hbeData" type="hbeData">
+    f1aec6e50c47f454dd805cf07cd00d41575a84ec5757fd638ae1eac9b73bf03e0c0d5bddcc8c4024ae2209fa1545442417720b7ddc6f25d4ce3299efc509da986d423a70238fa688f57372459ce507ef9bc1a0c5f0567c8af5febba10f3431f96e73949335c31dad1e3bd3388f3db284998a09165aa9962aadcd2172f543ff21b5fb30187ccf7c956ba9bf4db18cec4f0a94a8e107c43f003fc4bf384c19134991451939a0f3892beba4e3348b99c566e43af20e58425ec28aa31a01a9dd8d6199ee5f2837c64475bfc989da2c7be4755d00a441b3c221dbebb5f25d2e031208ef84764fc05dab50f8e573e9311ec1e094ae8f4a556012bc265e7d5ebdedeac083b9a321553a1e9a4faa9dde18140e0a55dd347196bd4caf063e4f7da240a68ae8d8515136a10de92e49614505b6ef642d19604db20a60d8e82d78ce2a67a4d496b3bd98e742974fcb5673c5ae1af53f8f396aaab6e996286219bc008d10e8fd40e1d388dc8bcd6f9d769a40df8598b014465acfb4ce7b469ef3147dd7eef0c25b18bedce1c2f42b8d838075d0dda1cac716a9a9108a2f6114b9289b075c877c29ed343cf5c4bd054120521b08cab1a01fa36cf02d1e0dcc06feedf347b76c8ec0133d18a6d622f0dad8d433ad5549caa647aa151e9a0a67c9ed6390b8e58f1341a8501919fd668dfe3bf0d391106920498ef7e55ca878d389a172daf9b12057d6dded8635750a69aa2a30014a11847b6428852cb1a2c132a321d90486af92784cdca4c55d335f27d94752529ccc7f6a851586f3f0f9171e7dce2b0633177ad2a2c9759a1e8b7440aa367f6a80df02d66e1eed4d96a05d0b7f6f8e5467cd096423062c48b215ed3dd07a48e62208802587739bef0aebd4b03cc340c41e6dc0eb862323b3565706b94acc9cd63e62102b4c32db273ac28b300cb301add871a46e5bcfc46efe8c6b9d8066c652774439f0249fb65a7572f18b3d158ce62dba671de4b8ade8d2ae5adc0a1793206957abaedb6e93956014cc4f1cf68e4a995662fd36245afe9831bdf81d7e90ac6fd7400d92dfbfeda7bb84ea2f6f1efef0ac3cd95cc942cbebba39ff06858a92dd3b3e4fe246ac676c8842d76004bdeedb3073a8cf971853b83ae96b9e7c968e9fc19289238afe64ff54964cccda6aac7e45c906df526014403e46967bac1eaea21bed97b8661822d59d9380286cc8225835a7c8b7500ac38d21d7971e5f5176e2d3cbf5748fe84c6f6d867ccad070f5496203e7c122666424131f8f959970576747513f8ddffc4cdcede40b2a4b32ead75018b3f92118b05f62bc860f067301770e53e556863c36f8d07f0da522ac6dadf0763029ad9d4e0e9f207c58cfea71240aebe92c2220db4587737a7047e58f2edecb1722ddc4bfff9e92081f6eb93a3238431588fba615e640c0b05f4c0500ee8de1f36c91e21d2dcf564c394e1be38c3b90e95e7f1ebc570ed72d095d51d9a77d6367e24e3137339c0f532a236c6080d62be61f2429c2825a8aeef7281e555654784c1b80276090ea54eb7e97edf5075f5211fd7036de53c5a2cd3700be1f7b5e469725972aa378f0c000521db7b54d4f4055847a85a347152fea76fc3964e9a86e070b159aaad87d29a9eb5186ee09b9c102cda532294d9746cde8b13530b391c96a9eba14103c2d1f3406dfe6cf3184ddc2d0f037807b2c80b4143eca7478e2e9b7fa0468767dd6045b272200919f239ed66c7a245a3052042243916baa0f648433de1c449fcd847b6e1a18f09f0f2b27fefc9d952b75f678711ed85afd10150ebb774c20e3d9e7e1f2e2b2a52265365f79847ac35982aecfaf5d7e6f4cee2ac46e3202c470e2dcfd232221604f5dc62d7a911388da83a2e2d3b45b4b4729fe38d9badd7c10cfa8eea9
+  </script>
+  <div class="hbe hbe-content">
+    <form id="hbeForm" class="hbe hbe-form" onsubmit="return false">
+      <div class="hbe hbe-input hbe-input-default">
+      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
+      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
+        <span class="hbe hbe-input-label-content hbe-input-label-content-default">请输入密码</span>
+      </label>
+    </div>
+      <button class="hbe hbe-button" type="submit">确认</button>
+      <div class="hbe hbe-error" role="alert" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function() {
+  var T = 'hbeTimestamp';
+  var DAYS = 7;
+  var now = Date.now();
+  var ts = localStorage.getItem(T);
+  if (ts && (now - parseInt(ts,10) > DAYS * 86400000)) {
+    var rm = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('hbe') === 0) rm.push(k);
+    }
+    for (var r = 0; r < rm.length; r++) localStorage.removeItem(rm[r]);
+    localStorage.removeItem(T);
+    localStorage.removeItem('hbeSharedPwd');
+  }
+})();
+</script>
+<script data-pjax src="/lib/hbe.9e70f1e1d2.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css"></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/10/nsh-internship-combat-skills/">https://cd-cd.top/2026/08/10/nsh-internship-combat-skills/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Portfolio/">Portfolio</a><a class="post-meta__tags" href="/tags/MMO/">MMO</a><a class="post-meta__tags" href="/tags/CombatDesign/">CombatDesign</a><a class="post-meta__tags" href="/tags/%E6%88%98%E6%96%97%E8%AE%BE%E8%AE%A1/">战斗设计</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width no-desc" href="/2026/08/10/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related no-desc" href="/2026/08/07/MMO-Combat-Design-Methodology/" title="【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-07</div><div class="info-item-2">【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/09/combat-design-supply-war-rts/" title="【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/09/combat-design-hit-feel-framework/" title="【设计思路】打击感设计全解析——从感官体验到工业化管线"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】打击感设计全解析——从感官体验到工业化管线</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/09/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/10/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/05/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-05</div><div class="info-item-2">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">23</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">88</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content toc-div-class" style="display:none"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E5%87%BB%C2%B7%E5%8F%8C%E5%88%80%EF%BC%881%E5%88%8608%E7%A7%92%EF%BC%89"><span class="toc-text">反击·双刀（1分08秒）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%BF%E5%BD%B1%E8%BF%BD%E5%87%BB%C2%B7%E5%8F%8C%E5%88%80%EF%BC%881%E5%88%8622%E7%A7%92%EF%BC%89"><span class="toc-text">承影追击·双刀（1分22秒）</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/10/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-10T04:00:00.000Z" title="Created 2026-08-10 12:00:00">2026-08-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-botw-emergent-combat/" title="【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</a><time datetime="2026-08-09T14:00:00.000Z" title="Created 2026-08-09 22:00:00">2026-08-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</a><time datetime="2026-08-09T12:00:00.000Z" title="Created 2026-08-09 20:00:00">2026-08-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-endfield-analysis/" title="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</a><time datetime="2026-08-09T10:00:00.000Z" title="Created 2026-08-09 18:00:00">2026-08-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-supply-war-rts/" title="【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度">【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度</a><time datetime="2026-08-09T08:00:00.000Z" title="Created 2026-08-09 16:00:00">2026-08-09</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div>
+<script>
+(function() {
+  var T = 'hbeTimestamp';
+  var S = 'hbeSharedPwd';
+
+  function ts() { localStorage.setItem(T, String(Date.now())); }
+
+  function setup() {
+    var container = document.getElementById('hexo-blog-encrypt');
+    if (!container) return;
+
+    var pass = document.getElementById('hbePass');
+    var form = document.getElementById('hbeForm');
+    if (!pass || !form) return;
+
+    // 0. Placeholder
+    pass.placeholder = '请输入密码';
+
+    // 1. Cross-page auto-fill: if we have a shared password from another post, use it
+    var shared = localStorage.getItem(S);
+    if (shared) {
+      pass.value = shared;
+      // Use requestSubmit for proper event handling, fallback to submit()
+      setTimeout(function() {
+        if (form.requestSubmit) form.requestSubmit();
+        else form.submit();
+      }, 100);
+      return;
+    }
+
+    // 2. On manual submit: save password for cross-page sharing + refresh timestamp
+    form.addEventListener('submit', function() {
+      if (pass.value) localStorage.setItem(S, pass.value);
+      ts();
+    });
+
+    // 3. If already auto-decrypted (cached key valid), refresh timestamp
+    if (pass.style.display === 'none') ts();
+
+    // 4. Watch for container removal (successful manual decrypt)
+    var obs = new MutationObserver(function(ms) {
+      for (var m = 0; m < ms.length; m++) {
+        for (var n = 0; n < ms[m].removedNodes.length; n++) {
+          if (ms[m].removedNodes[n].id === 'hexo-blog-encrypt') { ts(); obs.disconnect(); return; }
+        }
+      }
+    });
+    if (container.parentNode) obs.observe(container.parentNode, { childList: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();
+</script>
+</body></html>

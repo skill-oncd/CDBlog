@@ -1,0 +1,396 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构 | CD = CoolDown · CountDown · CombatDesign</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="拆解 Lyra 的三段式装备&#x2F;物品架构——Inventory（数据容器）、QuickBar（策略桥接）、Equipment（能力授予）——以及 Definition&#x2F;Instance 分离、Fragment 组合模式、SourceObject 反向引用链的优雅设计。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构">
+<meta property="og:url" content="https://cd-cd.top/2026/08/06/Lyra-05-Equipment-Inventory/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="拆解 Lyra 的三段式装备&#x2F;物品架构——Inventory（数据容器）、QuickBar（策略桥接）、Equipment（能力授予）——以及 Definition&#x2F;Instance 分离、Fragment 组合模式、SourceObject 反向引用链的优雅设计。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-08-06T10:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T18:23:30.701Z">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="Data-Driven">
+<meta property="article:tag" content="Equipment">
+<meta property="article:tag" content="Fragment">
+<meta property="article:tag" content="GAS">
+<meta property="article:tag" content="Inventory">
+<meta property="article:tag" content="Lyra">
+<meta property="article:tag" content="Unreal">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【技术探索】Lyra 框架拆解（五）：Equipment & Inventory —— Fragment 模式与三段式装备架构",
+  "url": "https://cd-cd.top/2026/08/06/Lyra-05-Equipment-Inventory/",
+  "image": "https://cd-cd.top/img/avatar.jpg",
+  "datePublished": "2026-08-06T10:00:00.000Z",
+  "dateModified": "2026-08-09T18:23:30.701Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "CD",
+      "url": "https://cd-cd.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/2026/08/06/Lyra-05-Equipment-Inventory/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【技术探索】Lyra 框架拆解（五）：Equipment & Inventory —— Fragment 模式与三段式装备架构',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">23</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">88</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-06T10:00:00.000Z" title="Created 2026-08-06 18:00:00">2026-08-06</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T18:23:30.701Z" title="Updated 2026-08-10 02:23:30">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/Lyra-%E6%A1%86%E6%9E%B6%E6%8B%86%E8%A7%A3/">Lyra 框架拆解</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td><strong>五</strong></td>
+<td><strong>Equipment &amp; Inventory（本文）</strong></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 Equipment&#x2F;Inventory 系统用三层分离架构实现了”武器切换 &#x3D; AbilitySet 的 GiveTo + TakeFrom”——Inventory 管”你拥有什么”，Equipment 管”你正装备什么”，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了”武器类膨胀到 5000 行”的问题。</p>
+<hr>
+<h2 id="一，三层架构全景"><a href="#一，三层架构全景" class="headerlink" title="一，三层架构全景"></a>一，三层架构全景</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Inventory（数据容器层）—— &quot;你拥有什么&quot;</span><br><span class="line">  ULyraInventoryManagerComponent (挂载在 PlayerState)</span><br><span class="line">  ├── FLyraInventoryList (FFastArraySerializer 网络复制)</span><br><span class="line">  │   └── ULyraInventoryItemInstance[] (运行时实例)</span><br><span class="line">  └── 物品定义: ULyraInventoryItemDefinition（Fragment 数组）</span><br><span class="line"></span><br><span class="line">          │  玩家按&quot;3&quot;切武器</span><br><span class="line">          ▼</span><br><span class="line"></span><br><span class="line">QuickBar（策略桥接层）—— &quot;你选哪个&quot;</span><br><span class="line">  ULyraQuickBarComponent (挂载在 Controller)</span><br><span class="line">  ├── Slots[] → InventoryItemInstance</span><br><span class="line">  ├── ActiveSlotIndex</span><br><span class="line">  └── EquipItemInSlot(7步流程)</span><br><span class="line"></span><br><span class="line">          │  调用 EquipmentManager</span><br><span class="line">          ▼</span><br><span class="line"></span><br><span class="line">Equipment（能力授予层）—— &quot;装备怎么生效&quot;</span><br><span class="line">  ULyraEquipmentManagerComponent (挂载在 Pawn)</span><br><span class="line">  ├── ULyraEquipmentDefinition → InstanceType + AbilitySetsToGrant + ActorsToSpawn</span><br><span class="line">  └── ULyraEquipmentInstance → OnEquipped/OnUnequipped 事件</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二，Fragment-模式：组合优于继承的极致应用"><a href="#二，Fragment-模式：组合优于继承的极致应用" class="headerlink" title="二，Fragment 模式：组合优于继承的极致应用"></a>二，Fragment 模式：组合优于继承的极致应用</h2><h3 id="传统方案：武器类的继承爆炸"><a href="#传统方案：武器类的继承爆炸" class="headerlink" title="传统方案：武器类的继承爆炸"></a>传统方案：武器类的继承爆炸</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">AWeapon</span><br><span class="line">  ├── ARifle     （射击逻辑、弹夹管理、后座力）</span><br><span class="line">  ├── AShotgun   （射击逻辑、弹夹管理、散布）</span><br><span class="line">  ├── APistol    （射击逻辑、弹夹管理、双持）</span><br><span class="line">  ├── AGrenade   （投掷逻辑、引信计时、范围伤害）</span><br><span class="line">  └── AMedkit    （治疗逻辑、使用动画、冷却）</span><br></pre></td></tr></table></figure>
+
+<p>每个子类都是”所有功能混在一起”。随着武器类型增加，共享的逻辑（弹夹管理、UI 显示）需要不断抽取基类或复制粘贴。</p>
+<h3 id="Lyra-方案：物品-Fragment-集合"><a href="#Lyra-方案：物品-Fragment-集合" class="headerlink" title="Lyra 方案：物品 &#x3D; Fragment 集合"></a>Lyra 方案：物品 &#x3D; Fragment 集合</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ULyraInventoryItemDefinition : UPrimaryDataAsset &#123;</span><br><span class="line">    <span class="comment">// 不定义&quot;武器是什么&quot;，而是列出&quot;武器有哪些碎片&quot;</span></span><br><span class="line">    TArray&lt;ULyraInventoryItemFragment*&gt; Fragments;  <span class="comment">// ← 核心：一个物品 = 一组 Fragment</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 模板方法：按类型查找 Fragment</span></span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt; <span class="type">const</span> T* <span class="title">FindFragmentByClass</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Frag : Fragments)</span><br><span class="line">            <span class="keyword">if</span> (Frag-&gt;<span class="built_in">IsA</span>(T::<span class="built_in">StaticClass</span>()) <span class="keyword">return</span> <span class="built_in">Cast</span>&lt;T&gt;(Frag);  <span class="comment">// O(n) 线性查找</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>每种 Fragment 只负责一个维度的数据：</p>
+<table>
+<thead>
+<tr>
+<th>Fragment 类型</th>
+<th>职责</th>
+<th>示例数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>EquippableFragment</code></td>
+<td>定义该物品是否能装备，以及对应的 EquipmentDefinition</td>
+<td>EquipmentDef 引用</td>
+</tr>
+<tr>
+<td><code>DisplayFragment</code></td>
+<td>物品名称、图标、描述</td>
+<td>FText + UTexture2D</td>
+</tr>
+<tr>
+<td><code>BulletFragment</code></td>
+<td>弹药信息</td>
+<td>GameplayTag Stack 配置</td>
+</tr>
+<tr>
+<td><code>WeaponPickupFragment</code></td>
+<td>世界拾取属性</td>
+<td>碰撞体大小、拾取音效</td>
+</tr>
+</tbody></table>
+<p><strong>一个物品 &#x3D; 一组 Fragment，每个 Fragment 是一个独立关注点</strong>。新增”附魔系统” &#x3D; 新增 <code>EnchantmentFragment</code>——不需要改任何现有代码。</p>
+<hr>
+<h2 id="三，Definition-Instance-分离"><a href="#三，Definition-Instance-分离" class="headerlink" title="三，Definition &#x2F; Instance 分离"></a>三，Definition &#x2F; Instance 分离</h2><p>这是 Lyra 中反复出现的模式（Experience ↔ ExperienceManager、PawnData ↔ Pawn、Equipment ↔ Instance）：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Definition (DataAsset)</th>
+<th>Instance (Runtime Object)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>性质</strong></td>
+<td>静态模板，不可变</td>
+<td>运行时状态，可变</td>
+</tr>
+<tr>
+<td><strong>数量</strong></td>
+<td>每种装备类型一个</td>
+<td>每个装备实例一个</td>
+</tr>
+<tr>
+<td><strong>网络</strong></td>
+<td>不复制（通过 PrimaryAssetId 引用）</td>
+<td>部分复制（StatTags、装备状态）</td>
+</tr>
+<tr>
+<td><strong>创建</strong></td>
+<td>编辑器中配置</td>
+<td>装备时 NewObject</td>
+</tr>
+</tbody></table>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 装备流程：Definition → Instance → AbilitySet → ASC</span></span><br><span class="line"><span class="built_in">EquipItem</span>(EquipmentDef) &#123;</span><br><span class="line">    <span class="keyword">auto</span>* Instance = <span class="built_in">NewObject</span>&lt;ULyraEquipmentInstance&gt;(Pawn);</span><br><span class="line">    <span class="comment">// Instance 持有对 Def 的引用</span></span><br><span class="line">    <span class="comment">// Def-&gt;AbilitySetsToGrant 通过 Instance 授予</span></span><br><span class="line">    Def-&gt;AbilitySetsToGrant.<span class="built_in">GiveToAbilitySystem</span>(ASC, &amp;Handles, Instance);  </span><br><span class="line">    <span class="comment">// ↑ SourceObject = Instance, 能力可以回溯到装备实例</span></span><br><span class="line">    <span class="built_in">SpawnEquipmentActors</span>(Def-&gt;ActorsToSpawn);  <span class="comment">// 生成世界中的武器 Actor</span></span><br><span class="line">    Instance-&gt;<span class="built_in">OnEquipped</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四，QuickBar：策略桥接层"><a href="#四，QuickBar：策略桥接层" class="headerlink" title="四，QuickBar：策略桥接层"></a>四，QuickBar：策略桥接层</h2><p>QuickBar 是 Inventory 和 Equipment 之间的”中间人”——它负责”用户选了哪个物品→通知装备系统”的策略逻辑：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">SetActiveSlotIndex(NewSlotIndex) &#123;</span><br><span class="line">    // 1. 取出当前槽位的 InventoryItemInstance</span><br><span class="line">    // 2. 找到它的 EquippableFragment</span><br><span class="line">    // 3. 取出 EquipmentDefinition</span><br><span class="line">    // 4. 调用 EquipmentManager::EquipItem(Def)</span><br><span class="line">    </span><br><span class="line">    // 这是一个 Server RPC —— 网络权威在服务器</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>为什么需要 QuickBar 这一层？</strong> 因为 Inventory 不知道 Equipment 的存在（你不背包里所有东西都装备），Equipment 不知道 Inventory 的存在（它只管”当前装备了什么”）。QuickBar 是唯一的”知道两边”的协调层。</p>
+<hr>
+<h2 id="五，SourceObject-反向引用链"><a href="#五，SourceObject-反向引用链" class="headerlink" title="五，SourceObject 反向引用链"></a>五，SourceObject 反向引用链</h2><p>当 Ability 需要知道自己来自哪个装备时（例如：射击技能需要获取武器弹药信息），Lyra 不用全局 Manager 查找，而是用 GAS 原生的 <code>SourceObject</code> 字段：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">GameplayAbility（GA_WeaponFire）</span><br><span class="line">  → CurrentAbilitySpec.SourceObject → ULyraEquipmentInstance</span><br><span class="line">    → GetInstigator() → ULyraInventoryItemInstance</span><br><span class="line">      → GetStatTagStackCount(TAG_Ammo) → 当前弹药数</span><br></pre></td></tr></table></figure>
+
+<p>这一设计的优势：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>SourceObject（Lyra）</th>
+<th>全局 Manager 查找（替代方案）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>耦合度</strong></td>
+<td>Ability 只知道 SourceObject 是 UObject，无类型依赖</td>
+<td>Ability 需知道 Manager 的具体类型和获取路径</td>
+</tr>
+<tr>
+<td><strong>多装备场景</strong></td>
+<td>每个 AbilitySpec 精确绑定到自己的 EquipmentInstance</td>
+<td>需额外的槽位 ID 区分</td>
+</tr>
+<tr>
+<td><strong>网络正确性</strong></td>
+<td>SourceObject 随 AbilitySpec 复制，天然正确</td>
+<td>需额外复制槽位映射</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="六，Inventory-的网络复制"><a href="#六，Inventory-的网络复制" class="headerlink" title="六，Inventory 的网络复制"></a>六，Inventory 的网络复制</h2><p>Inventory 使用 <code>FFastArraySerializer</code> 进行网络复制——这是 UE 中最高效的数组复制方式：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">FLyraInventoryList : FFastArraySerializer &#123;</span><br><span class="line">    TArray&lt;FLyraInventoryEntry&gt; Entries;</span><br><span class="line">    <span class="comment">// FFastArraySerializer 自动处理：</span></span><br><span class="line">    <span class="comment">//   - 增量更新（只复制变化项，不复制整个数组）</span></span><br><span class="line">    <span class="comment">//   - 按 Index 追踪，用 ReplicationID 复用槽位</span></span><br><span class="line">    <span class="comment">//   - PreReplicatedRemove / PostReplicatedAdd 回调保证客户端正确响应</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>此外，<code>ULyraInventoryItemInstance</code> 通过 <code>RegisteredSubObject</code> 注册到 <code>FLyraInventoryEntry</code>，实现嵌套对象的自动复制依赖。</p>
+<hr>
+<h2 id="七，装备-卸载完整时序"><a href="#七，装备-卸载完整时序" class="headerlink" title="七，装备&#x2F;卸载完整时序"></a>七，装备&#x2F;卸载完整时序</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">装备：EquipItem(EquipmentDef)</span><br><span class="line">  1. EquipmentList::AddEntry(Def, InstanceType)</span><br><span class="line">  2. NewObject EquipmentInstance(Outer=Pawn)</span><br><span class="line">  3. Def-&gt;AbilitySetsToGrant.GiveToAbilitySystem(ASC, &amp;GrantedHandles, Instance)</span><br><span class="line">  4. SpawnEquipmentActors(ActorsToSpawn) — 生成世界 Actor，骨骼挂载</span><br><span class="line">  5. Instance-&gt;OnEquipped() — 蓝图事件</span><br><span class="line"></span><br><span class="line">卸载：UnequipItem()</span><br><span class="line">  1. Instance-&gt;OnUnequipped() — 蓝图事件</span><br><span class="line">  2. EquipmentList::RemoveEntry()</span><br><span class="line">  3. GrantedHandles.TakeFromAbilitySystem(ASC) — ClearAbility(bWasCancelled=true)</span><br><span class="line">  4. DestroyEquipmentActors() — 销毁世界 Actor</span><br></pre></td></tr></table></figure>
+
+<p><strong>关键顺序</strong>：卸载时先 <code>OnUnequipped</code>（蓝图有机会做清理），再撤销能力（正在激活的能力收到 Cancel 信号），最后销毁 Actor。</p>
+<hr>
+<h2 id="八，与-PawnData-能力注入的互补"><a href="#八，与-PawnData-能力注入的互补" class="headerlink" title="八，与 PawnData 能力注入的互补"></a>八，与 PawnData 能力注入的互补</h2><table>
+<thead>
+<tr>
+<th>能力来源</th>
+<th>注入路径</th>
+<th>生命周期</th>
+<th>典型内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>PawnData.AbilitySets</strong></td>
+<td>Experience → PawnData → PawnExtension → ASC</td>
+<td>随 Pawn 生成&#x2F;销毁</td>
+<td>固有：移动、跳跃、血量</td>
+</tr>
+<tr>
+<td><strong>Equipment.AbilitySetsToGrant</strong></td>
+<td>QuickBar → EquipmentManager → ASC</td>
+<td>装备时授予，卸下时撤销</td>
+<td>装备：射击、换弹、战技</td>
+</tr>
+</tbody></table>
+<p>两者叠加 &#x3D; 角色的完整运行时能力集。一个角色永远有”移动 + 跳跃”，但”射击”只在装备武器时有。</p>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a> — 拆解 Lyra 的三层抽象输入管道：物理输入 → GameplayTag 路由 → GAS 激活，以及为什么 GameplayTag 中介是模块化框架的”胶水层”。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/06/Lyra-05-Equipment-Inventory/">https://cd-cd.top/2026/08/06/Lyra-05-Equipment-Inventory/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Lyra/">Lyra</a><a class="post-meta__tags" href="/tags/Unreal/">Unreal</a><a class="post-meta__tags" href="/tags/GAS/">GAS</a><a class="post-meta__tags" href="/tags/Equipment/">Equipment</a><a class="post-meta__tags" href="/tags/Inventory/">Inventory</a><a class="post-meta__tags" href="/tags/Fragment/">Fragment</a><a class="post-meta__tags" href="/tags/Data-Driven/">Data-Driven</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统（本文）   七 网络同步框架   八 UI 系统    一句话Lyra 在 UE Enhanced Input 之上增加了一个GameplayTag 路由层——InputConfig 把按键映射为语义 Tag，AbilitySet 把 Tag 关联到具体 GA，运行时 ASC 通过 Tag 匹配完成”按键 → 能力”的路由。这个中间层是 Lyra 模块化架构的”胶水”——没有它，GameFeature 的热加载&#x2F;卸载在输入层就卡死了。  一，标准 Enhanced Input 的问题标准做法123// 直接绑定：InputAction 指针 → Callback 函数EnhancedInputComponent-&gt;BindAction(IA_Fire, ETriggerEvent::Triggered,     this, &amp;A...</div></div></div></a><a class="pagination-related  no-desc" href="/2026/08/06/ArcaneRush-UE5-Blueprint-Portfolio/" title="【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统（本文）   七 网络同步框架   八 UI 系统    一句话Lyra 在 UE Enhanced Input 之上增加了一个GameplayTag 路由层——InputConfig 把按键映射为语义 Tag，AbilitySet 把 Tag 关联到具体 GA，运行时 ASC 通过 Tag 匹配完成”按键 → 能力”的路由。这个中间层是 Lyra 模块化架构的”胶水”——没有它，GameFeature 的热加载&#x2F;卸载在输入层就卡死了。  一，标准 Enhanced Input 的问题标准做法123// 直接绑定：InputAction 指针 → Callback 函数EnhancedInputComponent-&gt;BindAction(IA_Fire, ETriggerEvent::Triggered,     this, &amp;A...</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/06/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</div></div></div></a><a class="pagination-related" href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/" title="【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层（本文）   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Lyra 的 GAS 层不是简单的”使用”原生 GameplayAbilitySystem——它用五个封装层将 GAS 改造成完全 DataAsset 驱动、GameplayTag 中介、模块化注入的子系统。同一个 ALyraCharacter 在不同 Experience 中呈现完全不同的能力组合，这一切不需要写一行硬编码的 GiveAbility()。  一，与标准 GAS 的核心差异标准 GAS 的做法12345678910// 传统 UE：在 Actor 构造中硬编码所有能力AMyCharacter::AMyCharacter() &#123;    ASC = CreateDefaultSubobject&lt;UAbilitySystemComponent&gt;(&quot;A...</div></div></div></a><a class="pagination-related" href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统（本文 · 终篇）    一句话Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 AHUD 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（UUIExtensionSubsystem）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。  一，为什么不直接用 UMG HUD？在传统 UE 项目中，最自然的 UI 做法是： 1234AHUD::BeginPlay() &#123;    MainWidget = CreateWidget&lt;U...</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/05/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-05</div><div class="info-item-2">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/06/UE5%E5%8A%A8%E7%94%BB%E7%B3%BB%E7%BB%9F%E4%B8%A4%E7%A7%8D%E6%9E%B6%E6%9E%84-TPS%E4%B8%8EARPG%E5%AF%B9%E6%AF%94/" title="【设计思路】UE5 动画系统两种架构：TPS Blend Space 状态机 vs ARPG Montage + GAS 事件驱动"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【设计思路】UE5 动画系统两种架构：TPS Blend Space 状态机 vs ARPG Montage + GAS 事件驱动</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">23</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">88</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B3%BB%E5%88%97%E5%AF%BC%E8%88%AA"><span class="toc-text">系列导航</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="toc-text">一句话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%EF%BC%8C%E4%B8%89%E5%B1%82%E6%9E%B6%E6%9E%84%E5%85%A8%E6%99%AF"><span class="toc-text">一，三层架构全景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8CFragment-%E6%A8%A1%E5%BC%8F%EF%BC%9A%E7%BB%84%E5%90%88%E4%BC%98%E4%BA%8E%E7%BB%A7%E6%89%BF%E7%9A%84%E6%9E%81%E8%87%B4%E5%BA%94%E7%94%A8"><span class="toc-text">二，Fragment 模式：组合优于继承的极致应用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%A0%E7%BB%9F%E6%96%B9%E6%A1%88%EF%BC%9A%E6%AD%A6%E5%99%A8%E7%B1%BB%E7%9A%84%E7%BB%A7%E6%89%BF%E7%88%86%E7%82%B8"><span class="toc-text">传统方案：武器类的继承爆炸</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Lyra-%E6%96%B9%E6%A1%88%EF%BC%9A%E7%89%A9%E5%93%81-Fragment-%E9%9B%86%E5%90%88"><span class="toc-text">Lyra 方案：物品 &#x3D; Fragment 集合</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%EF%BC%8CDefinition-Instance-%E5%88%86%E7%A6%BB"><span class="toc-text">三，Definition &#x2F; Instance 分离</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%EF%BC%8CQuickBar%EF%BC%9A%E7%AD%96%E7%95%A5%E6%A1%A5%E6%8E%A5%E5%B1%82"><span class="toc-text">四，QuickBar：策略桥接层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%EF%BC%8CSourceObject-%E5%8F%8D%E5%90%91%E5%BC%95%E7%94%A8%E9%93%BE"><span class="toc-text">五，SourceObject 反向引用链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%EF%BC%8CInventory-%E7%9A%84%E7%BD%91%E7%BB%9C%E5%A4%8D%E5%88%B6"><span class="toc-text">六，Inventory 的网络复制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%EF%BC%8C%E8%A3%85%E5%A4%87-%E5%8D%B8%E8%BD%BD%E5%AE%8C%E6%95%B4%E6%97%B6%E5%BA%8F"><span class="toc-text">七，装备&#x2F;卸载完整时序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%EF%BC%8C%E4%B8%8E-PawnData-%E8%83%BD%E5%8A%9B%E6%B3%A8%E5%85%A5%E7%9A%84%E4%BA%92%E8%A1%A5"><span class="toc-text">八，与 PawnData 能力注入的互补</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/10/nsh-internship-combat-skills/" title="【DEMO展示】实习期间制作的部分技能展示（可外放）">【DEMO展示】实习期间制作的部分技能展示（可外放）</a><time datetime="2026-08-10T10:00:00.000Z" title="Created 2026-08-10 18:00:00">2026-08-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/10/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-10T04:00:00.000Z" title="Created 2026-08-10 12:00:00">2026-08-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-botw-emergent-combat/" title="【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</a><time datetime="2026-08-09T14:00:00.000Z" title="Created 2026-08-09 22:00:00">2026-08-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</a><time datetime="2026-08-09T12:00:00.000Z" title="Created 2026-08-09 20:00:00">2026-08-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-endfield-analysis/" title="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</a><time datetime="2026-08-09T10:00:00.000Z" title="Created 2026-08-09 18:00:00">2026-08-09</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机 | CD = CoolDown · CountDown · CombatDesign</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Lyra Character 的三位一体架构——薄 Actor（~500行）、厚 Component（按职责拆分）、InitState 状态机（GameplayTag 驱动）——拆解 ALyraCharacter 的设计意图、ExtensionHandler 动态注入、以及从 Spawn 到 Respawn 的 9 阶段生命周期。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机">
+<meta property="og:url" content="https://cd-cd.top/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="Lyra Character 的三位一体架构——薄 Actor（~500行）、厚 Component（按职责拆分）、InitState 状态机（GameplayTag 驱动）——拆解 ALyraCharacter 的设计意图、ExtensionHandler 动态注入、以及从 Spawn 到 Respawn 的 9 阶段生命周期。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-08-06T09:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T18:23:30.701Z">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="Character">
+<meta property="article:tag" content="Component">
+<meta property="article:tag" content="InitState">
+<meta property="article:tag" content="Lyra">
+<meta property="article:tag" content="ModularGameplay">
+<meta property="article:tag" content="Unreal">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机",
+  "url": "https://cd-cd.top/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB/",
+  "image": "https://cd-cd.top/img/avatar.jpg",
+  "datePublished": "2026-08-06T09:00:00.000Z",
+  "dateModified": "2026-08-09T18:23:30.701Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "CD",
+      "url": "https://cd-cd.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">23</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">88</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-06T09:00:00.000Z" title="Created 2026-08-06 17:00:00">2026-08-06</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T18:23:30.701Z" title="Updated 2026-08-10 02:23:30">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/Lyra-%E6%A1%86%E6%9E%B6%E6%8B%86%E8%A7%A3/">Lyra 框架拆解</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td><strong>三</strong></td>
+<td><strong>Character 组件体系（本文）</strong></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>ALyraCharacter 不是一个”角色”，而是一个”插槽”——它只做三件事：创建核心 Component、转发接口调用、初始化死亡流程。所有真正的游戏逻辑全部下沉到独立的 PawnComponent 中，由 GameplayTag 驱动的 InitState 状态机协调初始化顺序。</p>
+<hr>
+<h2 id="一，继承链：从-Engine-到-Lyra"><a href="#一，继承链：从-Engine-到-Lyra" class="headerlink" title="一，继承链：从 Engine 到 Lyra"></a>一，继承链：从 Engine 到 Lyra</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ACharacter (Engine)</span><br><span class="line">  └─ AModularCharacter (ModularGameplayActors 插件)</span><br><span class="line">       └─ ALyraCharacter (LyraGame)</span><br></pre></td></tr></table></figure>
+
+<p><code>AModularCharacter</code> 极其简单——它只重写了三个函数：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">PreInitializeComponents</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 将此 Actor 注册为 GameFrameworkComponentManager 的 Receiver</span></span><br><span class="line">    <span class="comment">// 这是 Actor 级别的唯一注册点</span></span><br><span class="line">    UGameFrameworkComponentManager::<span class="built_in">AddReceiver</span>(<span class="keyword">this</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">BeginPlay</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Super::<span class="built_in">BeginPlay</span>();</span><br><span class="line">    <span class="comment">// 发送信号：Actor 已就绪，GameFeatureAction 可以开始注入</span></span><br><span class="line">    UGameFrameworkComponentManager::<span class="built_in">SendGameFrameworkComponentExtensionEvent</span>(</span><br><span class="line">        <span class="keyword">this</span>, NAME_GameActorReady);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">EndPlay</span><span class="params">()</span> </span>&#123; <span class="comment">/* 反注册 */</span> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>三行逻辑，但这是 Lyra 最关键的”锚点”——它把 Actor 接入到 <code>GameFrameworkComponentManager</code> 的全局管理体系中，从此任何 GameFeatureAction 都可以通过 <code>AddExtensionHandler(ActorClass, Delegate)</code> 在检测到此类 Actor 生成时动态注入 Component 和 Ability。</p>
+<hr>
+<h2 id="二，ALyraCharacter-的五层解耦"><a href="#二，ALyraCharacter-的五层解耦" class="headerlink" title="二，ALyraCharacter 的五层解耦"></a>二，ALyraCharacter 的五层解耦</h2><h3 id="2-1-薄-Actor：构造函数就是全部”主动行为”"><a href="#2-1-薄-Actor：构造函数就是全部”主动行为”" class="headerlink" title="2.1 薄 Actor：构造函数就是全部”主动行为”"></a>2.1 薄 Actor：构造函数就是全部”主动行为”</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">ALyraCharacter::<span class="built_in">ALyraCharacter</span>() &#123;</span><br><span class="line">    PawnExtComp = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraPawnExtensionComponent&gt;(<span class="string">&quot;PawnExtension&quot;</span>);</span><br><span class="line">    HealthComp  = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraHealthComponent&gt;(<span class="string">&quot;HealthComponent&quot;</span>);</span><br><span class="line">    CameraComp  = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraCameraComponent&gt;(<span class="string">&quot;CameraComponent&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 替换默认 MovementComponent 为 Lyra 定制版</span></span><br><span class="line">    ObjectInitializer.<span class="built_in">SetDefaultSubobjectClass</span>&lt;ULyraCharacterMovementComponent&gt;(</span><br><span class="line">        ACharacter::CharacterMovementComponentName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>仅 3 个 Component</strong>。注意什么不在构造函数中：</p>
+<ul>
+<li>❌ 没有 <code>ULyraHeroComponent</code>（输入绑定 + 相机代理）——在 BP 或 GameFeature 中添加</li>
+<li>❌ 没有 <code>UAbilitySystemComponent</code>（GAS 核心）——放在 <code>ULyraPawnExtensionComponent</code> 中，被动创建</li>
+<li>❌ 没有武器&#x2F;装备 Component —— 通过 Equipment 系统动态挂载</li>
+</ul>
+<h3 id="2-2-接口转发：Actor-自己不做实现"><a href="#2-2-接口转发：Actor-自己不做实现" class="headerlink" title="2.2 接口转发：Actor 自己不做实现"></a>2.2 接口转发：Actor 自己不做实现</h3><p>ALyraCharacter 实现了 4 个接口，但全部是<strong>转发</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// IAbilitySystemInterface</span></span><br><span class="line"><span class="function">UAbilitySystemComponent* <span class="title">GetAbilitySystemComponent</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> PawnExtComp-&gt;<span class="built_in">GetLyraAbilitySystemComponent</span>();  <span class="comment">// 转发到 PawnExtension</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// IGameplayTagAssetInterface</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">GetOwnedGameplayTags</span><span class="params">(FGameplayTagContainer&amp; TagContainer)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="built_in">GetAbilitySystemComponent</span>()-&gt;<span class="built_in">GetOwnedGameplayTags</span>(TagContainer);  <span class="comment">// 转发到 ASC</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ILyraTeamAgentInterface（队伍归属）</span></span><br><span class="line"><span class="comment">// MyTeamID 成员变量 + ConditionalBroadcastTeamChanged 广播</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-InitState-状态机：不再依赖-BeginPlay-时序"><a href="#2-3-InitState-状态机：不再依赖-BeginPlay-时序" class="headerlink" title="2.3 InitState 状态机：不再依赖 BeginPlay 时序"></a>2.3 InitState 状态机：不再依赖 BeginPlay 时序</h3><p>在传统 UE 项目中，<code>BeginPlay</code> 的调用顺序不可靠——你无法保证 Component A 的 <code>BeginPlay</code> 在 Component B 之前执行。Lyra 用显式状态机替代隐式时序。</p>
+<h3 id="2-4-ExtensionHandler-动态注入"><a href="#2-4-ExtensionHandler-动态注入" class="headerlink" title="2.4 ExtensionHandler 动态注入"></a>2.4 ExtensionHandler 动态注入</h3><p>GameFeatureAction 在运行时动态注入 Component + AbilitySet——ALyraCharacter 无需知道是哪个插件注入了什么。</p>
+<h3 id="2-5-PawnData-数据驱动"><a href="#2-5-PawnData-数据驱动" class="headerlink" title="2.5 PawnData 数据驱动"></a>2.5 PawnData 数据驱动</h3><p>所有配置外化到 <code>ULyraPawnData</code> DataAsset：<code>AbilitySets</code>、<code>InputConfig</code>、<code>CameraMode</code>、<code>TagRelationshipMapping</code>。设计师不写代码即可切换 Pawn 功能。</p>
+<hr>
+<h2 id="三，InitState-状态机详解"><a href="#三，InitState-状态机详解" class="headerlink" title="三，InitState 状态机详解"></a>三，InitState 状态机详解</h2><h3 id="3-1-为什么用-GameplayTag-而不是枚举？"><a href="#3-1-为什么用-GameplayTag-而不是枚举？" class="headerlink" title="3.1 为什么用 GameplayTag 而不是枚举？"></a>3.1 为什么用 GameplayTag 而不是枚举？</h3><p>因为 <strong>GameFeature 插件可以定义自己的中间状态</strong>。例如，DLC 插件可以定义 <code>InitState_DLC_AssetsLoaded</code>，要求所有 Feature 在继续之前等待 DLC 资产加载——整个过程不需要修改引擎代码或核心框架。</p>
+<h3 id="3-2-四阶段状态"><a href="#3-2-四阶段状态" class="headerlink" title="3.2 四阶段状态"></a>3.2 四阶段状态</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">InitState_Spawned           ← Actor 已存在，Component 已注册</span><br><span class="line">        │                     触发：BeginPlay</span><br><span class="line">        │                     条件：无（总是通过）</span><br><span class="line">        ▼</span><br><span class="line">InitState_DataAvailable     ← 所需配置数据已就绪</span><br><span class="line">        │                     触发：SetPawnData() + Controller 已 Possessed</span><br><span class="line">        │                     条件：PawnData 非空；Authority/Local 需已 Possessed</span><br><span class="line">        ▼</span><br><span class="line">InitState_DataInitialized   ← 所有 Feature 的数据都已就绪</span><br><span class="line">        │                     触发：HaveAllFeaturesReachedInitState(DataAvailable)</span><br><span class="line">        │                     条件：HeroComponent 的 DataAvailable 也通过</span><br><span class="line">        │                     （Hero 需要 PlayerState + Controller + LocalPlayer）</span><br><span class="line">        ▼</span><br><span class="line">InitState_GameplayReady     ← 所有 Component 初始化完成，开始游戏逻辑</span><br><span class="line">                              条件：无条件通过（实际工作由各 Component 回调完成）</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-HeroComponent-的更严格前置"><a href="#3-3-HeroComponent-的更严格前置" class="headerlink" title="3.3 HeroComponent 的更严格前置"></a>3.3 HeroComponent 的更严格前置</h3><p><code>ULyraHeroComponent</code> 的 <code>DataAvailable</code> 比 <code>PawnExtensionComponent</code> 更严格：</p>
+<ul>
+<li>PlayerState 必须存在</li>
+<li><code>Controller-&gt;PlayerState-&gt;GetOwner() == Controller</code>（确保绑定完成）</li>
+<li>本地控制且非 Bot：InputComponent + LyraPC + LocalPlayer 都必须存在</li>
+</ul>
+<p>这就是 Lyra 对”输入绑定必须在所有玩家信息就绪后才能执行”这个隐式约束的显式化。</p>
+<h3 id="3-4-HaveAllFeaturesReachedInitState-的工作原理"><a href="#3-4-HaveAllFeaturesReachedInitState-的工作原理" class="headerlink" title="3.4 HaveAllFeaturesReachedInitState 的工作原理"></a>3.4 HaveAllFeaturesReachedInitState 的工作原理</h3><p><code>UGameFrameworkComponentManager</code> 维护每个 Actor 上所有已注册 Feature 的当前状态。当任何 Feature 的状态发生变化时：</p>
+<ol>
+<li>Manager 调用所有注册了 <code>BindOnActorInitStateChanged</code> 的回调</li>
+<li><code>ULyraPawnExtensionComponent</code> 在回调中调用 <code>CheckDefaultInitialization()</code></li>
+<li>检查”所有 Feature 是否都达到了目标状态” → 如果是，推进当前 Feature 的状态链</li>
+</ol>
+<p><strong>这是事件驱动而非轮询</strong>——状态推进只在状态变化时发生，无 CPU 浪费。</p>
+<hr>
+<h2 id="四，完整生命周期：9-阶段时间线"><a href="#四，完整生命周期：9-阶段时间线" class="headerlink" title="四，完整生命周期：9 阶段时间线"></a>四，完整生命周期：9 阶段时间线</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">阶段 0-1: Experience 加载</span><br><span class="line">  └─ GameMode::OnExperienceLoaded → RestartPlayer</span><br><span class="line"></span><br><span class="line">阶段 2: Pawn 生成与 PawnData 注入</span><br><span class="line">  └─ SpawnActor(bDeferConstruction) → SetPawnData → FinishSpawning → BeginPlay</span><br><span class="line">     ★ PawnData 在 BeginPlay 之前注入——组件 BeginPlay 时 PawnData 已可用</span><br><span class="line"></span><br><span class="line">阶段 3: InitState 启动</span><br><span class="line">  └─ PawnExtensionComponent::BeginPlay → TryToChangeInitState(Spawned) ✓</span><br><span class="line">     → CheckDefaultInitialization → DataAvailable ✓</span><br><span class="line"></span><br><span class="line">阶段 4: PlayerState 设置</span><br><span class="line">  └─ LyraPlayerState::SetPawnData() → GiveAbilitySet(PawnData-&gt;AbilitySets)</span><br><span class="line">     → NAME_LyraAbilityReady 事件 → GameFeatureAction 注入额外 AbilitySet</span><br><span class="line"></span><br><span class="line">阶段 5: DataInitialized → 全局初始化</span><br><span class="line">  └─ HeroComponent: InitializeAbilitySystem(ASC, LyraPS)</span><br><span class="line">     → ASC 广播 OnAbilitySystemInitialized</span><br><span class="line">     → HealthComponent: InitializeWithAbilitySystem(ASC) → 绑定 HealthSet 委托</span><br><span class="line">     → HeroComponent: InitializePlayerInput → Enhanced Input 全链路绑定</span><br><span class="line">     → CameraComponent: DetermineCameraModeDelegate 绑定</span><br><span class="line"></span><br><span class="line">阶段 6: GameplayReady</span><br><span class="line">  └─ NAME_BindInputsNow 事件 → GameFeatureAction 绑定额外输入</span><br><span class="line">     → GameplayReady ✓ → 玩家可正常游戏</span><br><span class="line"></span><br><span class="line">阶段 7: 游戏运行中</span><br><span class="line">  └─ ASC 处理 Ability、HealthComponent 监听属性、CameraComponent 混合 CameraMode</span><br><span class="line"></span><br><span class="line">阶段 8: 角色死亡</span><br><span class="line">  └─ HandleOutOfHealth → StartDeath → DisableMovementAndCollision</span><br><span class="line">     → FinishDeath → DestroyDueToDeath</span><br><span class="line">     ★ ASC 在 PlayerState 上继续存活，不随 Pawn 销毁</span><br><span class="line"></span><br><span class="line">阶段 9: Respawn</span><br><span class="line">  └─ GameMode 生成新 Pawn → InitializeAbilitySystem(复用旧 ASC)</span><br><span class="line">     → 新 Pawn 成为 ASC 的 Avatar</span><br></pre></td></tr></table></figure>
+
+<h3 id="关键洞察：ASC-生命周期-Pawn-生命周期"><a href="#关键洞察：ASC-生命周期-Pawn-生命周期" class="headerlink" title="关键洞察：ASC 生命周期 &gt; Pawn 生命周期"></a>关键洞察：ASC 生命周期 &gt; Pawn 生命周期</h3><p>ASC 放在 <code>ALyraPlayerState</code> 上而不是 <code>ALyraCharacter</code> 上。这意味着 <strong>Pawn 销毁时 ASC 存活，新 Pawn 直接复用旧 ASC</strong>。Respawn 不需要重新授予 AbilitySet、不需要重建 AttributeSet——所有 GAS 状态跨生命保持。</p>
+<hr>
+<h2 id="五，ExtensionHandler：GameFeature-如何动态注入"><a href="#五，ExtensionHandler：GameFeature-如何动态注入" class="headerlink" title="五，ExtensionHandler：GameFeature 如何动态注入"></a>五，ExtensionHandler：GameFeature 如何动态注入</h2><p>GameFeatureAction 通过 <code>AddExtensionHandler</code> 实现完全解耦的动态注入：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">1. GameFeatureAction 注册 Handler:</span><br><span class="line">   Manager-&gt;AddExtensionHandler(ALyraCharacter::StaticClass(), </span><br><span class="line">       FGameFrameworkComponentExtensionDelegate::CreateLambda([](AActor* Actor) &#123;</span><br><span class="line">           // 2. 动态创建 Component</span><br><span class="line">           UActorComponent* NewComp = NewObject&lt;UMyFeatureComponent&gt;(Actor);</span><br><span class="line">           NewComp-&gt;RegisterComponent();</span><br><span class="line">           </span><br><span class="line">           // 3. 授予 AbilitySet</span><br><span class="line">           MyAbilitySet-&gt;GiveToAbilitySystem(ASC, &amp;GrantedHandles, Actor);</span><br><span class="line">       &#125;));</span><br><span class="line"></span><br><span class="line">4. 当任何 ALyraCharacter 生成时 → Manager 自动调用 Lambda</span><br><span class="line">5. ALyraCharacter 从头到尾不知道是哪个插件给它加了什么</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="六，ARPG-落地要点"><a href="#六，ARPG-落地要点" class="headerlink" title="六，ARPG 落地要点"></a>六，ARPG 落地要点</h2><p>对于 TowerChallenge：</p>
+<ol>
+<li>为 Character 创建 C++ 子类在 Lyra 体系中通常是反模式——这是框架的核心约束。我们有过教训：430 行 <code>ATowerCharacter</code> 全量返工，最终 ~90 行 Component 解决了同样的问题。</li>
+<li>ASC 放 PlayerState 上——这是 Lyra 的选择，不是标准 GAS 做法。优点：Respawn 不丢失 GAS 状态。缺点：<code>GetASC()</code> 需要经过 <code>PlayerState</code> 间接访问。</li>
+<li>自定义 InitState 中间状态——如果某个 Feature 需要等待 DLC 资产加载，定义 <code>InitState_DLC_AssetsLoaded</code> Tag，在 <code>CanChangeInitState</code> 中检查即可。</li>
+<li>PawnData 的三级覆盖：Experience.DefaultPawnData → ActionSet.PawnData → 运行时覆盖。设计师通过切换 DataAsset 实现不同爬塔阶段的角色配置。</li>
+</ol>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a> — 拆解 Lyra 在 UE 原生 GAS 之上构建的五大封装层：AbilitySet 打包、InputTag 桥接、ActivationGroup 互斥、GlobalAbility 系统、Experience 注入管道。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB/">https://cd-cd.top/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Lyra/">Lyra</a><a class="post-meta__tags" href="/tags/Unreal/">Unreal</a><a class="post-meta__tags" href="/tags/ModularGameplay/">ModularGameplay</a><a class="post-meta__tags" href="/tags/Character/">Character</a><a class="post-meta__tags" href="/tags/InitState/">InitState</a><a class="post-meta__tags" href="/tags/Component/">Component</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/" title="【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层（本文）   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Lyra 的 GAS 层不是简单的”使用”原生 GameplayAbilitySystem——它用五个封装层将 GAS 改造成完全 DataAsset 驱动、GameplayTag 中介、模块化注入的子系统。同一个 ALyraCharacter 在不同 Experience 中呈现完全不同的能力组合，这一切不需要写一行硬编码的 GiveAbility()。  一，与标准 GAS 的核心差异标准 GAS 的做法12345678910// 传统 UE：在 Actor 构造中硬编码所有能力AMyCharacter::AMyCharacter() &#123;    ASC = CreateDefaultSubobject&lt;UAbilitySystemComponent&gt;(&quot;A...</div></div></div></a><a class="pagination-related" href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【技术探索】Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统（本文）   三 Character 组件体系与 InitState 状态机   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Experience 是一张”玩法配方表”——它用一个 DataAsset 回答了”这场游戏玩什么”：激活哪些 GameFeature 插件、执行哪些初始化动作、玩家用什么样的 Pawn。  一，问题：GameMode 子类为何不够在 Standard UE 中，为不同模式创建不同的 AGameModeBase 子类是标准做法： 12345// 传统方案：每增加一个模式 = 一个新类AGameModeBase  ├── AGameMode_TDM        → PawnClass = B_Hero_TDM, HUDClass = B_HUD_TDM  ├── AGameMode_CP         → PawnClass = B_Hero_CP,  HUD...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统（本文）   三 Character 组件体系与 InitState 状态机   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Experience 是一张”玩法配方表”——它用一个 DataAsset 回答了”这场游戏玩什么”：激活哪些 GameFeature 插件、执行哪些初始化动作、玩家用什么样的 Pawn。  一，问题：GameMode 子类为何不够在 Standard UE 中，为不同模式创建不同的 AGameModeBase 子类是标准做法： 12345// 传统方案：每增加一个模式 = 一个新类AGameModeBase  ├── AGameMode_TDM        → PawnClass = B_Hero_TDM, HUDClass = B_HUD_TDM  ├── AGameMode_CP         → PawnClass = B_Hero_CP,  HUD...</div></div></div></a><a class="pagination-related" href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88/" title="【技术探索】Lyra 框架拆解（一）：架构哲学总览 —— 薄 Actor + 厚 Component + GameFeature 插件化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（一）：架构哲学总览 —— 薄 Actor + 厚 Component + GameFeature 插件化</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览（本文）   二 Experience 系统：玩法配方表   三 Character 组件体系与 InitState 状态机   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话理解 LyraLyra 不是”一个游戏”，而是一套”做游戏的游戏”——它是 Epic 在 UE5 时代给模块化多人游戏的参考答案。它的核心命题是：  如何在不为每个游戏模式写一个 AGameMode 子类的前提下，让同一个 ALyraCharacter 在射击模式、探索模式、TopDown 模式下呈现完全不同的能力组合？  Lyra 的答案是四个字：数据驱动注入。C++ 提供能力框架，DataAsset 定义具体配方，GameFeature 插件负责物理隔离与按需加载。  一，四层架构全景图12345678910111213141516171819202122232425262728293031323334┌─────────────────────...</div></div></div></a><a class="pagination-related" href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统（本文 · 终篇）    一句话Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 AHUD 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（UUIExtensionSubsystem）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。  一，为什么不直接用 UMG HUD？在传统 UE 项目中，最自然的 UI 做法是： 1234AHUD::BeginPlay() &#123;    MainWidget = CreateWidget&lt;U...</div></div></div></a><a class="pagination-related" href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统（本文）   七 网络同步框架   八 UI 系统    一句话Lyra 在 UE Enhanced Input 之上增加了一个GameplayTag 路由层——InputConfig 把按键映射为语义 Tag，AbilitySet 把 Tag 关联到具体 GA，运行时 ASC 通过 Tag 匹配完成”按键 → 能力”的路由。这个中间层是 Lyra 模块化架构的”胶水”——没有它，GameFeature 的热加载&#x2F;卸载在输入层就卡死了。  一，标准 Enhanced Input 的问题标准做法123// 直接绑定：InputAction 指针 → Callback 函数EnhancedInputComponent-&gt;BindAction(IA_Fire, ETriggerEvent::Triggered,     this, &amp;A...</div></div></div></a><a class="pagination-related" href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/" title="【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架（本文）   八 UI 系统    一句话Lyra 的网络同步架构不是”用一套方案解决所有问题”——它构建了四层分层协作体系，从底层的 Iris 序列化到上层的 VerbMessage 消息广播，每一层解决一个粒度的同步需求。一个值得注意的设计决策：ReplicationGraph 默认禁用——先跑起来，性能瓶颈出现时再逐层启用优化。  一，五层同步架构1234567891011Gameplay 层:  UPROPERTY(Replicated) / FFastArray / RPC   ↓          基础同步原语 —— 简单的 float/HUD 走属性，数组走 FastArray，一次性事件走 RPC消息层:       FLyraVerbMessage（FFastArray + GameplayMessageSubsy...</div></div></div></a><a class="pagination-related" href="/2026/08/06/Lyra-05-Equipment-Inventory/" title="【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-06</div><div class="info-item-2">【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory（本文）   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Lyra 的 Equipment&#x2F;Inventory 系统用三层分离架构实现了”武器切换 &#x3D; AbilitySet 的 GiveTo + TakeFrom”——Inventory 管”你拥有什么”，Equipment 管”你正装备什么”，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了”武器类膨胀到 5000 行”的问题。  一，三层架构全景12345678910111213141516171819202122Inventory（数据容器层）—— &quot;你拥有什么&quot;  ULyraInventoryManagerComponent (挂载在 PlayerState)  ├── FLyraInventoryL...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">23</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">88</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B3%BB%E5%88%97%E5%AF%BC%E8%88%AA"><span class="toc-text">系列导航</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="toc-text">一句话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%EF%BC%8C%E7%BB%A7%E6%89%BF%E9%93%BE%EF%BC%9A%E4%BB%8E-Engine-%E5%88%B0-Lyra"><span class="toc-text">一，继承链：从 Engine 到 Lyra</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8CALyraCharacter-%E7%9A%84%E4%BA%94%E5%B1%82%E8%A7%A3%E8%80%A6"><span class="toc-text">二，ALyraCharacter 的五层解耦</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E8%96%84-Actor%EF%BC%9A%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E5%B0%B1%E6%98%AF%E5%85%A8%E9%83%A8%E2%80%9D%E4%B8%BB%E5%8A%A8%E8%A1%8C%E4%B8%BA%E2%80%9D"><span class="toc-text">2.1 薄 Actor：构造函数就是全部”主动行为”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%8E%A5%E5%8F%A3%E8%BD%AC%E5%8F%91%EF%BC%9AActor-%E8%87%AA%E5%B7%B1%E4%B8%8D%E5%81%9A%E5%AE%9E%E7%8E%B0"><span class="toc-text">2.2 接口转发：Actor 自己不做实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-InitState-%E7%8A%B6%E6%80%81%E6%9C%BA%EF%BC%9A%E4%B8%8D%E5%86%8D%E4%BE%9D%E8%B5%96-BeginPlay-%E6%97%B6%E5%BA%8F"><span class="toc-text">2.3 InitState 状态机：不再依赖 BeginPlay 时序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-ExtensionHandler-%E5%8A%A8%E6%80%81%E6%B3%A8%E5%85%A5"><span class="toc-text">2.4 ExtensionHandler 动态注入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-PawnData-%E6%95%B0%E6%8D%AE%E9%A9%B1%E5%8A%A8"><span class="toc-text">2.5 PawnData 数据驱动</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%EF%BC%8CInitState-%E7%8A%B6%E6%80%81%E6%9C%BA%E8%AF%A6%E8%A7%A3"><span class="toc-text">三，InitState 状态机详解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E4%B8%BA%E4%BB%80%E4%B9%88%E7%94%A8-GameplayTag-%E8%80%8C%E4%B8%8D%E6%98%AF%E6%9E%9A%E4%B8%BE%EF%BC%9F"><span class="toc-text">3.1 为什么用 GameplayTag 而不是枚举？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E5%9B%9B%E9%98%B6%E6%AE%B5%E7%8A%B6%E6%80%81"><span class="toc-text">3.2 四阶段状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-HeroComponent-%E7%9A%84%E6%9B%B4%E4%B8%A5%E6%A0%BC%E5%89%8D%E7%BD%AE"><span class="toc-text">3.3 HeroComponent 的更严格前置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-HaveAllFeaturesReachedInitState-%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-text">3.4 HaveAllFeaturesReachedInitState 的工作原理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%EF%BC%8C%E5%AE%8C%E6%95%B4%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%9A9-%E9%98%B6%E6%AE%B5%E6%97%B6%E9%97%B4%E7%BA%BF"><span class="toc-text">四，完整生命周期：9 阶段时间线</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E6%B4%9E%E5%AF%9F%EF%BC%9AASC-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F-Pawn-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-text">关键洞察：ASC 生命周期 &gt; Pawn 生命周期</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%EF%BC%8CExtensionHandler%EF%BC%9AGameFeature-%E5%A6%82%E4%BD%95%E5%8A%A8%E6%80%81%E6%B3%A8%E5%85%A5"><span class="toc-text">五，ExtensionHandler：GameFeature 如何动态注入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%EF%BC%8CARPG-%E8%90%BD%E5%9C%B0%E8%A6%81%E7%82%B9"><span class="toc-text">六，ARPG 落地要点</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/10/nsh-internship-combat-skills/" title="【DEMO展示】实习期间制作的部分技能展示（可外放）">【DEMO展示】实习期间制作的部分技能展示（可外放）</a><time datetime="2026-08-10T10:00:00.000Z" title="Created 2026-08-10 18:00:00">2026-08-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/10/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-10T04:00:00.000Z" title="Created 2026-08-10 12:00:00">2026-08-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-botw-emergent-combat/" title="【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</a><time datetime="2026-08-09T14:00:00.000Z" title="Created 2026-08-09 22:00:00">2026-08-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</a><time datetime="2026-08-09T12:00:00.000Z" title="Created 2026-08-09 20:00:00">2026-08-09</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/09/combat-design-endfield-analysis/" title="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</a><time datetime="2026-08-09T10:00:00.000Z" title="Created 2026-08-09 18:00:00">2026-08-09</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>
