@@ -1,0 +1,376 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径 | CD = CoolDown · CountDown · CombatDesign</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="拆解 Lyra 的四层网络同步体系——Iris 传输层、ReplicationGraph 六节点路由、SharedRepMovement 压缩、VerbMessage 消息系统——以及&quot;分层解耦 + 默认禁用&quot;的设计哲学。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径">
+<meta property="og:url" content="https://cd-cd.top/2026/08/10/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="拆解 Lyra 的四层网络同步体系——Iris 传输层、ReplicationGraph 六节点路由、SharedRepMovement 压缩、VerbMessage 消息系统——以及&quot;分层解耦 + 默认禁用&quot;的设计哲学。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-08-10T10:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T17:24:51.584Z">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="FFastArraySerializer">
+<meta property="article:tag" content="Iris">
+<meta property="article:tag" content="Lyra">
+<meta property="article:tag" content="Networking">
+<meta property="article:tag" content="ReplicationGraph">
+<meta property="article:tag" content="Unreal">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径",
+  "url": "https://cd-cd.top/2026/08/10/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/",
+  "image": "https://cd-cd.top/img/avatar.jpg",
+  "datePublished": "2026-08-10T10:00:00.000Z",
+  "dateModified": "2026-08-09T17:24:51.584Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "CD",
+      "url": "https://cd-cd.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/2026/08/10/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-10T10:00:00.000Z" title="Created 2026-08-10 18:00:00">2026-08-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T17:24:51.584Z" title="Updated 2026-08-10 01:24:51">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/Lyra-%E6%A1%86%E6%9E%B6%E6%8B%86%E8%A7%A3/">Lyra 框架拆解</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td><strong>七</strong></td>
+<td><strong>网络同步框架（本文）</strong></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的网络同步架构不是”用一套方案解决所有问题”——它构建了四层分层协作体系，从底层的 Iris 序列化到上层的 VerbMessage 消息广播，每一层解决一个粒度的同步需求。一个值得注意的设计决策：ReplicationGraph 默认禁用——先跑起来，性能瓶颈出现时再逐层启用优化。</p>
+<hr>
+<h2 id="一，五层同步架构"><a href="#一，五层同步架构" class="headerlink" title="一，五层同步架构"></a>一，五层同步架构</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Gameplay 层:  UPROPERTY(Replicated) / FFastArray / RPC</span><br><span class="line">   ↓          基础同步原语 —— 简单的 float/HUD 走属性，数组走 FastArray，一次性事件走 RPC</span><br><span class="line">消息层:       FLyraVerbMessage（FFastArray + GameplayMessageSubsystem）</span><br><span class="line">   ↓          跨系统的轻量事件广播（击杀广播、助攻消息、控制点占领）</span><br><span class="line">压缩层:       FSharedRepMovement / FLyraReplicatedAcceleration</span><br><span class="line">   ↓          移动数据共享——多个客户端观察同一个角色时，共享序列化结果</span><br><span class="line">LOD 层:       ULyraSignificanceManager</span><br><span class="line">   ↓          基于重要性动态调整复制频率（占位，框架已注册但未完成实现）</span><br><span class="line">路由层:       ULyraReplicationGraph / Iris ObjectReplicationBridge</span><br><span class="line">   ↓          按 Actor 类型分派到不同复制节点 —— 每个连接只收到&quot;相关&quot;的数据</span><br><span class="line">Iris 传输层:   过滤 → 优先级排序 → 序列化 → Delta 压缩 → 带宽分配</span><br></pre></td></tr></table></figure>
+
+<p>核心原则：每一层可以独立替换或禁用。 这是 Lyra 最务实的网络设计决策——不是”给你一套完美但必须全用的系统”，而是”给你一套可逐层启用的工具集”。</p>
+<hr>
+<h2 id="二，Iris-与-ReplicationGraph-的分工"><a href="#二，Iris-与-ReplicationGraph-的分工" class="headerlink" title="二，Iris 与 ReplicationGraph 的分工"></a>二，Iris 与 ReplicationGraph 的分工</h2><h3 id="Iris：下一代复制系统"><a href="#Iris：下一代复制系统" class="headerlink" title="Iris：下一代复制系统"></a>Iris：下一代复制系统</h3><p>Iris 是 UE5 新的底层复制框架（替代旧的 <code>UNetDriver</code> 复制管线），在 <code>LyraGame.Build.cs</code> 中通过一行宏启用：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">SetupIrisSupport</span>(Target);</span><br></pre></td></tr></table></figure>
+
+<p>Iris 负责<strong>怎么复制</strong>：序列化格式选择、过滤算法、优先级计算、Delta 压缩、带宽分配。通过 <code>ObjectReplicationBridgeConfig</code> 按类指定过滤策略：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 按类指定过滤方式</span></span><br><span class="line">FilterConfigs = [</span><br><span class="line">    &#123; Class = ALyraCharacter,    DynamicFilterName = <span class="string">&quot;Spatial&quot;</span> &#125;,   <span class="comment">// 空间距离过滤</span></span><br><span class="line">    &#123; Class = AWorldSettings,    DynamicFilterName = <span class="string">&quot;NotRouted&quot;</span> &#125;, <span class="comment">// 不复制</span></span><br><span class="line">    &#123; Class = AGameState,        DynamicFilterName = <span class="string">&quot;None&quot;</span> &#125;,      <span class="comment">// 不过滤，全连接</span></span><br><span class="line">];</span><br></pre></td></tr></table></figure>
+
+<h3 id="ReplicationGraph：自定义节点体系"><a href="#ReplicationGraph：自定义节点体系" class="headerlink" title="ReplicationGraph：自定义节点体系"></a>ReplicationGraph：自定义节点体系</h3><p>ReplicationGraph 负责<strong>复制什么</strong>：哪些 Actor 对哪些连接是相关的。它定义了 6 种节点类型：</p>
+<table>
+<thead>
+<tr>
+<th>节点</th>
+<th>Actor 类型</th>
+<th>策略</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>GridSpatialization2D</strong></td>
+<td>大部分 Gameplay Actor</td>
+<td>空间网格——只复制到”附近”的连接</td>
+</tr>
+<tr>
+<td><strong>AlwaysRelevant_ForConnection</strong></td>
+<td>PlayerController + ViewTarget</td>
+<td>始终复制到拥有者</td>
+</tr>
+<tr>
+<td><strong>PlayerStateFrequencyLimiter</strong></td>
+<td>PlayerState</td>
+<td>限制更新频率，降低带宽</td>
+</tr>
+<tr>
+<td><strong>ActorList</strong></td>
+<td>ALyraCharacter</td>
+<td>独立列表，配合 FastShared 路径使用</td>
+</tr>
+<tr>
+<td><strong>TearOff</strong></td>
+<td>销毁的 Actor</td>
+<td>延迟清理，确保客户端收到销毁前的最后状态</td>
+</tr>
+<tr>
+<td><strong>FrequencyBuckets</strong></td>
+<td>低优先级 Actor</td>
+<td>分频复制——远距离 Actor 以更低频率更新</td>
+</tr>
+</tbody></table>
+<h3 id="关键设计：ReplicationGraph-默认禁用"><a href="#关键设计：ReplicationGraph-默认禁用" class="headerlink" title="关键设计：ReplicationGraph 默认禁用"></a>关键设计：ReplicationGraph 默认禁用</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bDisableReplicationGraph = <span class="literal">true</span>;  <span class="comment">// 默认不走 ReplicationGraph</span></span><br></pre></td></tr></table></figure>
+
+<p>当 ReplicationGraph 禁用时，Iris 的 <code>ObjectReplicationBridgeConfig</code> 接管相关性过滤。这是 Lyra 的”先跑起来，优化再说”哲学的体现——小项目用 Iris 默认过滤足够，大项目再接入 ReplicationGraph 做精细路由。</p>
+<hr>
+<h2 id="三，FastShared-路径：独立带宽-共享序列化"><a href="#三，FastShared-路径：独立带宽-共享序列化" class="headerlink" title="三，FastShared 路径：独立带宽 + 共享序列化"></a>三，FastShared 路径：独立带宽 + 共享序列化</h2><p>ReplicationGraph 一个重要优化是 <strong>FastShared 路径</strong>——专门为移动数据设计：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ALyraCharacter 移动数据:</span><br><span class="line">  常规路径:    每个连接独立序列化 + 独立发送</span><br><span class="line">  带宽:        10 kB/s × N 个连接</span><br><span class="line">  </span><br><span class="line">  FastShared 路径: 序列化一次 → 广播给所有相关连接</span><br><span class="line">  带宽:        10 kB/s × 1 次序列化</span><br></pre></td></tr></table></figure>
+
+<p><code>ALyraCharacter</code> 通过 <code>FLyraReplicatedAcceleration</code> 结构体走这条路径——加速度数据从 12 字节压缩到 3 字节（75% 节省），且所有观察同一个角色的客户端共享同一份序列化结果。</p>
+<p><strong>这对大逃杀&#x2F;Battle Royale 场景至关重要</strong>——一个角色可能被 30+ 个客户端同时观察，每条连接单独复制移动数据会吃掉所有上行带宽。</p>
+<hr>
+<h2 id="四，FSharedRepMovement：移动压缩详解"><a href="#四，FSharedRepMovement：移动压缩详解" class="headerlink" title="四，FSharedRepMovement：移动压缩详解"></a>四，FSharedRepMovement：移动压缩详解</h2><p>传统的 <code>FRepMovement</code> 结构通过 <code>ReplicatedMovement</code> 复制——包含 Location(12 bytes) + Rotation(12 bytes) + Velocity(12 bytes) + 额外数据 ≈ 50+ bytes。</p>
+<p>Lyra 的 <code>FSharedRepMovement</code> 使用以下优化：</p>
+<ol>
+<li><strong>量化位置</strong>：世界坐标通过网格对齐降低精度 → 减少 bit 数</li>
+<li><strong>加速度压缩</strong>：<code>FLyraReplicatedAcceleration</code> 从 12 bytes → 3 bytes（量化为 256 级方向 + 精度缩放）</li>
+<li><strong>Delta 压缩</strong>：只发送相对于上一帧的变化，而非完整值</li>
+<li><strong>独立带宽预算</strong>：移动复制使用独立的带宽限制（而非与其他属性竞争）</li>
+</ol>
+<hr>
+<h2 id="五，FLyraVerbMessage：轻量事件广播"><a href="#五，FLyraVerbMessage：轻量事件广播" class="headerlink" title="五，FLyraVerbMessage：轻量事件广播"></a>五，FLyraVerbMessage：轻量事件广播</h2><p>传统 RPC 是”一对一”（Server→OwningClient）或”一对多”（NetMulticast），但有些游戏事件需要<strong>更灵活的订阅模型</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">击杀事件（Elimination.Message）:</span><br><span class="line">  谁需要知道？</span><br><span class="line">    → 击杀者 UI（显示击杀提示）</span><br><span class="line">    → 被击杀者 UI（显示死亡画面）</span><br><span class="line">    → 记分板（更新排名）</span><br><span class="line">    → 助攻处理器（检测助攻）</span><br><span class="line">    → 荣誉系统（检查连杀成就）</span><br></pre></td></tr></table></figure>
+
+<p><code>FLyraVerbMessage</code> 提供了一条<strong>双通道架构</strong>：</p>
+<ol>
+<li><strong>FFastArray 复制通道</strong>：<code>FVerbMessageArray</code> 使用 <code>FFastArraySerializer</code> → 服务器上有新消息时增量复制到所有客户端</li>
+<li><strong>GameplayMessageSubsystem 分发通道</strong>：客户端收到消息后通过 <code>UGameplayMessageSubsystem</code> 广播 → 任何感兴趣的 Subsystem 自行订阅</li>
+</ol>
+<p><strong>消息的生产者和消费者完全解耦</strong>——ShooterCore 的 Elimination 消息可以被 ShooterExplorer 的 UI 订阅，双方互不知道对方存在。这是 Lyra 在 Gameplay 层实现的最大粒度的模块化通信。</p>
+<hr>
+<h2 id="六，FFastArraySerializer：结构化数据复制的基石"><a href="#六，FFastArraySerializer：结构化数据复制的基石" class="headerlink" title="六，FFastArraySerializer：结构化数据复制的基石"></a>六，FFastArraySerializer：结构化数据复制的基石</h2><p>Lyra 中几乎所有的结构化列表数据都使用 <code>FFastArraySerializer</code>：</p>
+<table>
+<thead>
+<tr>
+<th>使用处</th>
+<th>数据结构</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Inventory</strong></td>
+<td><code>FLyraInventoryList</code></td>
+<td>增量更新 + SubObject 注册</td>
+</tr>
+<tr>
+<td><strong>Equipment</strong></td>
+<td><code>FLyraEquipmentList</code></td>
+<td>装备列表的原子增删</td>
+</tr>
+<tr>
+<td><strong>VerbMessage</strong></td>
+<td><code>FVerbMessageArray</code></td>
+<td>消息队列的自动回收</td>
+</tr>
+<tr>
+<td><strong>GameplayTag Stack</strong></td>
+<td>Tag 堆叠计数</td>
+<td>StackCount 变化即复制</td>
+</tr>
+</tbody></table>
+<p><code>FFastArraySerializer</code> 的核心优势：</p>
+<ul>
+<li><strong>增量复制</strong>：只复制变化了的 Entry，不复制整个数组</li>
+<li><strong>客户端回调</strong>：<code>PreReplicatedRemove</code> + <code>PostReplicatedAdd</code> + <code>PostReplicatedChange</code>——客户端在数组变化时收到明确通知</li>
+<li><strong>SubObject 支持</strong>：通过 <code>RegisteredSubObject</code> 实现嵌套 UObject 的复制依赖</li>
+</ul>
+<hr>
+<h2 id="七，SignificanceManager：预留的优化层"><a href="#七，SignificanceManager：预留的优化层" class="headerlink" title="七，SignificanceManager：预留的优化层"></a>七，SignificanceManager：预留的优化层</h2><p><code>ULyraSignificanceManager</code> 已经注册在 <code>DefaultEngine.ini</code> 中，但 <code>RegisterObject()</code> 的实现被注释掉了（代码中有 <code>@TODO</code> 标记）。它的理论协作路径是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ReplicationGraph::GetSignificance(Obj)</span><br><span class="line">  → SignificanceManager::GetSignificance(Obj)</span><br><span class="line">    → 返回 SignificanceValue（0-255）</span><br><span class="line">      → ReplicationGraph 据此调整复制频率甚至完全跳过</span><br></pre></td></tr></table></figure>
+
+<p><strong>Lyra 的设计风格</strong>：基建先到位（类已创建、已注册），调优留给项目开发者。”你知道有这个优化点，框架已经给你留好了位置”——比”框架没考虑这个场景，你需要从头实现”好得多。</p>
+<hr>
+<blockquote>
+<p><strong>下一篇（终篇）</strong>：<a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a> — 拆解 Lyra 的四层 UI 架构：CommonUI → CommonGame → UIExtension → LyraGame。以及 GameplayTag 驱动的发布&#x2F;订阅式 UI 注入如何实现”GameFeature 插件的 UI 完全解耦”。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/10/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/">https://cd-cd.top/2026/08/10/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Lyra/">Lyra</a><a class="post-meta__tags" href="/tags/Unreal/">Unreal</a><a class="post-meta__tags" href="/tags/Networking/">Networking</a><a class="post-meta__tags" href="/tags/ReplicationGraph/">ReplicationGraph</a><a class="post-meta__tags" href="/tags/Iris/">Iris</a><a class="post-meta__tags" href="/tags/FFastArraySerializer/">FFastArraySerializer</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统（本文 · 终篇）    一句话Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 AHUD 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（UUIExtensionSubsystem）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。  一，为什么不直接用 UMG HUD？在传统 UE 项目中，最自然的 UI 做法是： 1234AHUD::BeginPlay() &#123;    MainWidget = CreateWidget&lt;U...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-06-Input%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统（本文）   七 网络同步框架   八 UI 系统    一句话Lyra 在 UE Enhanced Input 之上增加了一个GameplayTag 路由层——InputConfig 把按键映射为语义 Tag，AbilitySet 把 Tag 关联到具体 GA，运行时 ASC 通过 Tag 匹配完成”按键 → 能力”的路由。这个中间层是 Lyra 模块化架构的”胶水”——没有它，GameFeature 的热加载&#x2F;卸载在输入层就卡死了。  一，标准 Enhanced Input 的问题标准做法123// 直接绑定：InputAction 指针 → Callback 函数EnhancedInputComponent-&gt;BindAction(IA_Fire, ETriggerEvent::Triggered,     this, &amp;A...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related no-desc" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-14</div><div class="info-item-2">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统（本文 · 终篇）    一句话Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 AHUD 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（UUIExtensionSubsystem）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。  一，为什么不直接用 UMG HUD？在传统 UE 项目中，最自然的 UI 做法是： 1234AHUD::BeginPlay() &#123;    MainWidget = CreateWidget&lt;U...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-05-Equipment-Inventory/" title="【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory（本文）   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Lyra 的 Equipment&#x2F;Inventory 系统用三层分离架构实现了”武器切换 &#x3D; AbilitySet 的 GiveTo + TakeFrom”——Inventory 管”你拥有什么”，Equipment 管”你正装备什么”，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了”武器类膨胀到 5000 行”的问题。  一，三层架构全景12345678910111213141516171819202122Inventory（数据容器层）—— &quot;你拥有什么&quot;  ULyraInventoryManagerComponent (挂载在 PlayerState)  ├── FLyraInventoryL...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/" title="【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层（本文）   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Lyra 的 GAS 层不是简单的”使用”原生 GameplayAbilitySystem——它用五个封装层将 GAS 改造成完全 DataAsset 驱动、GameplayTag 中介、模块化注入的子系统。同一个 ALyraCharacter 在不同 Experience 中呈现完全不同的能力组合，这一切不需要写一行硬编码的 GiveAbility()。  一，与标准 GAS 的核心差异标准 GAS 的做法12345678910// 传统 UE：在 Actor 构造中硬编码所有能力AMyCharacter::AMyCharacter() &#123;    ASC = CreateDefaultSubobject&lt;UAbilitySystemComponent&gt;(&quot;A...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88/" title="【技术探索】Lyra 框架拆解（一）：架构哲学总览 —— 薄 Actor + 厚 Component + GameFeature 插件化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（一）：架构哲学总览 —— 薄 Actor + 厚 Component + GameFeature 插件化</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览（本文）   二 Experience 系统：玩法配方表   三 Character 组件体系与 InitState 状态机   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话理解 LyraLyra 不是”一个游戏”，而是一套”做游戏的游戏”——它是 Epic 在 UE5 时代给模块化多人游戏的参考答案。它的核心命题是：  如何在不为每个游戏模式写一个 AGameMode 子类的前提下，让同一个 ALyraCharacter 在射击模式、探索模式、TopDown 模式下呈现完全不同的能力组合？  Lyra 的答案是四个字：数据驱动注入。C++ 提供能力框架，DataAsset 定义具体配方，GameFeature 插件负责物理隔离与按需加载。  一，四层架构全景图12345678910111213141516171819202122232425262728293031323334┌─────────────────────...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-06-Input%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统（本文）   七 网络同步框架   八 UI 系统    一句话Lyra 在 UE Enhanced Input 之上增加了一个GameplayTag 路由层——InputConfig 把按键映射为语义 Tag，AbilitySet 把 Tag 关联到具体 GA，运行时 ASC 通过 Tag 匹配完成”按键 → 能力”的路由。这个中间层是 Lyra 模块化架构的”胶水”——没有它，GameFeature 的热加载&#x2F;卸载在输入层就卡死了。  一，标准 Enhanced Input 的问题标准做法123// 直接绑定：InputAction 指针 → Callback 函数EnhancedInputComponent-&gt;BindAction(IA_Fire, ETriggerEvent::Triggered,     this, &amp;A...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B3%BB%E5%88%97%E5%AF%BC%E8%88%AA"><span class="toc-text">系列导航</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="toc-text">一句话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%EF%BC%8C%E4%BA%94%E5%B1%82%E5%90%8C%E6%AD%A5%E6%9E%B6%E6%9E%84"><span class="toc-text">一，五层同步架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8CIris-%E4%B8%8E-ReplicationGraph-%E7%9A%84%E5%88%86%E5%B7%A5"><span class="toc-text">二，Iris 与 ReplicationGraph 的分工</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Iris%EF%BC%9A%E4%B8%8B%E4%B8%80%E4%BB%A3%E5%A4%8D%E5%88%B6%E7%B3%BB%E7%BB%9F"><span class="toc-text">Iris：下一代复制系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ReplicationGraph%EF%BC%9A%E8%87%AA%E5%AE%9A%E4%B9%89%E8%8A%82%E7%82%B9%E4%BD%93%E7%B3%BB"><span class="toc-text">ReplicationGraph：自定义节点体系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%AE%BE%E8%AE%A1%EF%BC%9AReplicationGraph-%E9%BB%98%E8%AE%A4%E7%A6%81%E7%94%A8"><span class="toc-text">关键设计：ReplicationGraph 默认禁用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%EF%BC%8CFastShared-%E8%B7%AF%E5%BE%84%EF%BC%9A%E7%8B%AC%E7%AB%8B%E5%B8%A6%E5%AE%BD-%E5%85%B1%E4%BA%AB%E5%BA%8F%E5%88%97%E5%8C%96"><span class="toc-text">三，FastShared 路径：独立带宽 + 共享序列化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%EF%BC%8CFSharedRepMovement%EF%BC%9A%E7%A7%BB%E5%8A%A8%E5%8E%8B%E7%BC%A9%E8%AF%A6%E8%A7%A3"><span class="toc-text">四，FSharedRepMovement：移动压缩详解</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%EF%BC%8CFLyraVerbMessage%EF%BC%9A%E8%BD%BB%E9%87%8F%E4%BA%8B%E4%BB%B6%E5%B9%BF%E6%92%AD"><span class="toc-text">五，FLyraVerbMessage：轻量事件广播</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%EF%BC%8CFFastArraySerializer%EF%BC%9A%E7%BB%93%E6%9E%84%E5%8C%96%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6%E7%9A%84%E5%9F%BA%E7%9F%B3"><span class="toc-text">六，FFastArraySerializer：结构化数据复制的基石</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%EF%BC%8CSignificanceManager%EF%BC%9A%E9%A2%84%E7%95%99%E7%9A%84%E4%BC%98%E5%8C%96%E5%B1%82"><span class="toc-text">七，SignificanceManager：预留的优化层</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/16/TPS动画系统实践-ABP-八向移动-Montage/" title="【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤">【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</a><time datetime="2026-08-16T04:00:00.000Z" title="Created 2026-08-16 12:00:00">2026-08-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/15/ArcaneRush-UE5-Blueprint-Portfolio/" title="【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战">【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</a><time datetime="2026-08-15T04:00:00.000Z" title="Created 2026-08-15 12:00:00">2026-08-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-框架/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</a><time datetime="2026-08-14T06:00:00.000Z" title="Created 2026-08-14 14:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</a><time datetime="2026-08-14T04:00:00.000Z" title="Created 2026-08-14 12:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-13T04:00:00.000Z" title="Created 2026-08-13 12:00:00">2026-08-13</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>

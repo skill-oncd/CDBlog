@@ -1,0 +1,362 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学 | CD = CoolDown · CountDown · CombatDesign</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Lyra 在 UE 原生 GAS 之上构建的五大封装层——AbilitySet 打包、InputTag 桥接、ActivationGroup 互斥、GlobalAbility 系统、Experience 注入管道——以及&quot;DataAsset 驱动&quot;如何替代&quot;代码硬编码&quot;。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学">
+<meta property="og:url" content="https://cd-cd.top/2026/08/10/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="Lyra 在 UE 原生 GAS 之上构建的五大封装层——AbilitySet 打包、InputTag 桥接、ActivationGroup 互斥、GlobalAbility 系统、Experience 注入管道——以及&quot;DataAsset 驱动&quot;如何替代&quot;代码硬编码&quot;。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-08-10T07:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T17:24:51.584Z">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="AbilitySet">
+<meta property="article:tag" content="GAS">
+<meta property="article:tag" content="GameplayAbility">
+<meta property="article:tag" content="GameplayTag">
+<meta property="article:tag" content="Lyra">
+<meta property="article:tag" content="Unreal">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学",
+  "url": "https://cd-cd.top/2026/08/10/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/",
+  "image": "https://cd-cd.top/img/avatar.jpg",
+  "datePublished": "2026-08-10T07:00:00.000Z",
+  "dateModified": "2026-08-09T17:24:51.584Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "CD",
+      "url": "https://cd-cd.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/2026/08/10/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-10T07:00:00.000Z" title="Created 2026-08-10 15:00:00">2026-08-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T17:24:51.584Z" title="Updated 2026-08-10 01:24:51">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/Lyra-%E6%A1%86%E6%9E%B6%E6%8B%86%E8%A7%A3/">Lyra 框架拆解</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td><strong>四</strong></td>
+<td><strong>GAS 集成层（本文）</strong></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td>八</td>
+<td><a href="/2026/08/06/Lyra-08-UI%E7%B3%BB%E7%BB%9F">UI 系统</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 GAS 层不是简单的”使用”原生 GameplayAbilitySystem——它用五个封装层将 GAS 改造成<strong>完全 DataAsset 驱动、GameplayTag 中介、模块化注入的子系统</strong>。同一个 <code>ALyraCharacter</code> 在不同 Experience 中呈现完全不同的能力组合，这一切不需要写一行硬编码的 <code>GiveAbility()</code>。</p>
+<hr>
+<h2 id="一，与标准-GAS-的核心差异"><a href="#一，与标准-GAS-的核心差异" class="headerlink" title="一，与标准 GAS 的核心差异"></a>一，与标准 GAS 的核心差异</h2><h3 id="标准-GAS-的做法"><a href="#标准-GAS-的做法" class="headerlink" title="标准 GAS 的做法"></a>标准 GAS 的做法</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 传统 UE：在 Actor 构造中硬编码所有能力</span></span><br><span class="line">AMyCharacter::<span class="built_in">AMyCharacter</span>() &#123;</span><br><span class="line">    ASC = <span class="built_in">CreateDefaultSubobject</span>&lt;UAbilitySystemComponent&gt;(<span class="string">&quot;ASC&quot;</span>);</span><br><span class="line">    AttributeSet = <span class="built_in">CreateDefaultSubobject</span>&lt;UMyAttributeSet&gt;(<span class="string">&quot;AttributeSet&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">AMyCharacter::BeginPlay</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    ASC-&gt;<span class="built_in">GiveAbility</span>(<span class="built_in">FGameplayAbilitySpec</span>(UMyAttack::<span class="built_in">StaticClass</span>()));</span><br><span class="line">    ASC-&gt;<span class="built_in">GiveAbility</span>(<span class="built_in">FGameplayAbilitySpec</span>(UMyJump::<span class="built_in">StaticClass</span>()));</span><br><span class="line">    <span class="comment">// ... 每个新能力加一行</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>问题：</p>
+<ul>
+<li>同一 Character 类无法在不同模式中拥有不同能力组合</li>
+<li>卸载能力困难（ClearAbility 后 SpecHandle 丢失）</li>
+<li>输入绑定与能力代码耦合</li>
+</ul>
+<h3 id="Lyra-的做法"><a href="#Lyra-的做法" class="headerlink" title="Lyra 的做法"></a>Lyra 的做法</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Lyra: 零硬编码。能力全部从外部 DataAsset 注入</span></span><br><span class="line">ALyraCharacter::<span class="built_in">ALyraCharacter</span>() &#123;</span><br><span class="line">    <span class="comment">// 不创建 ASC。不创建 AttributeSet。不 GiveAbility。</span></span><br><span class="line">    PawnExtComp = <span class="built_in">CreateDefaultSubobject</span>&lt;ULyraPawnExtensionComponent&gt;(<span class="string">&quot;PawnExt&quot;</span>);</span><br><span class="line">    <span class="comment">// PawnExtComp 内部动态创建 ASC，但能力通过外部管道注入</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二，五大封装层"><a href="#二，五大封装层" class="headerlink" title="二，五大封装层"></a>二，五大封装层</h2><table>
+<thead>
+<tr>
+<th>封装层</th>
+<th>解决的原生问题</th>
+<th>核心机制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>AbilitySet</strong></td>
+<td>能力&#x2F;属性&#x2F;效果硬编码在构造函数中</td>
+<td>将 GA + GE + AttributeSet 打包为单一 DataAsset，支持批量授予与撤销</td>
+</tr>
+<tr>
+<td><strong>InputTag 桥接</strong></td>
+<td>InputAction 指针直接引用 → 无法热卸载</td>
+<td>GameplayTag 作为中间层：InputConfig 和 AbilitySet 通过 Tag 字符串耦合</td>
+</tr>
+<tr>
+<td><strong>ActivationGroup 互斥</strong></td>
+<td>原生仅靠 Block&#x2F;Cancel Tags 做粗粒度互斥</td>
+<td>三级分组：Independent &#x2F; Exclusive_Replaceable &#x2F; Exclusive_Blocking</td>
+</tr>
+<tr>
+<td><strong>GlobalAbility 系统</strong></td>
+<td>无全局能力概念</td>
+<td>WorldSubsystem 级别的全局能力，新 ASC 注册时自动继承</td>
+</tr>
+<tr>
+<td><strong>Experience 注入管道</strong></td>
+<td>能力配置分散在各处，无统一入口</td>
+<td>Experience → GameFeatureAction → AbilitySet → ASC 的完整注入链</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三，AbilitySet：打包、授予、撤销"><a href="#三，AbilitySet：打包、授予、撤销" class="headerlink" title="三，AbilitySet：打包、授予、撤销"></a>三，AbilitySet：打包、授予、撤销</h2><p><code>ULyraAbilitySet</code> 是 Lyra GAS 封装层的核心——它把三个独立的 GAS 概念打包在一起：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ULyraAbilitySet : UPrimaryDataAsset &#123;</span><br><span class="line">    TArray&lt;FLyraAbilitySet_GameplayAbility&gt; GrantedAbilities;     <span class="comment">// GA + AbilityLevel + InputTag</span></span><br><span class="line">    TArray&lt;FLyraAbilitySet_GameplayEffect&gt;  GrantedEffects;       <span class="comment">// GE + EffectLevel</span></span><br><span class="line">    TArray&lt;FLyraAbilitySet_AttributeSet&gt;    GrantedAttributes;    <span class="comment">// AttributeSet 类型</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="GiveToAbilitySystem：原子授予"><a href="#GiveToAbilitySystem：原子授予" class="headerlink" title="GiveToAbilitySystem：原子授予"></a>GiveToAbilitySystem：原子授予</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">GiveToAbilitySystem</span><span class="params">(UAbilitySystemComponent* ASC, </span></span></span><br><span class="line"><span class="params"><span class="function">                         FLyraAbilitySet_GrantedHandles* OutHandles, </span></span></span><br><span class="line"><span class="params"><span class="function">                         UObject* SourceObject)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1. 授予 AttributeSet（在 ASC 上创建）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Attr : GrantedAttributes)</span><br><span class="line">        OutHandles-&gt;<span class="built_in">AddAttributeSet</span>(ASC-&gt;<span class="built_in">InitStats</span>(Attr.AttributeSet));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 应用 GameplayEffect（初始化属性值）</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Effect : GrantedEffects)</span><br><span class="line">        OutHandles-&gt;<span class="built_in">AddGameplayEffectHandle</span>(</span><br><span class="line">            ASC-&gt;<span class="built_in">ApplyGameplayEffectToSelf</span>(Effect.GameplayEffect, Effect.EffectLevel));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 授予 GameplayAbility</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; Ability : GrantedAbilities) &#123;</span><br><span class="line">        <span class="function">FGameplayAbilitySpec <span class="title">Spec</span><span class="params">(Ability.GameplayAbility, Ability.AbilityLevel)</span></span>;</span><br><span class="line">        Spec.SourceObject = SourceObject;    <span class="comment">// ← 回溯到 Equipment/PawnData</span></span><br><span class="line">        Spec.DynamicSpecSourceTags.<span class="built_in">AddTag</span>(Ability.InputTag);  <span class="comment">// ← InputTag 桥接的关键</span></span><br><span class="line">        OutHandles-&gt;<span class="built_in">AddAbilitySpecHandle</span>(ASC-&gt;<span class="built_in">GiveAbility</span>(Spec));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="GrantedHandles：可撤销句柄"><a href="#GrantedHandles：可撤销句柄" class="headerlink" title="GrantedHandles：可撤销句柄"></a>GrantedHandles：可撤销句柄</h3><p><code>FLyraAbilitySet_GrantedHandles</code> 记录每个 AbilitySet 授予的所有 Handle。调用 <code>TakeFromAbilitySystem()</code> 时，按授予的反序统一撤销——GA 被 ClearAbility()、GE 被 RemoveActiveGameplayEffect()、AttributeSet 被移除。</p>
+<hr>
+<h2 id="四，InputTag-桥接：DataAsset-间的”软耦合”"><a href="#四，InputTag-桥接：DataAsset-间的”软耦合”" class="headerlink" title="四，InputTag 桥接：DataAsset 间的”软耦合”"></a>四，InputTag 桥接：DataAsset 间的”软耦合”</h2><p>这是 Lyra 最精妙的设计模式之一。InputAction → GAS 的链路不是直接引用，而是通过 GameplayTag：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">ULyraInputConfig.DataAsset:</span><br><span class="line">    AbilityInputActions[0] = &#123; InputAction = IA_WeaponFire, InputTag = &quot;InputTag.Weapon.Fire&quot; &#125;</span><br><span class="line"></span><br><span class="line">ULyraAbilitySet.DataAsset:</span><br><span class="line">    GrantedAbilities[0] = &#123; GameplayAbility = GA_WeaponFire, InputTag = &quot;InputTag.Weapon.Fire&quot; &#125;</span><br><span class="line"></span><br><span class="line">运行时桥接（LyraAbilitySystemComponent::AbilityInputTagPressed）:</span><br><span class="line">    for (auto&amp; Spec : ActivatableAbilities) &#123;</span><br><span class="line">        if (Spec.DynamicSpecSourceTags.HasTagExact(&quot;InputTag.Weapon.Fire&quot;))</span><br><span class="line">            InputPressedSpecHandles.AddUnique(Spec.Handle);  // 收集匹配的 Ability</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>两个 DataAsset 之间的唯一耦合点是一个 GameplayTag 字符串</strong>。这意味着：</p>
+<ul>
+<li>可以修改按键绑定（改 InputConfig）而不影响能力定义</li>
+<li>可以替换能力实现（改 AbilitySet）而不影响输入绑定</li>
+<li>GameFeature 卸载时只需要移除 InputConfig 和 AbilitySet，无残余引用</li>
+</ul>
+<hr>
+<h2 id="五，ActivationGroup：三级互斥"><a href="#五，ActivationGroup：三级互斥" class="headerlink" title="五，ActivationGroup：三级互斥"></a>五，ActivationGroup：三级互斥</h2><p>传统 GAS 通过 <code>BlockAbilitiesWithTag</code> &#x2F; <code>CancelAbilitiesWithTag</code> 做互斥，但配置分散、关系不直观。Lyra 提供了三级分组：</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>行为</th>
+<th>用例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Independent</strong></td>
+<td>独立运行，不影响其他</td>
+<td>移动、跳跃、被动技能</td>
+</tr>
+<tr>
+<td><strong>Exclusive_Replaceable</strong></td>
+<td>同组新能力激活时，自动取消旧能力</td>
+<td>武器射击（切枪时取消前一武器的射击）</td>
+</tr>
+<tr>
+<td><strong>Exclusive_Blocking</strong></td>
+<td>激活期间阻止同组其他能力激活</td>
+<td>处决技、大招动画（播放中不可被其他动作打断）</td>
+</tr>
+</tbody></table>
+<p><code>LyraAbilitySystemComponent</code> 维护 <code>ActivationGroupCounts</code>，在 <code>TryActivateAbility</code> 时检查分组约束，在 <code>NotifyAbilityEnded</code> 时递减计数。</p>
+<hr>
+<h2 id="六，GlobalAbility-系统"><a href="#六，GlobalAbility-系统" class="headerlink" title="六，GlobalAbility 系统"></a>六，GlobalAbility 系统</h2><p><code>ULyraGlobalAbilitySystem</code> 是一个 <code>UWorldSubsystem</code>，解决了一个实际问题：<strong>某些能力应该在整个 World 范围内生效，而非挂在某个特定 ASC 上</strong>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 向全局系统施加一个效果</span></span><br><span class="line">GlobalAbilitySystem-&gt;<span class="built_in">ApplyAbilityToAll</span>(GA_DoubleDamage, MyASC);</span><br><span class="line"><span class="comment">// 任何新加入的 ASC 自动获得该效果</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 新角色加入时自动继承</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">RegisterASC</span><span class="params">(UAbilitySystemComponent* ASC)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span>&amp; AppliedAbility : AppliedAbilities)</span><br><span class="line">        <span class="built_in">GiveAbilityToASC</span>(ASC, AppliedAbility);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>典型使用场景：Boss 房间的全局 debuff、天气系统对全场景的影响、团队光环。</p>
+<hr>
+<h2 id="七，Experience-→-GAS-端到端-8-步时间线"><a href="#七，Experience-→-GAS-端到端-8-步时间线" class="headerlink" title="七，Experience → GAS 端到端 8 步时间线"></a>七，Experience → GAS 端到端 8 步时间线</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">1. Experience 加载 → GameFeature 激活</span><br><span class="line">2. GameFeatureAction_AddAbilities 注册</span><br><span class="line">3. GameMode::RestartPlayer → SpawnDefaultPawn</span><br><span class="line">4. SetPawnData(Experience.DefaultPawnData) → BeginPlay</span><br><span class="line">5. PawnData.AbilitySets → GiveToAbilitySystem(ASC)</span><br><span class="line">6. NAME_LyraAbilityReady 事件广播</span><br><span class="line">7. GameFeatureAction_AddAbilities 响应 → ActorAbilities.GiveToAbilitySystem(ASC)</span><br><span class="line">8. GameplayReady → 玩家可以激活能力</span><br></pre></td></tr></table></figure>
+
+<p><strong>两阶段注入</strong>：PawnData.AbilitySets（角色固有）先注入，GameFeatureAction（模式专属）后注入。这保证了”固有”和”模式”两层能力的分离与覆盖。</p>
+<hr>
+<h2 id="八，ARPG-落地要点"><a href="#八，ARPG-落地要点" class="headerlink" title="八，ARPG 落地要点"></a>八，ARPG 落地要点</h2><p>对于 TowerChallenge 的 Souls-like 战斗系统，我们直接利用了这些 Lyra 封装：</p>
+<ol>
+<li>每种武器 &#x3D; 一个 AbilitySet：装备时 GiveTo，卸下时 TakeFrom。武器的 GA（轻攻&#x2F;重攻&#x2F;战技）都在 AbilitySet 中</li>
+<li>体力消耗用 GAS 原生 Cost GE：而非在 GA 中手动检查属性。<code>UGameplayAbility::GetCostGameplayEffect()</code> 返回体力消耗 GE</li>
+<li>弹反&#x2F;处决用 ActivationGroup：弹反 GA 设为 <code>Exclusive_Replaceable</code>（同一按键下不同窗口阶段自动切换），处决 GA 设为 <code>Exclusive_Blocking</code>（执行中不可打断）</li>
+<li>直接继承 <code>ULyraGameplayAbility</code> 而非创建 <code>UTowerGameplayAbility</code>。我们曾误判 MinimalAPI + UE_API virtual 的含义，以为不可跨模块子类化——实际上可以。踩坑详见 <a href="/2026/08/06/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6">Lyra-WarTower 复盘</a>。</li>
+</ol>
+<hr>
+<blockquote>
+<p><strong>下一篇</strong>：<a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a> — 拆解 Lyra 的三段式装备架构：Fragment 模式、Definition&#x2F;Instance 分离、QuickBar 桥接、以及 SourceObject 反向引用链的精妙设计。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/10/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/">https://cd-cd.top/2026/08/10/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Lyra/">Lyra</a><a class="post-meta__tags" href="/tags/Unreal/">Unreal</a><a class="post-meta__tags" href="/tags/GAS/">GAS</a><a class="post-meta__tags" href="/tags/AbilitySet/">AbilitySet</a><a class="post-meta__tags" href="/tags/GameplayAbility/">GameplayAbility</a><a class="post-meta__tags" href="/tags/GameplayTag/">GameplayTag</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/08/10/Lyra-05-Equipment-Inventory/" title="【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【技术探索】Lyra 框架拆解（五）：Equipment & Inventory —— Fragment 模式与三段式装备架构</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory（本文）   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Lyra 的 Equipment&#x2F;Inventory 系统用三层分离架构实现了”武器切换 &#x3D; AbilitySet 的 GiveTo + TakeFrom”——Inventory 管”你拥有什么”，Equipment 管”你正装备什么”，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了”武器类膨胀到 5000 行”的问题。  一，三层架构全景12345678910111213141516171819202122Inventory（数据容器层）—— &quot;你拥有什么&quot;  ULyraInventoryManagerComponent (挂载在 PlayerState)  ├── FLyraInventoryL...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB/" title="【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系（本文）   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话ALyraCharacter 不是一个”角色”，而是一个”插槽”——它只做三件事：创建核心 Component、转发接口调用、初始化死亡流程。所有真正的游戏逻辑全部下沉到独立的 PawnComponent 中，由 GameplayTag 驱动的 InitState 状态机协调初始化顺序。  一，继承链：从 Engine 到 Lyra123ACharacter (Engine)  └─ AModularCharacter (ModularGameplayActors 插件)       └─ ALyraCharacter (LyraGame)  AModularCharacter 极其简单——它只重写了三个函数： 123456789101112void PreInitializeCompone...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/08/10/Lyra-06-Input%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统（本文）   七 网络同步框架   八 UI 系统    一句话Lyra 在 UE Enhanced Input 之上增加了一个GameplayTag 路由层——InputConfig 把按键映射为语义 Tag，AbilitySet 把 Tag 关联到具体 GA，运行时 ASC 通过 Tag 匹配完成”按键 → 能力”的路由。这个中间层是 Lyra 模块化架构的”胶水”——没有它，GameFeature 的热加载&#x2F;卸载在输入层就卡死了。  一，标准 Enhanced Input 的问题标准做法123// 直接绑定：InputAction 指针 → Callback 函数EnhancedInputComponent-&gt;BindAction(IA_Fire, ETriggerEvent::Triggered,     this, &amp;A...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-05-Equipment-Inventory/" title="【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（五）：Equipment &amp; Inventory —— Fragment 模式与三段式装备架构</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory（本文）   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Lyra 的 Equipment&#x2F;Inventory 系统用三层分离架构实现了”武器切换 &#x3D; AbilitySet 的 GiveTo + TakeFrom”——Inventory 管”你拥有什么”，Equipment 管”你正装备什么”，QuickBar 做两者之间的策略桥接。而 Fragment 模式让物品定义像积木一样可组合，避免了”武器类膨胀到 5000 行”的问题。  一，三层架构全景12345678910111213141516171819202122Inventory（数据容器层）—— &quot;你拥有什么&quot;  ULyraInventoryManagerComponent (挂载在 PlayerState)  ├── FLyraInventoryL...</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-14</div><div class="info-item-2">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统（本文 · 终篇）    一句话Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 AHUD 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（UUIExtensionSubsystem）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。  一，为什么不直接用 UMG HUD？在传统 UE 项目中，最自然的 UI 做法是： 1234AHUD::BeginPlay() &#123;    MainWidget = CreateWidget&lt;U...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB/" title="【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系（本文）   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话ALyraCharacter 不是一个”角色”，而是一个”插槽”——它只做三件事：创建核心 Component、转发接口调用、初始化死亡流程。所有真正的游戏逻辑全部下沉到独立的 PawnComponent 中，由 GameplayTag 驱动的 InitState 状态机协调初始化顺序。  一，继承链：从 Engine 到 Lyra123ACharacter (Engine)  └─ AModularCharacter (ModularGameplayActors 插件)       └─ ALyraCharacter (LyraGame)  AModularCharacter 极其简单——它只重写了三个函数： 123456789101112void PreInitializeCompone...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/" title="【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架（本文）   八 UI 系统    一句话Lyra 的网络同步架构不是”用一套方案解决所有问题”——它构建了四层分层协作体系，从底层的 Iris 序列化到上层的 VerbMessage 消息广播，每一层解决一个粒度的同步需求。一个值得注意的设计决策：ReplicationGraph 默认禁用——先跑起来，性能瓶颈出现时再逐层启用优化。  一，五层同步架构1234567891011Gameplay 层:  UPROPERTY(Replicated) / FFastArray / RPC   ↓          基础同步原语 —— 简单的 float/HUD 走属性，数组走 FastArray，一次性事件走 RPC消息层:       FLyraVerbMessage（FFastArray + GameplayMessageSubsy...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B3%BB%E5%88%97%E5%AF%BC%E8%88%AA"><span class="toc-text">系列导航</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="toc-text">一句话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%EF%BC%8C%E4%B8%8E%E6%A0%87%E5%87%86-GAS-%E7%9A%84%E6%A0%B8%E5%BF%83%E5%B7%AE%E5%BC%82"><span class="toc-text">一，与标准 GAS 的核心差异</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%87%E5%87%86-GAS-%E7%9A%84%E5%81%9A%E6%B3%95"><span class="toc-text">标准 GAS 的做法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Lyra-%E7%9A%84%E5%81%9A%E6%B3%95"><span class="toc-text">Lyra 的做法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8C%E4%BA%94%E5%A4%A7%E5%B0%81%E8%A3%85%E5%B1%82"><span class="toc-text">二，五大封装层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%EF%BC%8CAbilitySet%EF%BC%9A%E6%89%93%E5%8C%85%E3%80%81%E6%8E%88%E4%BA%88%E3%80%81%E6%92%A4%E9%94%80"><span class="toc-text">三，AbilitySet：打包、授予、撤销</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#GiveToAbilitySystem%EF%BC%9A%E5%8E%9F%E5%AD%90%E6%8E%88%E4%BA%88"><span class="toc-text">GiveToAbilitySystem：原子授予</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GrantedHandles%EF%BC%9A%E5%8F%AF%E6%92%A4%E9%94%80%E5%8F%A5%E6%9F%84"><span class="toc-text">GrantedHandles：可撤销句柄</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%EF%BC%8CInputTag-%E6%A1%A5%E6%8E%A5%EF%BC%9ADataAsset-%E9%97%B4%E7%9A%84%E2%80%9D%E8%BD%AF%E8%80%A6%E5%90%88%E2%80%9D"><span class="toc-text">四，InputTag 桥接：DataAsset 间的”软耦合”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%EF%BC%8CActivationGroup%EF%BC%9A%E4%B8%89%E7%BA%A7%E4%BA%92%E6%96%A5"><span class="toc-text">五，ActivationGroup：三级互斥</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%EF%BC%8CGlobalAbility-%E7%B3%BB%E7%BB%9F"><span class="toc-text">六，GlobalAbility 系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%EF%BC%8CExperience-%E2%86%92-GAS-%E7%AB%AF%E5%88%B0%E7%AB%AF-8-%E6%AD%A5%E6%97%B6%E9%97%B4%E7%BA%BF"><span class="toc-text">七，Experience → GAS 端到端 8 步时间线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%EF%BC%8CARPG-%E8%90%BD%E5%9C%B0%E8%A6%81%E7%82%B9"><span class="toc-text">八，ARPG 落地要点</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/16/TPS动画系统实践-ABP-八向移动-Montage/" title="【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤">【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</a><time datetime="2026-08-16T04:00:00.000Z" title="Created 2026-08-16 12:00:00">2026-08-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/15/ArcaneRush-UE5-Blueprint-Portfolio/" title="【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战">【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</a><time datetime="2026-08-15T04:00:00.000Z" title="Created 2026-08-15 12:00:00">2026-08-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-框架/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</a><time datetime="2026-08-14T06:00:00.000Z" title="Created 2026-08-14 14:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</a><time datetime="2026-08-14T04:00:00.000Z" title="Created 2026-08-14 12:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-13T04:00:00.000Z" title="Created 2026-08-13 12:00:00">2026-08-13</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>

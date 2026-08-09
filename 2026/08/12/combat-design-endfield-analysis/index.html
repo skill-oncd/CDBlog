@@ -1,0 +1,325 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗 | CD = CoolDown · CountDown · CombatDesign</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="深度反拆《明日方舟：终末地》——物流基建与排轴战斗的融合度、体力经济的数学期望测算、商业化与核心玩法的割裂分析、以及箱庭式关卡设计的隐形动线艺术。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗">
+<meta property="og:url" content="https://cd-cd.top/2026/08/12/combat-design-endfield-analysis/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="深度反拆《明日方舟：终末地》——物流基建与排轴战斗的融合度、体力经济的数学期望测算、商业化与核心玩法的割裂分析、以及箱庭式关卡设计的隐形动线艺术。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-08-12T04:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T17:24:51.584Z">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="Arknights">
+<meta property="article:tag" content="CombatDesign">
+<meta property="article:tag" content="GameDesign">
+<meta property="article:tag" content="Stagger">
+<meta property="article:tag" content="二游">
+<meta property="article:tag" content="关卡设计">
+<meta property="article:tag" content="商业化">
+<meta property="article:tag" content="箱庭">
+<meta property="article:tag" content="终末地">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗",
+  "url": "https://cd-cd.top/2026/08/12/combat-design-endfield-analysis/",
+  "image": "https://cd-cd.top/img/avatar.jpg",
+  "datePublished": "2026-08-12T04:00:00.000Z",
+  "dateModified": "2026-08-09T17:24:51.584Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "CD",
+      "url": "https://cd-cd.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/2026/08/12/combat-design-endfield-analysis/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-12T04:00:00.000Z" title="Created 2026-08-12 12:00:00">2026-08-12</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T17:24:51.584Z" title="Updated 2026-08-10 01:24:51">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1/">GameDesign</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="先扬后抑：为什么终末地值得写一篇文章"><a href="#先扬后抑：为什么终末地值得写一篇文章" class="headerlink" title="先扬后抑：为什么终末地值得写一篇文章"></a>先扬后抑：为什么终末地值得写一篇文章</h2><p>《明日方舟：终末地》是一款设计上有许多值得讨论之处的游戏。</p>
+<p>它在二游赛道中做了一件少见的事：把《异星工厂》式的自动化物流网络，嫁接到一个以”排轴爆发”为核心的 ARPG 战斗系统上。这两个系统的底层逻辑几乎是相反的——一个是”慢节奏、重规划”，一个是”快节奏、重反应”。将二者耦合在一起，本身就是一个值得分析的设计命题。</p>
+<p>同时，它的一些底层数值设计和商业化路径，与核心玩法的融合之间存在可见的摩擦。</p>
+<p>这是一篇”策划视角”的反拆，从三个层面展开分析：<strong>体验层 → 机制层 → 数值与商业化层</strong>。</p>
+<hr>
+<h2 id="一、核心玩法双引擎：基建物流-×-排轴战斗"><a href="#一、核心玩法双引擎：基建物流-×-排轴战斗" class="headerlink" title="一、核心玩法双引擎：基建物流 × 排轴战斗"></a>一、核心玩法双引擎：基建物流 × 排轴战斗</h2><h3 id="1-1-基建端：真正的自动化物流网"><a href="#1-1-基建端：真正的自动化物流网" class="headerlink" title="1.1 基建端：真正的自动化物流网"></a>1.1 基建端：真正的自动化物流网</h3><p>很多二游都有”家园”——摆摆家具、种种菜。但终末地的基建是另一回事。</p>
+<p>它的核心是<strong>管线铺设 + 物流节点优化</strong>。原料从矿场 → 传送带 → 加工车间 → 中转仓库 → 最终组装线，玩家需要像玩 Factorio 一样规划物流拓扑。这个系统的深度体现在：</p>
+<ul>
+<li><strong>空间约束</strong>：地形起伏、障碍物决定了管线的路由，不是随便拉一条直线</li>
+<li><strong>效率博弈</strong>：一个供应节点可以同时服务于多条产线，但产出效率会分摊</li>
+<li><strong>基建产物反哺探索</strong>：铺设的滑索、跳板不仅”好看”，也有效地改变了大世界的移动效率——<strong>“一次基建，多次复用”</strong></li>
+</ul>
+<h3 id="1-2-战斗端：以-Stagger-为核心的排轴爆发"><a href="#1-2-战斗端：以-Stagger-为核心的排轴爆发" class="headerlink" title="1.2 战斗端：以 Stagger 为核心的排轴爆发"></a>1.2 战斗端：以 Stagger 为核心的排轴爆发</h3><p>战斗方面，终末地选择了现代二游 ARPG 的主流范式：<strong>失衡值（Stagger）驱动的排轴系统</strong>。</p>
+<p>核心循环如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">常态阶段              失衡爆发阶段            回收阶段</span><br><span class="line">┌──────────┐        ┌──────────────┐        ┌──────────┐</span><br><span class="line">│ 攒技力    │        │ 怪物失衡僵直  │        │ 循环重置  │</span><br><span class="line">│ 铺元素异常 │  ───▶  │ 独立1.3x易伤  │  ───▶  │ CD转好    │</span><br><span class="line">│ 削黄条    │        │ 大招爆发(融冰) │        │ 准备下一轮 │</span><br><span class="line">└──────────┘        └──────────────┘        └──────────┘</span><br></pre></td></tr></table></figure>
+
+<p>这个设计的有效之处在于：<strong>它把 ACT 对”极限反应”的要求，转化为了 RPG 玩家更擅长的”资源管理与技能排轴”</strong>。</p>
+<p>硬核动作游戏要求你在 0.2 秒内做出闪避反应。而终末地只要求你：在黄条快满的时候，确保主力输出的大招不是 CD 状态。这是一种对泛用户更友好的”策略深度”。</p>
+<hr>
+<h2 id="二、融合度的体检报告：哪里接上了，哪里断了"><a href="#二、融合度的体检报告：哪里接上了，哪里断了" class="headerlink" title="二、融合度的体检报告：哪里接上了，哪里断了"></a>二、融合度的体检报告：哪里接上了，哪里断了</h2><p>终末地最有意思的设计命题是：<strong>基建和战斗之间，到底有多少真正的交互？</strong></p>
+<h3 id="2-1-接上了的地方"><a href="#2-1-接上了的地方" class="headerlink" title="2.1 接上了的地方"></a>2.1 接上了的地方</h3><ul>
+<li><strong>滑索和跳板改变战斗入场方式</strong>：玩家可以用基建产物从高处切入战斗，获得突袭优势</li>
+<li><strong>部分地图机制需要基建解锁战斗区域</strong>：不铺桥就过不去某些 Boss 房</li>
+<li><strong>养成材料来自基建产出</strong>：战斗养成和物流效率成绑定关系</li>
+</ul>
+<h3 id="2-2-断裂的地方"><a href="#2-2-断裂的地方" class="headerlink" title="2.2 断裂的地方"></a>2.2 断裂的地方</h3><p>但更深层的交互——<strong>战斗的结果反哺基建</strong>——几乎没有。</p>
+<p>一个典型的”融合体验”应该是这样的：</p>
+<blockquote>
+<p>我打了一个火属性 Boss → 掉落了稀有材料 → 这个材料让我能造一条耐高温传送带 → 这条传送带让我能开发火山矿区的资源 → 新资源让我能打造更强的装备 → …</p>
+</blockquote>
+<p>但终末地的实际体验是：<strong>战斗掉落和基建材料基本独立</strong>。你在战斗中投入的努力，对基建端的影响微乎其微。反之亦然。</p>
+<p>这就形成了一个尴尬的局面：喜欢种田的玩家觉得战斗是负担，喜欢战斗的玩家觉得种田是打工。两个核心玩法之间缺乏一个<strong>价值正反馈的闭环</strong>。</p>
+<hr>
+<h2 id="三、数值体检：体力经济学的数学期望测算"><a href="#三、数值体检：体力经济学的数学期望测算" class="headerlink" title="三、数值体检：体力经济学的数学期望测算"></a>三、数值体检：体力经济学的数学期望测算</h2><p>在反拆报告中，我花了大量时间做的一项核心分析是：<strong>养成体力投入的边际收益测算</strong>。</p>
+<h3 id="3-1-升级-vs-技能：投入产出比严重失衡"><a href="#3-1-升级-vs-技能：投入产出比严重失衡" class="headerlink" title="3.1 升级 vs 技能：投入产出比严重失衡"></a>3.1 升级 vs 技能：投入产出比严重失衡</h3><p>把一个干员从 1 级强拉到 90 级，大约需要消耗 8800 体力。这些体力投入到等级提升上，对法术异常乘区的实际提升约为多少？</p>
+<p><strong>约 0.5%。</strong></p>
+<p>而把同样的 8800 体力投入到技能升级上，收益是等级升级的十余倍。</p>
+<p>从这里可以看出：<strong>等级养成在数值上的”性价比”极低，但它是玩家长期在线的基础动力之一。</strong> 如果升了 20 级感觉不到任何战斗力变化，这个养成系统更像是”消耗玩家的耐心”，而非”提供成长的快感”。</p>
+<h3 id="3-2-乘区分布的问题"><a href="#3-2-乘区分布的问题" class="headerlink" title="3.2 乘区分布的问题"></a>3.2 乘区分布的问题</h3><p>更进一步看终末地的伤害公式，各乘区的权重分配也值得商榷：</p>
+<table>
+<thead>
+<tr>
+<th>乘区</th>
+<th>成长来源</th>
+<th>实际影响力</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>基础攻击</td>
+<td>等级+装备</td>
+<td>中</td>
+</tr>
+<tr>
+<td>技能倍率</td>
+<td>技能升级</td>
+<td><strong>极高</strong>（碾压其他）</td>
+</tr>
+<tr>
+<td>法术异常</td>
+<td>等级+被动</td>
+<td><strong>极低</strong>（几乎可忽略）</td>
+</tr>
+<tr>
+<td>元素反应</td>
+<td>配队</td>
+<td>中高</td>
+</tr>
+</tbody></table>
+<p>当”技能升级”一个维度的回报率远高于其他维度时，玩家的策略空间就被压缩了——最优解趋向单一：集中资源堆技能等级。其他养成线变成了投入后回报感不明显的选项。</p>
+<hr>
+<h2 id="四、商业化的错位：谁在氪金，谁在被服务？"><a href="#四、商业化的错位：谁在氪金，谁在被服务？" class="headerlink" title="四、商业化的错位：谁在氪金，谁在被服务？"></a>四、商业化的错位：谁在氪金，谁在被服务？</h2><p>这是拆解终末地时发现的一个值得探讨的问题。</p>
+<h3 id="4-1-两群互不理解的人"><a href="#4-1-两群互不理解的人" class="headerlink" title="4.1 两群互不理解的人"></a>4.1 两群互不理解的人</h3><p>终末地同时吸引了两类玩家：</p>
+<ul>
+<li><strong>基建玩家</strong>：喜欢铺管线、优化产线、看自动化运转。他们愿意为”效率”付费。</li>
+<li><strong>战斗玩家</strong>：喜欢排轴、追求极限输出、打高难 Boss。他们愿意为”强度”付费。</li>
+</ul>
+<p>问题在于：<strong>当前的商业化模型只能服务于第二类玩家</strong>。</p>
+<p>付费抽出的高星角色，只在战斗系统里提供数值反馈——更高的面板、更强的大招倍率、更优的元素反应。但他们对大世界探索和基建效率<strong>完全没有贡献</strong>。</p>
+<p>这就导致了一个尴尬的局面：</p>
+<ul>
+<li>基建玩家：没有氪金动力（因为抽出来的角色对基建没帮助）</li>
+<li>战斗玩家：被强制要求去”打螺丝”（基建）来获取养成材料，但基建本身不能跳过</li>
+</ul>
+<h3 id="4-2-一个可能的解法"><a href="#4-2-一个可能的解法" class="headerlink" title="4.2 一个可能的解法"></a>4.2 一个可能的解法</h3><p>一个可能的调整思路是：<strong>让付费角色在大世界和基建中产生”效率赋能”</strong>。</p>
+<p>具体的：</p>
+<ul>
+<li>火属性角色在队伍中时，冶炼速度 +20%</li>
+<li>特定角色的被动技能可以”无视部分地形限制铺设管线”</li>
+<li>高星角色拥有专属的基建组件（高效传送带、自动分拣器）</li>
+</ul>
+<p>这样做的好处是：<strong>付费不仅可以在战斗中提供强度提升，也可以在基建中提供效率提升</strong>。前者对接战斗玩家的诉求，后者对接种田玩家的核心诉求。</p>
+<p>商业化的核心逻辑是”让玩家在在乎的维度上获得更好的体验”——而非”在玩家不在乎的维度解锁一些用不上的东西”。</p>
+<hr>
+<h2 id="五、关卡设计的亮点：箱庭结构的优势"><a href="#五、关卡设计的亮点：箱庭结构的优势" class="headerlink" title="五、关卡设计的亮点：箱庭结构的优势"></a>五、关卡设计的亮点：箱庭结构的优势</h2><p>终末地还有一个容易被商业化和战斗讨论淹没的设计亮点：<strong>它的关卡设计选择了一条与主流的开放世界方向不同的路</strong>。</p>
+<p>它没有做无缝大地图。而是用<strong>狭长通路串联高低错落的立体空间</strong>——本质上是 3D 化的箱庭（Box-garden）结构。</p>
+<p>以”阿伯莉采石场”这张图为例：</p>
+<ul>
+<li><strong>隐形动线引导</strong>：设计师极少使用生硬的 UI 箭头或小地图标记。取而代之的是——明线电缆的走向、远处大型起重机的地标效应、以及光照明暗的自然过渡——用环境在做”隐形的引导”</li>
+<li><strong>高低差利用</strong>：地图在垂直方向上叠了三层——地面矿场、中层运输通道、高层控制中心——每层之间有滑索和跳板连接，给玩家”自己发现路线”的探索快感</li>
+<li><strong>一次基建、多次复用</strong>：在这张图里架的滑索网络，后面跑图时会反复经过。前期的基建投入在后期持续产生效率回报</li>
+</ul>
+<p>这种高密度、强引导、弱 UI 的设计，比那些”跑五分钟路打三十秒怪”的空洞开放世界，更能保障玩家的心流体验。</p>
+<hr>
+<h2 id="六、终末地给”融合型游戏”留下的启示"><a href="#六、终末地给”融合型游戏”留下的启示" class="headerlink" title="六、终末地给”融合型游戏”留下的启示"></a>六、终末地给”融合型游戏”留下的启示</h2><p>总结下来，终末地提出的一个行业命题很有价值：</p>
+<p><strong>“两个核心玩法之间的融合，需要一条贯穿两个系统的价值正反馈链路，而非’各做各的然后放在同一个客户端里’。”</strong></p>
+<p>在终末地这里，这条链路应该是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">基建效率 → 养成速度 → 战斗实力 → 稀有掉落 → 基建解锁新能力 → ...</span><br></pre></td></tr></table></figure>
+
+<p>目前这个环是断的。但指出断裂点本身就有分析价值——理解”为什么断”往往比”这里断了”更有助于后续的设计改进。</p>
+<hr>
+<blockquote>
+<p>下一篇将深度拆解《艾尔登法环》的战斗系统——魂系游戏如何用极低的指令复杂度换取极高的空间与时间判定要求，以及法环在”做加法”这件事上展现的值得深入分析的设计思路。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/12/combat-design-endfield-analysis/">https://cd-cd.top/2026/08/12/combat-design-endfield-analysis/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GameDesign/">GameDesign</a><a class="post-meta__tags" href="/tags/CombatDesign/">CombatDesign</a><a class="post-meta__tags" href="/tags/%E7%BB%88%E6%9C%AB%E5%9C%B0/">终末地</a><a class="post-meta__tags" href="/tags/Arknights/">Arknights</a><a class="post-meta__tags" href="/tags/%E4%BA%8C%E6%B8%B8/">二游</a><a class="post-meta__tags" href="/tags/Stagger/">Stagger</a><a class="post-meta__tags" href="/tags/%E5%85%B3%E5%8D%A1%E8%AE%BE%E8%AE%A1/">关卡设计</a><a class="post-meta__tags" href="/tags/%E7%AE%B1%E5%BA%AD/">箱庭</a><a class="post-meta__tags" href="/tags/%E5%95%86%E4%B8%9A%E5%8C%96/">商业化</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/08/12/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</div></div><div class="info-2"><div class="info-item-1">一个反直觉的事实《艾尔登法环》卖出了 2800 万份。 对于一个以”难”为核心卖点、BOSS 可以三刀带走你、地图上没有任务指引、死亡还会掉光所有经验值的游戏来说——这个数字是惊人的。 按照常规的产品逻辑，”难”天然等于”小众”。法环证明了这个等式的荒谬。而荒谬的背后，藏着一套精密的战斗系统设计哲学。 本文尝试把这套哲学拆成四层来理解：底层基调 → 新增机制 → 系统深度 → 玩家心流。  一、魂系战斗的底层基调：为什么是”低主动 + 高被动”？在分析法环的新东西之前，需要先理解它继承了黑魂的什么。 魂系战斗区别于传统动作游戏（如《忍者龙剑传》《鬼泣》）的核心特征，可以从两个维度来观察：反应频率和操作精度。 1.1 战斗交互频率的两极低主动反应频率（玩家进攻端）：  动作系统高度简化——没有复杂连招表，轻击重击就是全部 动作硬直大且无法随意取消——你按了攻击，就得等它播完 所有行为几乎都消耗精力（Stamina）——攻击、翻滚、防御，共用一个资源池 敌人受击空窗期短——砍一刀就得退，贪第二刀大概率被打  设计目的：限制玩家”贪刀”，强迫每次出手都是刻意决策。 高被动反应频率（玩家...</div></div></div></a><a class="pagination-related" href="/2026/08/11/combat-design-botw-emergent-combat/" title="【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</div></div><div class="info-2"><div class="info-item-1">一部没有”战斗系统”的战斗系统传统动作游戏的战斗系统，更像是一套预设的行为树——设计师提前想好玩家能做什么、敌人会怎么响应，然后把这些规则写成代码。 《旷野之息》走了完全相反的路。 它没有给战斗单独设计一套系统。它只是搭建了一个物理引擎和一个化学引擎，然后把环境、怪物、道具全部暴露在这两个引擎的规则之下。战斗玩法是涌现出来的——它来自玩家利用引擎规则的创造性组合，而非设计师的预设编排。 这篇文章试图拆解这个涌现式沙盒在战斗场景下究竟是怎么运作的，以及它给战斗设计带来了怎样不同的思考方式。  一、双引擎驱动的涌现式交互旷野之息战斗的”无限解法”，建立在一个基础的架构决策之上：物理引擎和化学引擎被放在了战斗系统的核心位置——所有的战斗交互都建立在这两个引擎的规则之上。 1.1 物理引擎：静止器作为动能储存装置希卡之石的”静止器（Stasis）”是最典型的例子。 从玩家视角看，Stasis 是一个”让敌人不能动”的控制技能。但从底层逻辑来看，它是一个动能储存与矢量释放装置：  对目标使用 Stasis → 目标冻结，期间所有施加的力被累积 Stasis 解除 → 累积的动能瞬间释放，目...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/08/12/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-12</div><div class="info-item-2">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</div></div><div class="info-2"><div class="info-item-1">一个反直觉的事实《艾尔登法环》卖出了 2800 万份。 对于一个以”难”为核心卖点、BOSS 可以三刀带走你、地图上没有任务指引、死亡还会掉光所有经验值的游戏来说——这个数字是惊人的。 按照常规的产品逻辑，”难”天然等于”小众”。法环证明了这个等式的荒谬。而荒谬的背后，藏着一套精密的战斗系统设计哲学。 本文尝试把这套哲学拆成四层来理解：底层基调 → 新增机制 → 系统深度 → 玩家心流。  一、魂系战斗的底层基调：为什么是”低主动 + 高被动”？在分析法环的新东西之前，需要先理解它继承了黑魂的什么。 魂系战斗区别于传统动作游戏（如《忍者龙剑传》《鬼泣》）的核心特征，可以从两个维度来观察：反应频率和操作精度。 1.1 战斗交互频率的两极低主动反应频率（玩家进攻端）：  动作系统高度简化——没有复杂连招表，轻击重击就是全部 动作硬直大且无法随意取消——你按了攻击，就得等它播完 所有行为几乎都消耗精力（Stamina）——攻击、翻滚、防御，共用一个资源池 敌人受击空窗期短——砍一刀就得退，贪第二刀大概率被打  设计目的：限制玩家”贪刀”，强迫每次出手都是刻意决策。 高被动反应频率（玩家...</div></div></div></a><a class="pagination-related" href="/2026/08/09/combat-design-three-layer-framework/" title="【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流</div></div><div class="info-2"><div class="info-item-1">一份战斗系统 GDD 的内在逻辑写战斗系统文档时，不同经验的策划写出来的文档往往存在显著差异。 经验较浅的策划可能会写：”这个技能是一记猛烈的上挑，命中后敌人浮空，手感要爽。” 有经验的策划会写：”前摇 12 帧，判定窗口 3 帧（AnimNotify_Start → AnimNotify_End），命中后播放 Montage_Launched，同时施加 GE_Float（Duration 1.2s, Gravity Scale 0.3），允许在浮空期间接入 GA_AerialCombo。” 核心差异在于：后者写的每一条，都可以直接映射到引擎里的数据或调用。前者写的是”感觉”，后者写的是”规则”。 这种从”感觉”到”规则”的转化能力，是战斗系统设计中的重要技能。而支撑这种转化的，是一套从微观到宏观的三层递进逻辑框架。  层一：微观操作循环——输入、执行与反馈这是战斗系统的”神经末梢”，决定了玩家最直接的”手感”。三个环节缺一不可： 1.1 输入响应层——爽感的起点是”可控”玩家按下攻击键 → 角色开始动作。这个链条延迟超过 66ms（约 4 帧 in 60fps），玩家大脑会感知...</div></div></div></a><a class="pagination-related" href="/2026/08/09/MMO-Combat-Design-Methodology/" title="【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记</div></div><div class="info-2"><div class="info-item-1">缘起MMO 战斗设计是一个挺有意思的领域。它不像单机动作游戏那样有相对成熟的范式可以参考——精确的打击帧、客户端级停顿、逐帧调校的受击动画，这些在单机里理所当然的东西，放到网络同步、服务器校验、同屏几十人的环境下，往往就走不通了。 但也正是这些限制，让 MMO 的战斗设计有了自己的味道。下面整理了一些平时思考这个方向时觉得比较有趣的观察角度，写下来算是给自己存档，也希望能抛砖引玉。  一、反馈的诚实性：看到的和发生的是同一件事吗？MMO 战斗中有一个容易被低估的问题，我习惯叫它「反馈的诚实性」。 想象这样一个场景：你放了一个控制技能，目标怪物播放了浮空或眩晕动画，但它的攻击其实没有被打断——于是你继续站桩输出，然后莫名其妙掉了半管血。事后复盘才发现，动画归动画，逻辑归逻辑，两者从来没对齐过。 对体验的伤害，可能比”怪物太难了”要大。难，玩家可以练。但被骗，玩家会觉得这游戏不讲道理。 一个可以尝试的方向是：让画面表现跟逻辑判定保持一致。怪物看起来被控了，逻辑上就应该被控；看起来没被控，逻辑上也别硬来。这里面需要排查的边界 case 不少——不同等级的怪物、不同类型的控制效果、不同网...</div></div></div></a><a class="pagination-related" href="/2026/08/09/combat-design-hit-feel-framework/" title="【设计思路】打击感设计全解析——从感官体验到工业化管线"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】打击感设计全解析——从感官体验到工业化管线</div></div><div class="info-2"><div class="info-item-1">一个问题“这游戏打击感真好。” “这游戏手感怪怪的。” 玩动作游戏的人几乎都说过这两句话。但如果追问一句——“打击感到底是什么？好和不好差在哪？”——大多数情况下讨论会停留在”特效好不好看”或者”音效够不够响”的表层描述。 打击感是一个系统工程。 本文尝试把这个系统工程拆成五层，从”玩家能直接感知的”到”玩家感知不到但底层在默默运转的”，并给出每一层在引擎里的具体实现路径。  一、什么是打击感？先给一个可操作的定义先给出一个可操作的定义。 打击感 &#x3D; 当角色命中目标时，系统通过视觉、听觉、触觉等多感官渠道，在同一逻辑帧内传递给玩家的即时、直观且可信的综合反馈。 这个定义里藏着三个关键词：  “同一逻辑帧” — 同步是打击感的生命线。特效慢了 2 帧？手感就碎了。 “多感官渠道” — 视觉、听觉、触觉并发执行，不能是”先看到火花，再听到声音” “可信” — 反馈需要符合物理逻辑（利器命中肉体 ≠ 钝器命中铠甲），不符合预期的反馈比没有反馈更糟   二、五层拆解：从感官到规则打击感的设计维度可以按照”从表层到深层”的逻辑拆解为五层： 层一：视觉反馈（最直接的信息通道）   ...</div></div></div></a><a class="pagination-related" href="/2026/08/09/combat-design-supply-war-rts/" title="【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度</div></div><div class="info-2"><div class="info-item-1">RTS 的困局：一个被自己门槛杀死的品类RTS 品类有一个广为人知的矛盾：它的核心魅力（多线并发的系统调度与宏观资源博弈）和它的核心痛点（APM 门槛过高）是同源的。 星际争霸的职业选手 APM 在 300-400，相当于每秒 5-7 次有效操作。普通玩家可能在 80-120。这种情况下，RTS 的部分核心体验对普通玩家来说是”关闭的”——原因通常在于操作门槛而非策略深度。 这个问题在面试中被反复问到：”如果在今天让你做一款 RTS，你会怎么改？” 本文分享的是《补给战争》——一份把”物流网络”作为核心机制的原创 RTS 策划案。拆解它的三个核心设计：动态难度双轨系统、物流闭环经济、以及支撑千单位同屏的 ECS 架构选型。  一、核心设计哲学：把 RTS 的门槛从”手速”降回”策略”《补给战争》最根本的设计决策是：弱化微操，深化物流与宏观指令。 传统 RTS 的操作负担来自：  每个小兵需要手动控制走位 多线作战需要频繁切屏 农民的生产分配需要实时手动调整  《补给战争》的处理方式：  玩家不直接控制每个单位的走位和攻击——通过全局”指挥官面板”下达宏观指令，如”区域清剿””据点...</div></div></div></a><a class="pagination-related" href="/2026/08/11/combat-design-botw-emergent-combat/" title="【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-11</div><div class="info-item-2">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</div></div><div class="info-2"><div class="info-item-1">一部没有”战斗系统”的战斗系统传统动作游戏的战斗系统，更像是一套预设的行为树——设计师提前想好玩家能做什么、敌人会怎么响应，然后把这些规则写成代码。 《旷野之息》走了完全相反的路。 它没有给战斗单独设计一套系统。它只是搭建了一个物理引擎和一个化学引擎，然后把环境、怪物、道具全部暴露在这两个引擎的规则之下。战斗玩法是涌现出来的——它来自玩家利用引擎规则的创造性组合，而非设计师的预设编排。 这篇文章试图拆解这个涌现式沙盒在战斗场景下究竟是怎么运作的，以及它给战斗设计带来了怎样不同的思考方式。  一、双引擎驱动的涌现式交互旷野之息战斗的”无限解法”，建立在一个基础的架构决策之上：物理引擎和化学引擎被放在了战斗系统的核心位置——所有的战斗交互都建立在这两个引擎的规则之上。 1.1 物理引擎：静止器作为动能储存装置希卡之石的”静止器（Stasis）”是最典型的例子。 从玩家视角看，Stasis 是一个”让敌人不能动”的控制技能。但从底层逻辑来看，它是一个动能储存与矢量释放装置：  对目标使用 Stasis → 目标冻结，期间所有施加的力被累积 Stasis 解除 → 累积的动能瞬间释放，目...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E6%89%AC%E5%90%8E%E6%8A%91%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BB%88%E6%9C%AB%E5%9C%B0%E5%80%BC%E5%BE%97%E5%86%99%E4%B8%80%E7%AF%87%E6%96%87%E7%AB%A0"><span class="toc-text">先扬后抑：为什么终末地值得写一篇文章</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E7%8E%A9%E6%B3%95%E5%8F%8C%E5%BC%95%E6%93%8E%EF%BC%9A%E5%9F%BA%E5%BB%BA%E7%89%A9%E6%B5%81-%C3%97-%E6%8E%92%E8%BD%B4%E6%88%98%E6%96%97"><span class="toc-text">一、核心玩法双引擎：基建物流 × 排轴战斗</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E5%9F%BA%E5%BB%BA%E7%AB%AF%EF%BC%9A%E7%9C%9F%E6%AD%A3%E7%9A%84%E8%87%AA%E5%8A%A8%E5%8C%96%E7%89%A9%E6%B5%81%E7%BD%91"><span class="toc-text">1.1 基建端：真正的自动化物流网</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E6%88%98%E6%96%97%E7%AB%AF%EF%BC%9A%E4%BB%A5-Stagger-%E4%B8%BA%E6%A0%B8%E5%BF%83%E7%9A%84%E6%8E%92%E8%BD%B4%E7%88%86%E5%8F%91"><span class="toc-text">1.2 战斗端：以 Stagger 为核心的排轴爆发</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%9E%8D%E5%90%88%E5%BA%A6%E7%9A%84%E4%BD%93%E6%A3%80%E6%8A%A5%E5%91%8A%EF%BC%9A%E5%93%AA%E9%87%8C%E6%8E%A5%E4%B8%8A%E4%BA%86%EF%BC%8C%E5%93%AA%E9%87%8C%E6%96%AD%E4%BA%86"><span class="toc-text">二、融合度的体检报告：哪里接上了，哪里断了</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%8E%A5%E4%B8%8A%E4%BA%86%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="toc-text">2.1 接上了的地方</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%96%AD%E8%A3%82%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="toc-text">2.2 断裂的地方</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%95%B0%E5%80%BC%E4%BD%93%E6%A3%80%EF%BC%9A%E4%BD%93%E5%8A%9B%E7%BB%8F%E6%B5%8E%E5%AD%A6%E7%9A%84%E6%95%B0%E5%AD%A6%E6%9C%9F%E6%9C%9B%E6%B5%8B%E7%AE%97"><span class="toc-text">三、数值体检：体力经济学的数学期望测算</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%8D%87%E7%BA%A7-vs-%E6%8A%80%E8%83%BD%EF%BC%9A%E6%8A%95%E5%85%A5%E4%BA%A7%E5%87%BA%E6%AF%94%E4%B8%A5%E9%87%8D%E5%A4%B1%E8%A1%A1"><span class="toc-text">3.1 升级 vs 技能：投入产出比严重失衡</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E4%B9%98%E5%8C%BA%E5%88%86%E5%B8%83%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-text">3.2 乘区分布的问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%95%86%E4%B8%9A%E5%8C%96%E7%9A%84%E9%94%99%E4%BD%8D%EF%BC%9A%E8%B0%81%E5%9C%A8%E6%B0%AA%E9%87%91%EF%BC%8C%E8%B0%81%E5%9C%A8%E8%A2%AB%E6%9C%8D%E5%8A%A1%EF%BC%9F"><span class="toc-text">四、商业化的错位：谁在氪金，谁在被服务？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E4%B8%A4%E7%BE%A4%E4%BA%92%E4%B8%8D%E7%90%86%E8%A7%A3%E7%9A%84%E4%BA%BA"><span class="toc-text">4.1 两群互不理解的人</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E4%B8%80%E4%B8%AA%E5%8F%AF%E8%83%BD%E7%9A%84%E8%A7%A3%E6%B3%95"><span class="toc-text">4.2 一个可能的解法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%85%B3%E5%8D%A1%E8%AE%BE%E8%AE%A1%E7%9A%84%E4%BA%AE%E7%82%B9%EF%BC%9A%E7%AE%B1%E5%BA%AD%E7%BB%93%E6%9E%84%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="toc-text">五、关卡设计的亮点：箱庭结构的优势</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%BB%88%E6%9C%AB%E5%9C%B0%E7%BB%99%E2%80%9D%E8%9E%8D%E5%90%88%E5%9E%8B%E6%B8%B8%E6%88%8F%E2%80%9D%E7%95%99%E4%B8%8B%E7%9A%84%E5%90%AF%E7%A4%BA"><span class="toc-text">六、终末地给”融合型游戏”留下的启示</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/16/TPS动画系统实践-ABP-八向移动-Montage/" title="【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤">【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</a><time datetime="2026-08-16T04:00:00.000Z" title="Created 2026-08-16 12:00:00">2026-08-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/15/ArcaneRush-UE5-Blueprint-Portfolio/" title="【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战">【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</a><time datetime="2026-08-15T04:00:00.000Z" title="Created 2026-08-15 12:00:00">2026-08-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-框架/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</a><time datetime="2026-08-14T06:00:00.000Z" title="Created 2026-08-14 14:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</a><time datetime="2026-08-14T04:00:00.000Z" title="Created 2026-08-14 12:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-13T04:00:00.000Z" title="Created 2026-08-13 12:00:00">2026-08-13</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>

@@ -2764,6 +2764,64 @@ figure.highlight pre .javascript .function {
   -webkit-line-clamp: 2;
   word-break: break-word;
 }
+body.type-portfolio #page-header.not-home-page {
+  background: -webkit-linear-gradient(315deg, #1e3a5f 0%, #2d5a87 50%, #1a3350 100%) !important;
+  background: -moz-linear-gradient(315deg, #1e3a5f 0%, #2d5a87 50%, #1a3350 100%) !important;
+  background: -o-linear-gradient(315deg, #1e3a5f 0%, #2d5a87 50%, #1a3350 100%) !important;
+  background: -ms-linear-gradient(315deg, #1e3a5f 0%, #2d5a87 50%, #1a3350 100%) !important;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1a3350 100%) !important;
+}
+body.type-portfolio #page-header.not-home-page #page-site-info #site-title {
+  font-size: 2.5rem;
+  letter-spacing: 0.06em;
+}
+body.type-portfolio #rightside {
+  opacity: 0.8;
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=80)";
+  filter: alpha(opacity=80);
+  -webkit-transform: translate(-58px, 0);
+  -moz-transform: translate(-58px, 0);
+  -o-transform: translate(-58px, 0);
+  -ms-transform: translate(-58px, 0);
+  transform: translate(-58px, 0);
+}
+.portfolio-group .article-sort-title:before {
+  border-color: currentColor !important;
+}
+.portfolio-group .article-sort-title:after {
+  background: currentColor !important;
+}
+.portfolio-group .article-sort {
+  border-left-color: currentColor !important;
+}
+.portfolio-group .article-sort-item:before {
+  border-color: currentColor !important;
+}
+.portfolio-group.demo-group {
+  color: #6366f1;
+}
+.portfolio-group.design-group {
+  color: #0ea5e9;
+}
+.portfolio-group.analysis-group {
+  color: #f59e0b;
+}
+.portfolio-group.tech-group {
+  color: #10b981;
+}
+@media screen and (max-width: 768px) {
+  body.type-portfolio #page-header.not-home-page #site-title {
+    font-size: 1.8rem;
+  }
+  body.type-portfolio #rightside {
+    right: 0;
+    -webkit-transform: translate(-52px, 0);
+    -moz-transform: translate(-52px, 0);
+    -o-transform: translate(-52px, 0);
+    -ms-transform: translate(-52px, 0);
+    transform: translate(-52px, 0);
+  }
+}
 #article-container .shuoshuo-item {
   margin-bottom: 20px;
   padding: 35px 30px 30px;

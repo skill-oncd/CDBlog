@@ -1,0 +1,336 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度 | CD = CoolDown · CountDown · CombatDesign</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="如何设计一款&quot;不靠手速靠策略&quot;的 RTS? 拆解《补给战争》原创策划案的核心设计——森林扰动值(FD)事件驱动模型、恐惧值(Dread)隐藏阻尼器、防御公式选择、以及 Mass AI (ECS) 架构如何支撑同屏千单位的性能与逻辑。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度">
+<meta property="og:url" content="https://cd-cd.top/2026/08/09/combat-design-supply-war-rts/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="如何设计一款&quot;不靠手速靠策略&quot;的 RTS? 拆解《补给战争》原创策划案的核心设计——森林扰动值(FD)事件驱动模型、恐惧值(Dread)隐藏阻尼器、防御公式选择、以及 Mass AI (ECS) 架构如何支撑同屏千单位的性能与逻辑。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-08-09T08:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T17:24:51.584Z">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="CombatDesign">
+<meta property="article:tag" content="DDA">
+<meta property="article:tag" content="ECS">
+<meta property="article:tag" content="GameDesign">
+<meta property="article:tag" content="MassAI">
+<meta property="article:tag" content="RTS">
+<meta property="article:tag" content="数值设计">
+<meta property="article:tag" content="补给战争">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度",
+  "url": "https://cd-cd.top/2026/08/09/combat-design-supply-war-rts/",
+  "image": "https://cd-cd.top/img/avatar.jpg",
+  "datePublished": "2026-08-09T08:00:00.000Z",
+  "dateModified": "2026-08-09T17:24:51.584Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "CD",
+      "url": "https://cd-cd.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/2026/08/09/combat-design-supply-war-rts/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-09T08:00:00.000Z" title="Created 2026-08-09 16:00:00">2026-08-09</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T17:24:51.584Z" title="Updated 2026-08-10 01:24:51">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1/">GameDesign</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="RTS-的困局：一个被自己门槛杀死的品类"><a href="#RTS-的困局：一个被自己门槛杀死的品类" class="headerlink" title="RTS 的困局：一个被自己门槛杀死的品类"></a>RTS 的困局：一个被自己门槛杀死的品类</h2><p>RTS 品类有一个广为人知的矛盾：<strong>它的核心魅力（多线并发的系统调度与宏观资源博弈）和它的核心痛点（APM 门槛过高）是同源的。</strong></p>
+<p>星际争霸的职业选手 APM 在 300-400，相当于每秒 5-7 次有效操作。普通玩家可能在 80-120。这种情况下，RTS 的部分核心体验对普通玩家来说是”关闭的”——原因通常在于操作门槛而非策略深度。</p>
+<p>这个问题在面试中被反复问到：”如果在今天让你做一款 RTS，你会怎么改？”</p>
+<p>本文分享的是《补给战争》——一份把”物流网络”作为核心机制的原创 RTS 策划案。拆解它的三个核心设计：<strong>动态难度双轨系统、物流闭环经济、以及支撑千单位同屏的 ECS 架构选型</strong>。</p>
+<hr>
+<h2 id="一、核心设计哲学：把-RTS-的门槛从”手速”降回”策略”"><a href="#一、核心设计哲学：把-RTS-的门槛从”手速”降回”策略”" class="headerlink" title="一、核心设计哲学：把 RTS 的门槛从”手速”降回”策略”"></a>一、核心设计哲学：把 RTS 的门槛从”手速”降回”策略”</h2><p>《补给战争》最根本的设计决策是：<strong>弱化微操，深化物流与宏观指令。</strong></p>
+<p>传统 RTS 的操作负担来自：</p>
+<ul>
+<li>每个小兵需要手动控制走位</li>
+<li>多线作战需要频繁切屏</li>
+<li>农民的生产分配需要实时手动调整</li>
+</ul>
+<p>《补给战争》的处理方式：</p>
+<ul>
+<li>玩家不直接控制每个单位的走位和攻击——<strong>通过全局”指挥官面板”下达宏观指令</strong>，如”区域清剿””据点固守””优先摧毁敌方补给线”</li>
+<li>AI 自动完成微观执行——寻路、交战、站位</li>
+<li>玩家的真正挑战在于<strong>战略层的资源分配</strong>：有限的农民人口，是派去上前线打仗，还是留在后方维持补给线？</li>
+</ul>
+<p>这就把 RTS 从”APM 竞赛”变成了”资源统筹竞赛”——而后者更接近 RTS 的核心乐趣所在。</p>
+<hr>
+<h2 id="二、动态难度双轨系统：FD（明线）×-Dread（暗线）"><a href="#二、动态难度双轨系统：FD（明线）×-Dread（暗线）" class="headerlink" title="二、动态难度双轨系统：FD（明线）× Dread（暗线）"></a>二、动态难度双轨系统：FD（明线）× Dread（暗线）</h2><p>这是《补给战争》系统设计中的重要部分——如何在一款有成百上千单位、局势瞬息万变的 RTS 中，保证数值不崩坏且难度曲线始终维持在最佳心流区间？</p>
+<h3 id="2-1-问题：传统刷怪时间轴的三宗罪"><a href="#2-1-问题：传统刷怪时间轴的三宗罪" class="headerlink" title="2.1 问题：传统刷怪时间轴的三宗罪"></a>2.1 问题：传统刷怪时间轴的三宗罪</h3><p>大多数 RTS 或 PvE 策略游戏的难度控制基于<strong>静态时间轴</strong>——第 5 分钟刷 3 队小兵，第 10 分钟刷 1 个 Boss。</p>
+<p>问题：</p>
+<ol>
+<li><strong>无视玩家状态</strong>——玩家经济崩了也照刷不误，雪上加霜</li>
+<li><strong>缺乏负反馈</strong>——没有”防止滚雪球”的机制，赢了就一直赢，无聊</li>
+<li><strong>缺乏正反馈调节</strong>——没有”落后者追赶”的机制，输了就只能等死</li>
+</ol>
+<h3 id="2-2-明线：森林扰动值（FD）——“高收益伴随高风险”"><a href="#2-2-明线：森林扰动值（FD）——“高收益伴随高风险”" class="headerlink" title="2.2 明线：森林扰动值（FD）——“高收益伴随高风险”"></a>2.2 明线：森林扰动值（FD）——“高收益伴随高风险”</h3><p>FD（Forest Disturbance）是一个<strong>事件驱动的全局变量</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">FD = Σ(玩家行为 × 行为权重) × 扩散系数</span><br><span class="line"></span><br><span class="line">玩家行为包括:</span><br><span class="line">  - 砍树:    +5 FD / 次</span><br><span class="line">  - 采矿:    +8 FD / 次</span><br><span class="line">  - 造兵:   +15 FD / 单位</span><br><span class="line">  - 建造建筑: +20 FD / 建筑</span><br><span class="line">  - 战斗击杀: +10 FD / 击杀</span><br><span class="line"></span><br><span class="line">扩散: FD 在网格地图上向相邻格扩散，扩散速率与地形类型相关</span><br></pre></td></tr></table></figure>
+
+<p>FD 的核心设计意图：<strong>玩家的经济行为（采集、建造、暴兵）会产生”扰动”，这个扰动会被系统量化并转化为敌人（亡灵 AI）的兵力强度。</strong></p>
+<p>总威胁值（TV）的计算：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">TV = BaseThreat + FD × ThreatMultiplier + PlayerPower × ScalingFactor</span><br><span class="line"></span><br><span class="line">其中:</span><br><span class="line">  BaseThreat = 波次基础兵力</span><br><span class="line">  ThreatMultiplier = FD 到兵力的转换系数</span><br><span class="line">  PlayerPower = 玩家当前的总战力评估（军队数量 × 单位强度）</span><br><span class="line">  ScalingFactor = 根据难度档位调整的比例</span><br></pre></td></tr></table></figure>
+
+<p>这体现了”高收益伴随高风险”——你开发越多资源、建造越多部队，敌人也会越强。玩家需要在这种动态博弈中找到”最优开发节奏”，而不是无脑暴兵。</p>
+<h3 id="2-3-暗线：恐惧值（Dread）——隐形的动态阻尼器"><a href="#2-3-暗线：恐惧值（Dread）——隐形的动态阻尼器" class="headerlink" title="2.3 暗线：恐惧值（Dread）——隐形的动态阻尼器"></a>2.3 暗线：恐惧值（Dread）——隐形的动态阻尼器</h3><p>FD 解决了”难度跟随玩家”的问题，但它有一个局限性：<strong>如果玩家一开始就崩了，FD 不会因此降低——它只会随着玩家的经济活动增加。</strong></p>
+<p>Dread 系统正是为处理这种情况设计的。</p>
+<p>Dread 是一个<strong>全局的隐藏变量，不对玩家展示</strong>，只做两件事：</p>
+<p><strong>失败保护（隐性救济机制）</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">if (player.main_base.health &lt; 25% AND dread_flag_crisis == true):</span><br><span class="line">    → apply_global_debuff_to_enemies(</span><br><span class="line">        debuff: AttackPower -15%,</span><br><span class="line">        duration: 90 seconds,</span><br><span class="line">        label: &quot;Dread_LastStand&quot;  # 隐藏标签，UI不显示</span><br><span class="line">      )</span><br><span class="line">    → dread_flag_crisis = false  # 冷却 120 秒，防止滥用</span><br></pre></td></tr></table></figure>
+
+<p><strong>膨胀遏制（反雪球机制）</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">if (player.unit_production_rate_5min &gt; ΔP_max):</span><br><span class="line">    → trigger_bonus_elite_wave(</span><br><span class="line">        wave_type: &quot;Dread_Surge&quot;,</span><br><span class="line">        intensity: (actual_production_rate / ΔP_max) × 1.5</span><br><span class="line">      )</span><br><span class="line">    → log_to_system: &quot;Dread_Surge_Triggered&quot;</span><br></pre></td></tr></table></figure>
+
+<p>Dread 系统的设计要点：</p>
+<ul>
+<li><strong>玩家不会看到它</strong>——它不在任何 UI 上显示，不产生任何文字提示</li>
+<li><strong>它的存在通过”游戏体验”间接感知</strong>——“这局差点死了，但莫名撑过来了，好险”</li>
+<li><strong>触发条件严格且不重复</strong>——避免让玩家形成”反正有 Dread 兜底”的心理预期</li>
+</ul>
+<h3 id="2-4-为什么是双轨？"><a href="#2-4-为什么是双轨？" class="headerlink" title="2.4 为什么是双轨？"></a>2.4 为什么是双轨？</h3><p>单用 FD（明线）→ 玩家会精确计算 FD 的积累速度 → 难度变成”可预测的” → 失去紧张感</p>
+<p>单用 Dread（暗线）→ 玩家感知不到难度变化的规律 → 可能觉得游戏变化缺乏规律 → 失去掌控感</p>
+<p><strong>双轨结合：玩家可以感知到 FD 带来的”有规律的难度递增”，而 Dread 作为隐形的阻尼器只在极端情况下介入——两者共同把难度锁定在心流区间内。</strong></p>
+<p>这与经济学中”市场经济（明线）+ 央行调控（暗线）”的双轨逻辑同构。</p>
+<hr>
+<h2 id="三、伤害公式选择：为什么选择除法？"><a href="#三、伤害公式选择：为什么选择除法？" class="headerlink" title="三、伤害公式选择：为什么选择除法？"></a>三、伤害公式选择：为什么选择除法？</h2><p>《补给战争》的伤害计算涉及多个叠加维度——将领光环、地形加成、补给效率——如果用减法公式，复杂性会爆炸。</p>
+<p>我选择的公式是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FinalDamage = BaseDamage × DefenseFactor × TerrainMultiplier × SupplyEfficiency × CritMultiplier</span><br><span class="line"></span><br><span class="line">其中:</span><br><span class="line">  DefenseFactor = DEF / (DEF + 85 × Level + 400)</span><br><span class="line">  TerrainMultiplier = 1.0 (平地) / 0.85 (高地) / 1.15 (低地)</span><br><span class="line">  SupplyEfficiency = 1.0 (补给充足) → 0.5 (补给被切断)</span><br></pre></td></tr></table></figure>
+
+<p>设计考量：</p>
+<ol>
+<li><strong>DefenseFactor 保证边际收益递减</strong>——无论装甲叠多高，免伤比例无限趋近于 1 但不等于 1。这让”堆防”持续有效但不无敌。</li>
+<li><strong>多个独立乘区保证每个策略维度都被玩家感知</strong>——截断敌方补给让 SupplyEfficiency 从 1.0 跌到 0.5，这是一个直接的 50% 伤害削减，玩家不需要理解复杂公式就能直观看到”截补给线 &#x3D; 敌方变脆了”</li>
+<li><strong>乘区之间不可互相替代</strong>——你无法通过堆更高的攻击力来弥补被截断的补给线（因为它们是独立的乘法关系），这要求玩家关注每一个策略维度</li>
+</ol>
+<hr>
+<h2 id="四、Mass-AI（ECS-架构）——当行为树装不下千单位"><a href="#四、Mass-AI（ECS-架构）——当行为树装不下千单位" class="headerlink" title="四、Mass AI（ECS 架构）——当行为树装不下千单位"></a>四、Mass AI（ECS 架构）——当行为树装不下千单位</h2><p>RTS 的同屏单位数量（数百到上千）给 AI 架构提出了一个 ACT 或 ARPG 不会面临的问题：<strong>如果你用传统的 Actor + 行为树（Behavior Tree）来驱动每个单位，CPU 会很快成为瓶颈。</strong></p>
+<p>一个简单的估算：</p>
+<ul>
+<li>1 个单位 × 行为树 Tick &#x3D; ~0.05ms（乐观估计）</li>
+<li>1000 个单位同时 Tick &#x3D; ~50ms&#x2F;帧</li>
+<li>60fps 的帧预算是 16.67ms → <strong>已经爆了三倍</strong></li>
+</ul>
+<h3 id="4-1-ECS-的基本抽象"><a href="#4-1-ECS-的基本抽象" class="headerlink" title="4.1 ECS 的基本抽象"></a>4.1 ECS 的基本抽象</h3><p>UE5 的 Mass AI 框架基于 ECS（Entity-Component-System）架构，把传统 Actor 的”对象 → 对象”模型重构为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Entity（实体）    — 只是一个 ID，没有任何逻辑</span><br><span class="line">Fragment（数据片段）— 实体的纯数据：血量、位置、补给状态、当前指令</span><br><span class="line">Processor（处理器）— 批量遍历所有含特定 Fragment 的实体，执行逻辑</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-在《补给战争》中的应用"><a href="#4-2-在《补给战争》中的应用" class="headerlink" title="4.2 在《补给战争》中的应用"></a>4.2 在《补给战争》中的应用</h3><p>一个具体的例子——物流系统：</p>
+<p><strong>传统做法（Actor）：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">每个农民是一个 Actor → 每个 Tick 检查：</span><br><span class="line">  - 我现在在干嘛？</span><br><span class="line">  - 采集目标还在不在？</span><br><span class="line">  - 背包满了吗？</span><br><span class="line">  - 该送到哪个仓库？</span><br><span class="line">→ 100 个农民 = 100 个 Actor，每个独立 Tick</span><br></pre></td></tr></table></figure>
+
+<p><strong>ECS 做法（Mass AI）：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">FMassFarmerFragment:</span><br><span class="line">  - TaskState: IDLE / HARVESTING / TRANSPORTING</span><br><span class="line">  - CurrentResourceNodeID</span><br><span class="line">  - CargoAmount</span><br><span class="line">  - TargetDepotID</span><br><span class="line"></span><br><span class="line">UProcessor_Logistics::Execute(FMassEntityQuery&amp; Query):</span><br><span class="line">  1. 一次性取出所有含 FMassFarmerFragment 的实体</span><br><span class="line">  2. 按 TaskState 分组批处理：</span><br><span class="line">     - IDLE → 查找最近资源节点 → 分配</span><br><span class="line">     - HARVESTING → 检查节点是否耗尽 → 切换状态</span><br><span class="line">     - TRANSPORTING → 更新路径 → 检查到达</span><br><span class="line">  3. 所有农民的物流逻辑在 ONE PASS 中完成</span><br></pre></td></tr></table></figure>
+
+<p>关键差异不是语法上的——是<strong>数据排布和缓存效率</strong>：</p>
+<ul>
+<li>Actor 模型：每个单位的数据分散在内存各处 → Cache Miss 频繁</li>
+<li>ECS 模型：所有农民的数据连续存储 → 处理器一次遍历全部命中 L2&#x2F;L3 Cache</li>
+</ul>
+<h3 id="4-3-为什么策划需要理解这个？"><a href="#4-3-为什么策划需要理解这个？" class="headerlink" title="4.3 为什么策划需要理解这个？"></a>4.3 为什么策划需要理解这个？</h3><p>一个面试官问过我的问题：”作为策划，你了解 Mass AI 这种底层架构有什么意义？”</p>
+<p>我的回答是：<strong>因为系统的架构约束会反向塑造你的设计边界。</strong></p>
+<p>如果我知道引擎的 AI 框架是基于 ECS 的批处理模型，我在设计”物流网络”时就会：</p>
+<ul>
+<li>把农民的决策逻辑设计成<strong>有限状态机（而非复杂的模糊逻辑）</strong>——因为 FSM 适合批处理</li>
+<li>把物流任务抽象为<strong>数据标签（Tag）而非行为脚本</strong>——让 Processor 能高效分组和路由</li>
+<li>清楚地知道”一千个农民”的性能开销上限在哪——从而在设计时就知道我的玩法规则能在什么规模下运行</li>
+</ul>
+<p><strong>设计文档既需要让程序知道”你要做什么”，也需要让程序知道”你理解他需要怎么做”。</strong> 这就是为什么我的《补给战争》策划案里附带了 GAS 数值原型和 Mass AI 技术参考——目的在于消除信息损耗。</p>
+<hr>
+<h2 id="五、策划的技术附录：消除从文档到代码的”翻译税”"><a href="#五、策划的技术附录：消除从文档到代码的”翻译税”" class="headerlink" title="五、策划的技术附录：消除从文档到代码的”翻译税”"></a>五、策划的技术附录：消除从文档到代码的”翻译税”</h2><p>最后讨论一个容易被忽略的点。</p>
+<p>传统的策划文档是这样写的：</p>
+<blockquote>
+<p>“这个英雄有一个光环，能加周围友军的攻击力。”</p>
+</blockquote>
+<p>程序员看到就会问：加的是基础攻击还是最终攻击？光环范围怎么判定——球形还是圆柱？多人光环叠加是加法还是取最大值？光环在英雄死亡时还在不在？</p>
+<p>这些问题如果在文档里没回答，程序员就要自己去猜——或者来回找你确认。每一次”确认”都是管线效率的损耗。</p>
+<p>策划在文档里附带技术附录的意义在于：<strong>用程序的术语写清楚数据结构。</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">光环系统 - 技术规格:</span><br><span class="line"></span><br><span class="line">Attribute:</span><br><span class="line">  - 光环加成属性: BaseAttackPower（加在 AttributeSet 的基础攻击上，非最终伤害）</span><br><span class="line">  - 加成方式: Add, Magnitude = 15.0</span><br><span class="line"></span><br><span class="line">GE 定义:</span><br><span class="line">  - 类型: Infinite GameplayEffect</span><br><span class="line">  - 挂载位置: 英雄自身的 ASC (AbilitySystemComponent)</span><br><span class="line">  - 效果: 为范围内（球形 Radius=600）所有友方 Actor 的 ASC 应用一个</span><br><span class="line">          Infinite GE_Aura_Buff</span><br><span class="line"></span><br><span class="line">边界条件:</span><br><span class="line">  - 多个光环叠加: 取最高值（而非累加），防止组队时数值爆炸</span><br><span class="line">  - 施法者死亡: 光环立即移除（通过 OwnerDeath Tag 触发 RemoveOnTagAdded）</span><br><span class="line">  - 范围判定: 每 0.5s Tick 一次，离开范围后 Buff 保留 2s（防止边缘抖动）</span><br></pre></td></tr></table></figure>
+
+<p>这份文档到代码的翻译损耗降到最低。</p>
+<hr>
+<h2 id="六、总结：一个策划案应该长什么样"><a href="#六、总结：一个策划案应该长什么样" class="headerlink" title="六、总结：一个策划案应该长什么样"></a>六、总结：一个策划案应该长什么样</h2><p>《补给战争》的完整策划案包括了：</p>
+<ol>
+<li><strong>核心玩法设计</strong>——物流网络 + 宏观指令驱动的 RTS</li>
+<li><strong>动态难度系统</strong>——FD（明线事件驱动）+ Dread（暗线阻尼器）</li>
+<li><strong>数值模型</strong>——除法防御公式 + 多乘区独立结算</li>
+<li><strong>AI 架构选型</strong>——Mass AI（ECS）+ 有限状态机批处理</li>
+<li><strong>技术附录</strong>——GAS 数值原型 + ECS 实体&#x2F;片段&#x2F;处理器映射表</li>
+</ol>
+<p>这五个部分合在一起，才是一份”程序拿到手就能开写”的策划案。</p>
+<p>这两种能力——<strong>社会科学的宏观推演（FD&#x2F;Dread 的系统设计）和 UE5 的底层落地（GAS&#x2F;Mass AI 的技术附录）</strong>——构成了我们在这个系列中讨论的”跨学科技术型策划”的能力模型。</p>
+<hr>
+<blockquote>
+<p><strong>系列完。</strong> 从跨学科思维 → GAS 工程实践 → 终末地&#x2F;法环&#x2F;BOTW 三款游戏深度拆解 → 打击感与三层框架的理论体系 → 补给战争的原创设计，这个系列尝试回答一个核心问题：<strong>一个懂社会科学、懂引擎底层、又热爱游戏的人，在做战斗策划时能输出什么样的设计？</strong> 感谢阅读，欢迎交流。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/09/combat-design-supply-war-rts/">https://cd-cd.top/2026/08/09/combat-design-supply-war-rts/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GameDesign/">GameDesign</a><a class="post-meta__tags" href="/tags/CombatDesign/">CombatDesign</a><a class="post-meta__tags" href="/tags/RTS/">RTS</a><a class="post-meta__tags" href="/tags/DDA/">DDA</a><a class="post-meta__tags" href="/tags/MassAI/">MassAI</a><a class="post-meta__tags" href="/tags/ECS/">ECS</a><a class="post-meta__tags" href="/tags/%E6%95%B0%E5%80%BC%E8%AE%BE%E8%AE%A1/">数值设计</a><a class="post-meta__tags" href="/tags/%E8%A1%A5%E7%BB%99%E6%88%98%E4%BA%89/">补给战争</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/08/09/MMO-Combat-Design-Methodology/" title="【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记</div></div><div class="info-2"><div class="info-item-1">缘起MMO 战斗设计是一个挺有意思的领域。它不像单机动作游戏那样有相对成熟的范式可以参考——精确的打击帧、客户端级停顿、逐帧调校的受击动画，这些在单机里理所当然的东西，放到网络同步、服务器校验、同屏几十人的环境下，往往就走不通了。 但也正是这些限制，让 MMO 的战斗设计有了自己的味道。下面整理了一些平时思考这个方向时觉得比较有趣的观察角度，写下来算是给自己存档，也希望能抛砖引玉。  一、反馈的诚实性：看到的和发生的是同一件事吗？MMO 战斗中有一个容易被低估的问题，我习惯叫它「反馈的诚实性」。 想象这样一个场景：你放了一个控制技能，目标怪物播放了浮空或眩晕动画，但它的攻击其实没有被打断——于是你继续站桩输出，然后莫名其妙掉了半管血。事后复盘才发现，动画归动画，逻辑归逻辑，两者从来没对齐过。 对体验的伤害，可能比”怪物太难了”要大。难，玩家可以练。但被骗，玩家会觉得这游戏不讲道理。 一个可以尝试的方向是：让画面表现跟逻辑判定保持一致。怪物看起来被控了，逻辑上就应该被控；看起来没被控，逻辑上也别硬来。这里面需要排查的边界 case 不少——不同等级的怪物、不同类型的控制效果、不同网...</div></div></div></a><a class="pagination-related" href="/2026/08/09/combat-design-three-layer-framework/" title="【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流</div></div><div class="info-2"><div class="info-item-1">一份战斗系统 GDD 的内在逻辑写战斗系统文档时，不同经验的策划写出来的文档往往存在显著差异。 经验较浅的策划可能会写：”这个技能是一记猛烈的上挑，命中后敌人浮空，手感要爽。” 有经验的策划会写：”前摇 12 帧，判定窗口 3 帧（AnimNotify_Start → AnimNotify_End），命中后播放 Montage_Launched，同时施加 GE_Float（Duration 1.2s, Gravity Scale 0.3），允许在浮空期间接入 GA_AerialCombo。” 核心差异在于：后者写的每一条，都可以直接映射到引擎里的数据或调用。前者写的是”感觉”，后者写的是”规则”。 这种从”感觉”到”规则”的转化能力，是战斗系统设计中的重要技能。而支撑这种转化的，是一套从微观到宏观的三层递进逻辑框架。  层一：微观操作循环——输入、执行与反馈这是战斗系统的”神经末梢”，决定了玩家最直接的”手感”。三个环节缺一不可： 1.1 输入响应层——爽感的起点是”可控”玩家按下攻击键 → 角色开始动作。这个链条延迟超过 66ms（约 4 帧 in 60fps），玩家大脑会感知...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/08/09/combat-design-three-layer-framework/" title="【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流</div></div><div class="info-2"><div class="info-item-1">一份战斗系统 GDD 的内在逻辑写战斗系统文档时，不同经验的策划写出来的文档往往存在显著差异。 经验较浅的策划可能会写：”这个技能是一记猛烈的上挑，命中后敌人浮空，手感要爽。” 有经验的策划会写：”前摇 12 帧，判定窗口 3 帧（AnimNotify_Start → AnimNotify_End），命中后播放 Montage_Launched，同时施加 GE_Float（Duration 1.2s, Gravity Scale 0.3），允许在浮空期间接入 GA_AerialCombo。” 核心差异在于：后者写的每一条，都可以直接映射到引擎里的数据或调用。前者写的是”感觉”，后者写的是”规则”。 这种从”感觉”到”规则”的转化能力，是战斗系统设计中的重要技能。而支撑这种转化的，是一套从微观到宏观的三层递进逻辑框架。  层一：微观操作循环——输入、执行与反馈这是战斗系统的”神经末梢”，决定了玩家最直接的”手感”。三个环节缺一不可： 1.1 输入响应层——爽感的起点是”可控”玩家按下攻击键 → 角色开始动作。这个链条延迟超过 66ms（约 4 帧 in 60fps），玩家大脑会感知...</div></div></div></a><a class="pagination-related" href="/2026/08/09/combat-design-hit-feel-framework/" title="【设计思路】打击感设计全解析——从感官体验到工业化管线"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】打击感设计全解析——从感官体验到工业化管线</div></div><div class="info-2"><div class="info-item-1">一个问题“这游戏打击感真好。” “这游戏手感怪怪的。” 玩动作游戏的人几乎都说过这两句话。但如果追问一句——“打击感到底是什么？好和不好差在哪？”——大多数情况下讨论会停留在”特效好不好看”或者”音效够不够响”的表层描述。 打击感是一个系统工程。 本文尝试把这个系统工程拆成五层，从”玩家能直接感知的”到”玩家感知不到但底层在默默运转的”，并给出每一层在引擎里的具体实现路径。  一、什么是打击感？先给一个可操作的定义先给出一个可操作的定义。 打击感 &#x3D; 当角色命中目标时，系统通过视觉、听觉、触觉等多感官渠道，在同一逻辑帧内传递给玩家的即时、直观且可信的综合反馈。 这个定义里藏着三个关键词：  “同一逻辑帧” — 同步是打击感的生命线。特效慢了 2 帧？手感就碎了。 “多感官渠道” — 视觉、听觉、触觉并发执行，不能是”先看到火花，再听到声音” “可信” — 反馈需要符合物理逻辑（利器命中肉体 ≠ 钝器命中铠甲），不符合预期的反馈比没有反馈更糟   二、五层拆解：从感官到规则打击感的设计维度可以按照”从表层到深层”的逻辑拆解为五层： 层一：视觉反馈（最直接的信息通道）   ...</div></div></div></a><a class="pagination-related" href="/2026/08/11/combat-design-botw-emergent-combat/" title="【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-11</div><div class="info-item-2">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</div></div><div class="info-2"><div class="info-item-1">一部没有”战斗系统”的战斗系统传统动作游戏的战斗系统，更像是一套预设的行为树——设计师提前想好玩家能做什么、敌人会怎么响应，然后把这些规则写成代码。 《旷野之息》走了完全相反的路。 它没有给战斗单独设计一套系统。它只是搭建了一个物理引擎和一个化学引擎，然后把环境、怪物、道具全部暴露在这两个引擎的规则之下。战斗玩法是涌现出来的——它来自玩家利用引擎规则的创造性组合，而非设计师的预设编排。 这篇文章试图拆解这个涌现式沙盒在战斗场景下究竟是怎么运作的，以及它给战斗设计带来了怎样不同的思考方式。  一、双引擎驱动的涌现式交互旷野之息战斗的”无限解法”，建立在一个基础的架构决策之上：物理引擎和化学引擎被放在了战斗系统的核心位置——所有的战斗交互都建立在这两个引擎的规则之上。 1.1 物理引擎：静止器作为动能储存装置希卡之石的”静止器（Stasis）”是最典型的例子。 从玩家视角看，Stasis 是一个”让敌人不能动”的控制技能。但从底层逻辑来看，它是一个动能储存与矢量释放装置：  对目标使用 Stasis → 目标冻结，期间所有施加的力被累积 Stasis 解除 → 累积的动能瞬间释放，目...</div></div></div></a><a class="pagination-related" href="/2026/08/12/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-12</div><div class="info-item-2">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</div></div><div class="info-2"><div class="info-item-1">一个反直觉的事实《艾尔登法环》卖出了 2800 万份。 对于一个以”难”为核心卖点、BOSS 可以三刀带走你、地图上没有任务指引、死亡还会掉光所有经验值的游戏来说——这个数字是惊人的。 按照常规的产品逻辑，”难”天然等于”小众”。法环证明了这个等式的荒谬。而荒谬的背后，藏着一套精密的战斗系统设计哲学。 本文尝试把这套哲学拆成四层来理解：底层基调 → 新增机制 → 系统深度 → 玩家心流。  一、魂系战斗的底层基调：为什么是”低主动 + 高被动”？在分析法环的新东西之前，需要先理解它继承了黑魂的什么。 魂系战斗区别于传统动作游戏（如《忍者龙剑传》《鬼泣》）的核心特征，可以从两个维度来观察：反应频率和操作精度。 1.1 战斗交互频率的两极低主动反应频率（玩家进攻端）：  动作系统高度简化——没有复杂连招表，轻击重击就是全部 动作硬直大且无法随意取消——你按了攻击，就得等它播完 所有行为几乎都消耗精力（Stamina）——攻击、翻滚、防御，共用一个资源池 敌人受击空窗期短——砍一刀就得退，贪第二刀大概率被打  设计目的：限制玩家”贪刀”，强迫每次出手都是刻意决策。 高被动反应频率（玩家...</div></div></div></a><a class="pagination-related" href="/2026/08/12/combat-design-endfield-analysis/" title="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-12</div><div class="info-item-2">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</div></div><div class="info-2"><div class="info-item-1">先扬后抑：为什么终末地值得写一篇文章《明日方舟：终末地》是一款设计上有许多值得讨论之处的游戏。 它在二游赛道中做了一件少见的事：把《异星工厂》式的自动化物流网络，嫁接到一个以”排轴爆发”为核心的 ARPG 战斗系统上。这两个系统的底层逻辑几乎是相反的——一个是”慢节奏、重规划”，一个是”快节奏、重反应”。将二者耦合在一起，本身就是一个值得分析的设计命题。 同时，它的一些底层数值设计和商业化路径，与核心玩法的融合之间存在可见的摩擦。 这是一篇”策划视角”的反拆，从三个层面展开分析：体验层 → 机制层 → 数值与商业化层。  一、核心玩法双引擎：基建物流 × 排轴战斗1.1 基建端：真正的自动化物流网很多二游都有”家园”——摆摆家具、种种菜。但终末地的基建是另一回事。 它的核心是管线铺设 + 物流节点优化。原料从矿场 → 传送带 → 加工车间 → 中转仓库 → 最终组装线，玩家需要像玩 Factorio 一样规划物流拓扑。这个系统的深度体现在：  空间约束：地形起伏、障碍物决定了管线的路由，不是随便拉一条直线 效率博弈：一个供应节点可以同时服务于多条产线，但产出效率会分摊 基建产物反...</div></div></div></a><a class="pagination-related" href="/2026/08/09/MMO-Combat-Design-Methodology/" title="【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记</div></div><div class="info-2"><div class="info-item-1">缘起MMO 战斗设计是一个挺有意思的领域。它不像单机动作游戏那样有相对成熟的范式可以参考——精确的打击帧、客户端级停顿、逐帧调校的受击动画，这些在单机里理所当然的东西，放到网络同步、服务器校验、同屏几十人的环境下，往往就走不通了。 但也正是这些限制，让 MMO 的战斗设计有了自己的味道。下面整理了一些平时思考这个方向时觉得比较有趣的观察角度，写下来算是给自己存档，也希望能抛砖引玉。  一、反馈的诚实性：看到的和发生的是同一件事吗？MMO 战斗中有一个容易被低估的问题，我习惯叫它「反馈的诚实性」。 想象这样一个场景：你放了一个控制技能，目标怪物播放了浮空或眩晕动画，但它的攻击其实没有被打断——于是你继续站桩输出，然后莫名其妙掉了半管血。事后复盘才发现，动画归动画，逻辑归逻辑，两者从来没对齐过。 对体验的伤害，可能比”怪物太难了”要大。难，玩家可以练。但被骗，玩家会觉得这游戏不讲道理。 一个可以尝试的方向是：让画面表现跟逻辑判定保持一致。怪物看起来被控了，逻辑上就应该被控；看起来没被控，逻辑上也别硬来。这里面需要排查的边界 case 不少——不同等级的怪物、不同类型的控制效果、不同网...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#RTS-%E7%9A%84%E5%9B%B0%E5%B1%80%EF%BC%9A%E4%B8%80%E4%B8%AA%E8%A2%AB%E8%87%AA%E5%B7%B1%E9%97%A8%E6%A7%9B%E6%9D%80%E6%AD%BB%E7%9A%84%E5%93%81%E7%B1%BB"><span class="toc-text">RTS 的困局：一个被自己门槛杀死的品类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1%E5%93%B2%E5%AD%A6%EF%BC%9A%E6%8A%8A-RTS-%E7%9A%84%E9%97%A8%E6%A7%9B%E4%BB%8E%E2%80%9D%E6%89%8B%E9%80%9F%E2%80%9D%E9%99%8D%E5%9B%9E%E2%80%9D%E7%AD%96%E7%95%A5%E2%80%9D"><span class="toc-text">一、核心设计哲学：把 RTS 的门槛从”手速”降回”策略”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%8A%A8%E6%80%81%E9%9A%BE%E5%BA%A6%E5%8F%8C%E8%BD%A8%E7%B3%BB%E7%BB%9F%EF%BC%9AFD%EF%BC%88%E6%98%8E%E7%BA%BF%EF%BC%89%C3%97-Dread%EF%BC%88%E6%9A%97%E7%BA%BF%EF%BC%89"><span class="toc-text">二、动态难度双轨系统：FD（明线）× Dread（暗线）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E9%97%AE%E9%A2%98%EF%BC%9A%E4%BC%A0%E7%BB%9F%E5%88%B7%E6%80%AA%E6%97%B6%E9%97%B4%E8%BD%B4%E7%9A%84%E4%B8%89%E5%AE%97%E7%BD%AA"><span class="toc-text">2.1 问题：传统刷怪时间轴的三宗罪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%98%8E%E7%BA%BF%EF%BC%9A%E6%A3%AE%E6%9E%97%E6%89%B0%E5%8A%A8%E5%80%BC%EF%BC%88FD%EF%BC%89%E2%80%94%E2%80%94%E2%80%9C%E9%AB%98%E6%94%B6%E7%9B%8A%E4%BC%B4%E9%9A%8F%E9%AB%98%E9%A3%8E%E9%99%A9%E2%80%9D"><span class="toc-text">2.2 明线：森林扰动值（FD）——“高收益伴随高风险”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E6%9A%97%E7%BA%BF%EF%BC%9A%E6%81%90%E6%83%A7%E5%80%BC%EF%BC%88Dread%EF%BC%89%E2%80%94%E2%80%94%E9%9A%90%E5%BD%A2%E7%9A%84%E5%8A%A8%E6%80%81%E9%98%BB%E5%B0%BC%E5%99%A8"><span class="toc-text">2.3 暗线：恐惧值（Dread）——隐形的动态阻尼器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E5%8F%8C%E8%BD%A8%EF%BC%9F"><span class="toc-text">2.4 为什么是双轨？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E4%BC%A4%E5%AE%B3%E5%85%AC%E5%BC%8F%E9%80%89%E6%8B%A9%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89%E6%8B%A9%E9%99%A4%E6%B3%95%EF%BC%9F"><span class="toc-text">三、伤害公式选择：为什么选择除法？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Mass-AI%EF%BC%88ECS-%E6%9E%B6%E6%9E%84%EF%BC%89%E2%80%94%E2%80%94%E5%BD%93%E8%A1%8C%E4%B8%BA%E6%A0%91%E8%A3%85%E4%B8%8D%E4%B8%8B%E5%8D%83%E5%8D%95%E4%BD%8D"><span class="toc-text">四、Mass AI（ECS 架构）——当行为树装不下千单位</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-ECS-%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%8A%BD%E8%B1%A1"><span class="toc-text">4.1 ECS 的基本抽象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E5%9C%A8%E3%80%8A%E8%A1%A5%E7%BB%99%E6%88%98%E4%BA%89%E3%80%8B%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8"><span class="toc-text">4.2 在《补给战争》中的应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E4%B8%BA%E4%BB%80%E4%B9%88%E7%AD%96%E5%88%92%E9%9C%80%E8%A6%81%E7%90%86%E8%A7%A3%E8%BF%99%E4%B8%AA%EF%BC%9F"><span class="toc-text">4.3 为什么策划需要理解这个？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E7%AD%96%E5%88%92%E7%9A%84%E6%8A%80%E6%9C%AF%E9%99%84%E5%BD%95%EF%BC%9A%E6%B6%88%E9%99%A4%E4%BB%8E%E6%96%87%E6%A1%A3%E5%88%B0%E4%BB%A3%E7%A0%81%E7%9A%84%E2%80%9D%E7%BF%BB%E8%AF%91%E7%A8%8E%E2%80%9D"><span class="toc-text">五、策划的技术附录：消除从文档到代码的”翻译税”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9A%E4%B8%80%E4%B8%AA%E7%AD%96%E5%88%92%E6%A1%88%E5%BA%94%E8%AF%A5%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7"><span class="toc-text">六、总结：一个策划案应该长什么样</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/16/TPS动画系统实践-ABP-八向移动-Montage/" title="【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤">【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</a><time datetime="2026-08-16T04:00:00.000Z" title="Created 2026-08-16 12:00:00">2026-08-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/15/ArcaneRush-UE5-Blueprint-Portfolio/" title="【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战">【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</a><time datetime="2026-08-15T04:00:00.000Z" title="Created 2026-08-15 12:00:00">2026-08-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-框架/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</a><time datetime="2026-08-14T06:00:00.000Z" title="Created 2026-08-14 14:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</a><time datetime="2026-08-14T04:00:00.000Z" title="Created 2026-08-14 12:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-13T04:00:00.000Z" title="Created 2026-08-13 12:00:00">2026-08-13</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>

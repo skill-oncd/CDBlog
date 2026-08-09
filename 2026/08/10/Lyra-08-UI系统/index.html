@@ -1,0 +1,378 @@
+<!DOCTYPE html><html lang="en" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入 | CD = CoolDown · CountDown · CombatDesign</title><meta name="author" content="CD"><meta name="copyright" content="CD"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="拆解 Lyra 的四层 UI 架构——CommonUI 输入路由→CommonGame 多层级 Stack→UIExtension 发布&#x2F;订阅引擎→LyraGame 专属控件。重点剖析 GameplayTag 驱动的 UI 注入如何让 GameFeature 插件的 HUD 部件完全解耦，以及 CommonUI 为什么比纯 UMG 更适合多人分屏场景。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布&#x2F;订阅式 UI 注入">
+<meta property="og:url" content="https://cd-cd.top/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="CD &#x3D; CoolDown · CountDown · CombatDesign">
+<meta property="og:description" content="拆解 Lyra 的四层 UI 架构——CommonUI 输入路由→CommonGame 多层级 Stack→UIExtension 发布&#x2F;订阅引擎→LyraGame 专属控件。重点剖析 GameplayTag 驱动的 UI 注入如何让 GameFeature 插件的 HUD 部件完全解耦，以及 CommonUI 为什么比纯 UMG 更适合多人分屏场景。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
+<meta property="article:published_time" content="2026-08-10T11:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-09T17:24:51.584Z">
+<meta property="article:author" content="CD">
+<meta property="article:tag" content="CommonUI">
+<meta property="article:tag" content="GameplayTag">
+<meta property="article:tag" content="Lyra">
+<meta property="article:tag" content="UI">
+<meta property="article:tag" content="UIExtension">
+<meta property="article:tag" content="Unreal">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cd-cd.top/img/avatar.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入",
+  "url": "https://cd-cd.top/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/",
+  "image": "https://cd-cd.top/img/avatar.jpg",
+  "datePublished": "2026-08-10T11:00:00.000Z",
+  "dateModified": "2026-08-09T17:24:51.584Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "CD",
+      "url": "https://cd-cd.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.svg"><link rel="canonical" href="https://cd-cd.top/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.6.2"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"No results found for: ${query}","hits_stats":"${hits} articles found"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-10T11:00:00.000Z" title="Created 2026-08-10 19:00:00">2026-08-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T17:24:51.584Z" title="Updated 2026-08-10 01:24:51">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/Lyra-%E6%A1%86%E6%9E%B6%E6%8B%86%E8%A7%A3/">Lyra 框架拆解</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="系列导航"><a href="#系列导航" class="headerlink" title="系列导航"></a>系列导航</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>主题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td><a href="/2026/08/06/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88">架构哲学总览</a></td>
+</tr>
+<tr>
+<td>二</td>
+<td><a href="/2026/08/06/Lyra-02-Experience%E7%B3%BB%E7%BB%9F">Experience 系统</a></td>
+</tr>
+<tr>
+<td>三</td>
+<td><a href="/2026/08/06/Lyra-03-Character%E7%BB%84%E4%BB%B6%E4%BD%93%E7%B3%BB">Character 组件体系</a></td>
+</tr>
+<tr>
+<td>四</td>
+<td><a href="/2026/08/06/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82">GAS 集成层</a></td>
+</tr>
+<tr>
+<td>五</td>
+<td><a href="/2026/08/06/Lyra-05-Equipment-Inventory">Equipment &amp; Inventory</a></td>
+</tr>
+<tr>
+<td>六</td>
+<td><a href="/2026/08/06/Lyra-06-Input%E7%B3%BB%E7%BB%9F">Input 系统</a></td>
+</tr>
+<tr>
+<td>七</td>
+<td><a href="/2026/08/06/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5">网络同步框架</a></td>
+</tr>
+<tr>
+<td><strong>八</strong></td>
+<td><strong>UI 系统（本文 · 终篇）</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="一句话"><a href="#一句话" class="headerlink" title="一句话"></a>一句话</h2><p>Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 <code>AHUD</code> 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（<code>UUIExtensionSubsystem</code>）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。</p>
+<hr>
+<h2 id="一，为什么不直接用-UMG-HUD？"><a href="#一，为什么不直接用-UMG-HUD？" class="headerlink" title="一，为什么不直接用 UMG HUD？"></a>一，为什么不直接用 UMG HUD？</h2><p>在传统 UE 项目中，最自然的 UI 做法是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">AHUD::<span class="built_in">BeginPlay</span>() &#123;</span><br><span class="line">    MainWidget = <span class="built_in">CreateWidget</span>&lt;UMainHUD&gt;(PlayerController, MainHUDClass);</span><br><span class="line">    MainWidget-&gt;<span class="built_in">AddToViewport</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这在单人项目中工作得很好。但在 Lyra 的场景下有三个致命短板：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>传统 UMG</th>
+<th>Lyra 的需求</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>多人分屏</strong></td>
+<td><code>AHUD</code> 是全局单例，每个 Player 无独立 UI 根</td>
+<td>4 人分屏 → 4 套独立 UI 树</td>
+</tr>
+<tr>
+<td><strong>跨平台输入</strong></td>
+<td>手动 <code>SetInputMode_GameOnly</code>&#x2F;<code>UIOnly</code>，手柄&#x2F;键鼠需自己处理</td>
+<td>CommonUI 的 <code>CommonActivatableWidgetStack</code> 自动管理输入模式</td>
+</tr>
+<tr>
+<td><strong>GameFeature 热插拔</strong></td>
+<td>HUD 硬引用 Widget 类 → 无法热卸载</td>
+<td>UIExtension 的发布&#x2F;订阅模式：GameFeature 注册时不引用具体 HUD</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="二，四层分层架构"><a href="#二，四层分层架构" class="headerlink" title="二，四层分层架构"></a>二，四层分层架构</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">GameFeature 层:   GameFeatureAction_AddWidgets</span><br><span class="line">                  → 向 HUD Layout 注入 Layout + Element Widget</span><br><span class="line">                       ↓</span><br><span class="line">UIExtension 层:   UUIExtensionSubsystem（WorldSubsystem）</span><br><span class="line">                  → GameplayTag 驱动的发布/订阅引擎</span><br><span class="line">                       ↓</span><br><span class="line">CommonGame 层:    UPrimaryGameLayout</span><br><span class="line">                  → 每个 LocalPlayer 独立的根布局 + 多层级 Stack 管理</span><br><span class="line">                       ↓</span><br><span class="line">CommonUI 层:      CommonActivatableWidget + CommonActivatableWidgetStack</span><br><span class="line">                  → 输入路由 + 焦点自动管理 + 跨平台切换</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据流"><a href="#数据流" class="headerlink" title="数据流"></a>数据流</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Experience 加载</span><br><span class="line">  → GameFeature 激活</span><br><span class="line">    → GameFeatureAction_AddWidgets::OnGameFeatureActivating</span><br><span class="line">      → Layout 模式: PushWidgetToLayerStack(UI.Layer.Game, LayoutClass)</span><br><span class="line">      → Widget 模式: UIExtensionSubsystem::RegisterExtensionPoint(Tag, WidgetClass)</span><br><span class="line">        → HUD Layout 内的 ExtensionPointWidget 接收 → 创建 Widget</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三，UIExtensionSubsystem：发布-订阅引擎"><a href="#三，UIExtensionSubsystem：发布-订阅引擎" class="headerlink" title="三，UIExtensionSubsystem：发布&#x2F;订阅引擎"></a>三，UIExtensionSubsystem：发布&#x2F;订阅引擎</h2><p>这是 Lyra UI 系统最核心的创新——它不是”HUD 知道所有 Widget”，而是”HUD 声明插槽，GameFeature 提供内容，GameplayTag 做中介”：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">发布方（GameFeature）:</span><br><span class="line">  UIExtensionSubsystem-&gt;RegisterExtension(</span><br><span class="line">      TAG(&quot;HUD.Slot.QuickBar&quot;),     // ← 我要往这个插槽放 Widget</span><br><span class="line">      QuickBarWidgetClass,          // ← 这是我的 Widget 类</span><br><span class="line">      Priority = 0                  // ← 同一插槽多个 Widget 的排序</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">订阅方（HUD Layout）:</span><br><span class="line">  // UUIExtensionPointWidget 注册到 TAG(&quot;HUD.Slot.QuickBar&quot;)</span><br><span class="line">  // ExtensionSubsystem 通知有新 Extension 注册</span><br><span class="line">  // → ExtensionPointWidget::RebuildWidget() → CreateWidget(QuickBarWidgetClass)</span><br></pre></td></tr></table></figure>
+
+<h3 id="关键特性"><a href="#关键特性" class="headerlink" title="关键特性"></a>关键特性</h3><ol>
+<li><strong>GameplayTag 层级匹配</strong>：TAG(<code>HUD.Slot</code>) 可以接收 TAG(<code>HUD.Slot.QuickBar</code>)、TAG(<code>HUD.Slot.Reticle</code>) 等所有子 Tag 的 Extension。这提供了”接收全部 HUD 部件”和”接收特定部件”的灵活性</li>
+<li><strong>ContextObject 过滤</strong>：Extension 可以携带 Context（如”只有装备了特定武器才显示此 Widget”），ExtensionPoint 在 Rebuild 时检查 Context 是否匹配</li>
+<li><strong>Priority 排序</strong>：同一插槽多个 Extension → 按 Priority 排序显示</li>
+<li><strong>完全解耦</strong>：发布方（ShooterCore 的 QuickBar）不知道订阅方（HUD Layout）的存在，甚至不知道有没有人订阅</li>
+</ol>
+<hr>
+<h2 id="四，CommonUI-的哲学：UI-是玩家的私有财产"><a href="#四，CommonUI-的哲学：UI-是玩家的私有财产" class="headerlink" title="四，CommonUI 的哲学：UI 是玩家的私有财产"></a>四，CommonUI 的哲学：UI 是玩家的私有财产</h2><p>Lyra 选择 CommonUI 而非纯 UMG 的深层原因是 CommonUI 的一个根本假设：</p>
+<blockquote>
+<p><strong>每个玩家拥有一棵独立的 UI 树。</strong></p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// CommonUI 中，每个 LocalPlayer 获得独立的 UPrimaryGameLayout</span></span><br><span class="line"><span class="keyword">for</span> (ULocalPlayer* LP : GameInstance-&gt;<span class="built_in">GetLocalPlayers</span>())</span><br><span class="line">    LP-&gt;<span class="built_in">GetPrimaryGameLayout</span>()-&gt;<span class="built_in">PushWidgetToLayerStack</span>(<span class="built_in">TAG</span>(<span class="string">&quot;UI.Layer.Game&quot;</span>), LayoutClass);</span><br></pre></td></tr></table></figure>
+
+<p>对比传统 UMG 中 <code>AHUD</code> 是全局单例——在 4 人分屏场景下根本无法支持。</p>
+<h3 id="多层级-Stack-自动输入模式"><a href="#多层级-Stack-自动输入模式" class="headerlink" title="多层级 Stack + 自动输入模式"></a>多层级 Stack + 自动输入模式</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">UPrimaryGameLayout (Root)</span><br><span class="line">  ├─ UCommonActivatableWidgetStack: UI.Layer.Game        ← 游戏 HUD（QuickBar、Reticle、血量）</span><br><span class="line">  ├─ UCommonActivatableWidgetStack: UI.Layer.GameMenu    ← 暂停菜单、背包、地图</span><br><span class="line">  ├─ UCommonActivatableWidgetStack: UI.Layer.Menu        ← 主菜单、设置、角色选择</span><br><span class="line">  └─ UCommonActivatableWidgetStack: UI.Layer.Modal       ← 确认框、错误提示、按键绑定</span><br></pre></td></tr></table></figure>
+
+<p><strong>输入模式自动切换</strong>：当你在 Game 层（HUD 可见）时，输入自动设为 <code>GameOnly</code>——鼠标控制视角。当 GameMenu 层有 Widget Push 进入（打开背包），输入自动切换为 <code>GameAndMenu</code>——鼠标出现、角色停止响应视角输入。</p>
+<hr>
+<h2 id="五，ULyraActivatableWidget：声明式输入模式"><a href="#五，ULyraActivatableWidget：声明式输入模式" class="headerlink" title="五，ULyraActivatableWidget：声明式输入模式"></a>五，ULyraActivatableWidget：声明式输入模式</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ULyraActivatableWidget : UCommonActivatableWidget &#123;</span><br><span class="line">    ELyraWidgetInputMode InputMode;  <span class="comment">// ← 声明这个 Widget 要什么输入模式</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">ELyraWidgetInputMode &#123;</span><br><span class="line">    Default,       <span class="comment">// 继承父层设置</span></span><br><span class="line">    GameAndMenu,   <span class="comment">// 游戏输入 + UI 输入（鼠标可见，角色可移动）</span></span><br><span class="line">    Game,          <span class="comment">// 纯游戏输入（鼠标隐藏，视角控制）</span></span><br><span class="line">    Menu,          <span class="comment">// 纯 UI 输入（鼠标可见，角色停止响应）</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>当这个 Widget 被 Push 到 Stack 上时，System 自动应用其声明的输入模式；被 Pop 时自动恢复之前的模式。</p>
+<hr>
+<h2 id="六，Indicator-系统：3D-世界-→-2D-屏幕投影"><a href="#六，Indicator-系统：3D-世界-→-2D-屏幕投影" class="headerlink" title="六，Indicator 系统：3D 世界 → 2D 屏幕投影"></a>六，Indicator 系统：3D 世界 → 2D 屏幕投影</h2><p>Lyra 的离屏指示器系统（离屏目标箭头）是 UI 系统中另一个值得学习的独立子系统：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ULyraIndicatorManagerComponent (挂载在 PlayerController)</span><br><span class="line">  ├── IndicatorDescriptor[] — 需要跟踪的目标列表（位置 + 数据）</span><br><span class="line">  └── 通知 SActorCanvas（纯 Slate Panel）</span><br><span class="line">        └── 每帧 ActiveTimer: 3D WorldPos → 2D ScreenPos（ProjectWorldLocationToScreen）</span><br><span class="line">              ├── 在屏幕内 → 显示图标</span><br><span class="line">              └── 在屏幕外 → Clamp + 旋转箭头指向屏幕外方向</span><br></pre></td></tr></table></figure>
+
+<p>为什么用纯 Slate 而非 UMG？</p>
+<ul>
+<li>性能：ActorCanvas 每帧遍历所有指示器做 3D→2D 投影。如果用 UMG Widget，每个指示器一个 Widget 对象 → 大量创建&#x2F;销毁开销</li>
+<li><code>FUserWidgetPool</code> 池化：即使只在 Slate 层，Widget 实例仍然从池中获取和归还</li>
+<li><code>SActorCanvas</code> 直接处理 Slate 绘制——无 UMG 开销</li>
+</ul>
+<hr>
+<h2 id="七，GameFeatureAction-AddWidgets：两种注入模式"><a href="#七，GameFeatureAction-AddWidgets：两种注入模式" class="headerlink" title="七，GameFeatureAction_AddWidgets：两种注入模式"></a>七，GameFeatureAction_AddWidgets：两种注入模式</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">UGameFeatureAction_AddWidgets &#123;</span><br><span class="line">    <span class="comment">// 模式 1: Layout 模式 — 向 Layer Stack 推入整个 HUD Layout</span></span><br><span class="line">    FLyraHUDLayoutRequest Layout;</span><br><span class="line">    <span class="comment">// → AddWidgets(TAG(&quot;UI.Layer.Game&quot;), W_ShooterHUDLayout)</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 模式 2: Widget 模式 — 向 UIExtensionSubsystem 注册单个 Widget</span></span><br><span class="line">    FLyraHUDElementEntry Widgets[];</span><br><span class="line">    <span class="comment">// → RegisterExtension(TAG(&quot;HUD.Slot.QuickBar&quot;), W_QuickBar)</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>Layout 模式 &#x3D; “这个 GameFeature 提供一整套 HUD”（如 ShooterCore 的 <code>W_ShooterHUDLayout</code>）。<br>Widget 模式 &#x3D; “这个 GameFeature 向现有 HUD 追加一个部件”（如 DLC 武器添加专属弹药计数器）。</p>
+<p><strong>两者可以组合</strong>——ShooterCore ActionSet 同时使用 Layout（推入 HUD Layout）和 Widget（注册 QuickBar&#x2F;Reticle 等部件）。</p>
+<hr>
+<h2 id="八，全系列回顾"><a href="#八，全系列回顾" class="headerlink" title="八，全系列回顾"></a>八，全系列回顾</h2><table>
+<thead>
+<tr>
+<th>篇</th>
+<th>系统</th>
+<th>核心思想</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td>架构哲学</td>
+<td>薄 Actor + 厚 Component + GameFeature + Experience</td>
+</tr>
+<tr>
+<td>二</td>
+<td>Experience</td>
+<td>DataAsset 配方表替代 GameMode 子类</td>
+</tr>
+<tr>
+<td>三</td>
+<td>Character</td>
+<td>InitState 状态机替代 BeginPlay 时序</td>
+</tr>
+<tr>
+<td>四</td>
+<td>GAS</td>
+<td>五大封装：AbilitySet &#x2F; InputTag &#x2F; ActivationGroup &#x2F; Global &#x2F; ExperiencePipe</td>
+</tr>
+<tr>
+<td>五</td>
+<td>Equipment</td>
+<td>Fragment 组合 + Definition&#x2F;Instance 分离 + SourceObject 反向引用</td>
+</tr>
+<tr>
+<td>六</td>
+<td>Input</td>
+<td>GameplayTag 中介解耦按键绑定与能力激活</td>
+</tr>
+<tr>
+<td>七</td>
+<td>网络</td>
+<td>分层解耦 + ReplicationGraph 默认禁用 + FastShared 独立带宽</td>
+</tr>
+<tr>
+<td>八</td>
+<td>UI</td>
+<td>GameplayTag 发布&#x2F;订阅 + CommonUI 多层级 Stack + 异步注入</td>
+</tr>
+</tbody></table>
+<p>Lyra 在所有这些系统中有同一个设计 DNA：数据驱动注入 + GameplayTag 中介 + 组合优于继承 + 异步不阻塞。理解这个 DNA，比记住任何具体类的 API 都重要。</p>
+<hr>
+<p><em>这是 Lyra 框架拆解系列的最后一篇。如果你对某个系统的实现细节有更深入的问题，欢迎交流。</em></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/">https://cd-cd.top/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Lyra/">Lyra</a><a class="post-meta__tags" href="/tags/Unreal/">Unreal</a><a class="post-meta__tags" href="/tags/GameplayTag/">GameplayTag</a><a class="post-meta__tags" href="/tags/UI/">UI</a><a class="post-meta__tags" href="/tags/CommonUI/">CommonUI</a><a class="post-meta__tags" href="/tags/UIExtension/">UIExtension</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/08/11/combat-design-botw-emergent-combat/" title="【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</div></div><div class="info-2"><div class="info-item-1">一部没有”战斗系统”的战斗系统传统动作游戏的战斗系统，更像是一套预设的行为树——设计师提前想好玩家能做什么、敌人会怎么响应，然后把这些规则写成代码。 《旷野之息》走了完全相反的路。 它没有给战斗单独设计一套系统。它只是搭建了一个物理引擎和一个化学引擎，然后把环境、怪物、道具全部暴露在这两个引擎的规则之下。战斗玩法是涌现出来的——它来自玩家利用引擎规则的创造性组合，而非设计师的预设编排。 这篇文章试图拆解这个涌现式沙盒在战斗场景下究竟是怎么运作的，以及它给战斗设计带来了怎样不同的思考方式。  一、双引擎驱动的涌现式交互旷野之息战斗的”无限解法”，建立在一个基础的架构决策之上：物理引擎和化学引擎被放在了战斗系统的核心位置——所有的战斗交互都建立在这两个引擎的规则之上。 1.1 物理引擎：静止器作为动能储存装置希卡之石的”静止器（Stasis）”是最典型的例子。 从玩家视角看，Stasis 是一个”让敌人不能动”的控制技能。但从底层逻辑来看，它是一个动能储存与矢量释放装置：  对目标使用 Stasis → 目标冻结，期间所有施加的力被累积 Stasis 解除 → 累积的动能瞬间释放，目...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/" title="【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架（本文）   八 UI 系统    一句话Lyra 的网络同步架构不是”用一套方案解决所有问题”——它构建了四层分层协作体系，从底层的 Iris 序列化到上层的 VerbMessage 消息广播，每一层解决一个粒度的同步需求。一个值得注意的设计决策：ReplicationGraph 默认禁用——先跑起来，性能瓶颈出现时再逐层启用优化。  一，五层同步架构1234567891011Gameplay 层:  UPROPERTY(Replicated) / FFastArray / RPC   ↓          基础同步原语 —— 简单的 float/HUD 走属性，数组走 FastArray，一次性事件走 RPC消息层:       FLyraVerbMessage（FFastArray + GameplayMessageSubsy...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/08/10/Lyra-04-GAS%E9%9B%86%E6%88%90%E5%B1%82/" title="【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层（本文）   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Lyra 的 GAS 层不是简单的”使用”原生 GameplayAbilitySystem——它用五个封装层将 GAS 改造成完全 DataAsset 驱动、GameplayTag 中介、模块化注入的子系统。同一个 ALyraCharacter 在不同 Experience 中呈现完全不同的能力组合，这一切不需要写一行硬编码的 GiveAbility()。  一，与标准 GAS 的核心差异标准 GAS 的做法12345678910// 传统 UE：在 Actor 构造中硬编码所有能力AMyCharacter::AMyCharacter() &#123;    ASC = CreateDefaultSubobject&lt;UAbilitySystemComponent&gt;(&quot;A...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-06-Input%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统（本文）   七 网络同步框架   八 UI 系统    一句话Lyra 在 UE Enhanced Input 之上增加了一个GameplayTag 路由层——InputConfig 把按键映射为语义 Tag，AbilitySet 把 Tag 关联到具体 GA，运行时 ASC 通过 Tag 匹配完成”按键 → 能力”的路由。这个中间层是 Lyra 模块化架构的”胶水”——没有它，GameFeature 的热加载&#x2F;卸载在输入层就卡死了。  一，标准 Enhanced Input 的问题标准做法123// 直接绑定：InputAction 指针 → Callback 函数EnhancedInputComponent-&gt;BindAction(IA_Fire, ETriggerEvent::Triggered,     this, &amp;A...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-02-Experience%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统（本文）   三 Character 组件体系与 InitState 状态机   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话Experience 是一张”玩法配方表”——它用一个 DataAsset 回答了”这场游戏玩什么”：激活哪些 GameFeature 插件、执行哪些初始化动作、玩家用什么样的 Pawn。  一，问题：GameMode 子类为何不够在 Standard UE 中，为不同模式创建不同的 AGameModeBase 子类是标准做法： 12345// 传统方案：每增加一个模式 = 一个新类AGameModeBase  ├── AGameMode_TDM        → PawnClass = B_Hero_TDM, HUDClass = B_HUD_TDM  ├── AGameMode_CP         → PawnClass = B_Hero_CP,  HUD...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-01-%E6%9E%B6%E6%9E%84%E5%93%B2%E5%AD%A6%E6%80%BB%E8%A7%88/" title="【技术探索】Lyra 框架拆解（一）：架构哲学总览 —— 薄 Actor + 厚 Component + GameFeature 插件化"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（一）：架构哲学总览 —— 薄 Actor + 厚 Component + GameFeature 插件化</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览（本文）   二 Experience 系统：玩法配方表   三 Character 组件体系与 InitState 状态机   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统    一句话理解 LyraLyra 不是”一个游戏”，而是一套”做游戏的游戏”——它是 Epic 在 UE5 时代给模块化多人游戏的参考答案。它的核心命题是：  如何在不为每个游戏模式写一个 AGameMode 子类的前提下，让同一个 ALyraCharacter 在射击模式、探索模式、TopDown 模式下呈现完全不同的能力组合？  Lyra 的答案是四个字：数据驱动注入。C++ 提供能力框架，DataAsset 定义具体配方，GameFeature 插件负责物理隔离与按需加载。  一，四层架构全景图12345678910111213141516171819202122232425262728293031323334┌─────────────────────...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-07-%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/" title="【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-10</div><div class="info-item-2">【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架（本文）   八 UI 系统    一句话Lyra 的网络同步架构不是”用一套方案解决所有问题”——它构建了四层分层协作体系，从底层的 Iris 序列化到上层的 VerbMessage 消息广播，每一层解决一个粒度的同步需求。一个值得注意的设计决策：ReplicationGraph 默认禁用——先跑起来，性能瓶颈出现时再逐层启用优化。  一，五层同步架构1234567891011Gameplay 层:  UPROPERTY(Replicated) / FFastArray / RPC   ↓          基础同步原语 —— 简单的 float/HUD 走属性，数组走 FastArray，一次性事件走 RPC消息层:       FLyraVerbMessage（FFastArray + GameplayMessageSubsy...</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-%E6%A1%86%E6%9E%B6/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-14</div><div class="info-item-2">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B3%BB%E5%88%97%E5%AF%BC%E8%88%AA"><span class="toc-text">系列导航</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="toc-text">一句话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%EF%BC%8C%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%9B%B4%E6%8E%A5%E7%94%A8-UMG-HUD%EF%BC%9F"><span class="toc-text">一，为什么不直接用 UMG HUD？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%EF%BC%8C%E5%9B%9B%E5%B1%82%E5%88%86%E5%B1%82%E6%9E%B6%E6%9E%84"><span class="toc-text">二，四层分层架构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%B5%81"><span class="toc-text">数据流</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%EF%BC%8CUIExtensionSubsystem%EF%BC%9A%E5%8F%91%E5%B8%83-%E8%AE%A2%E9%98%85%E5%BC%95%E6%93%8E"><span class="toc-text">三，UIExtensionSubsystem：发布&#x2F;订阅引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E7%89%B9%E6%80%A7"><span class="toc-text">关键特性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%EF%BC%8CCommonUI-%E7%9A%84%E5%93%B2%E5%AD%A6%EF%BC%9AUI-%E6%98%AF%E7%8E%A9%E5%AE%B6%E7%9A%84%E7%A7%81%E6%9C%89%E8%B4%A2%E4%BA%A7"><span class="toc-text">四，CommonUI 的哲学：UI 是玩家的私有财产</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E5%B1%82%E7%BA%A7-Stack-%E8%87%AA%E5%8A%A8%E8%BE%93%E5%85%A5%E6%A8%A1%E5%BC%8F"><span class="toc-text">多层级 Stack + 自动输入模式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%EF%BC%8CULyraActivatableWidget%EF%BC%9A%E5%A3%B0%E6%98%8E%E5%BC%8F%E8%BE%93%E5%85%A5%E6%A8%A1%E5%BC%8F"><span class="toc-text">五，ULyraActivatableWidget：声明式输入模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%EF%BC%8CIndicator-%E7%B3%BB%E7%BB%9F%EF%BC%9A3D-%E4%B8%96%E7%95%8C-%E2%86%92-2D-%E5%B1%8F%E5%B9%95%E6%8A%95%E5%BD%B1"><span class="toc-text">六，Indicator 系统：3D 世界 → 2D 屏幕投影</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%EF%BC%8CGameFeatureAction-AddWidgets%EF%BC%9A%E4%B8%A4%E7%A7%8D%E6%B3%A8%E5%85%A5%E6%A8%A1%E5%BC%8F"><span class="toc-text">七，GameFeatureAction_AddWidgets：两种注入模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%EF%BC%8C%E5%85%A8%E7%B3%BB%E5%88%97%E5%9B%9E%E9%A1%BE"><span class="toc-text">八，全系列回顾</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/16/TPS动画系统实践-ABP-八向移动-Montage/" title="【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤">【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</a><time datetime="2026-08-16T04:00:00.000Z" title="Created 2026-08-16 12:00:00">2026-08-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/15/ArcaneRush-UE5-Blueprint-Portfolio/" title="【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战">【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</a><time datetime="2026-08-15T04:00:00.000Z" title="Created 2026-08-15 12:00:00">2026-08-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-框架/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</a><time datetime="2026-08-14T06:00:00.000Z" title="Created 2026-08-14 14:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</a><time datetime="2026-08-14T04:00:00.000Z" title="Created 2026-08-14 12:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-13T04:00:00.000Z" title="Created 2026-08-13 12:00:00">2026-08-13</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>
