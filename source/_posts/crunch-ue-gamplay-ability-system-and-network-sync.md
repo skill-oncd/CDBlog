@@ -14,6 +14,10 @@ categories:
 description: 从零搭建 UE5 第三人称动作 RPG Demo。深度复盘 Gameplay Ability System 架构设计、属性集分层、"服务器权威"网络同步模型，以及 Combo / 地面AOE / 浮空连击的技能实现。
 ---
 
+---
+
+> 📦 **源码仓库**：[github.com/skill-oncd/Crunch](https://github.com/skill-oncd/Crunch)
+
 ## 项目概览
 
 | 项 | 内容 |

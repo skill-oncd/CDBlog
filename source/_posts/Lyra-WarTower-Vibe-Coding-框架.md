@@ -16,6 +16,10 @@ categories:
 description: 基于 Lyra + Claude Code 构建的 21 智能体 UE5 开发网络。通过三层抽象模型（Concept→Order→REQ）、MCP 编辑器直连、双清单质量体系与流程 Bug 反馈闭环，探索 AI 辅助游戏开发的工程化边界。已产出完整的 Souls-like 战斗系统（6 GA + 5 AttributeSet）。
 ---
 
+---
+
+> 📦 **源码仓库**：[github.com/skill-oncd/Lyra-WarTower](https://github.com/skill-oncd/Lyra-WarTower)
+
 ## 项目概览
 
 | 项 | 内容 |

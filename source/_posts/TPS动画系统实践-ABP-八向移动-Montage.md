@@ -48,6 +48,10 @@ ABP_MyCharacter
 └── Post Process Anim BP          ← Control Rig Foot IK
 ```
 
+![Locomotion State Machine](https://cd-cd.top/images/tps-locomotion-state-machine.jpg)
+
+*Locomotion 状态机全景：Idle 作为 Hub，所有移动状态均回到 Idle；TurnInPlace 处理原地转身；IdleToWalk/IdleToRun 等过渡动画保证状态切换平滑。*
+
 ### 数据来源：C++ → Anim BP
 
 动画蓝图本身不持有数据，依赖 C++ Character 层每帧计算后传入：
@@ -66,6 +70,10 @@ Anim BP 的 Event Graph 中做方向计算：
 - bIsCrouching = `CharacterMovement.IsCrouching()`
 - bIsInAir = `CharacterMovement.IsFalling()`
 - WeaponType = 从 `BaseGun::GetWeaponType()` 取值，决定武器动画分支
+
+![AnimGraph 主输出流](https://cd-cd.top/images/tps-animgraph-main.jpg)
+
+*AnimGraph 主输出流：Crouch/WalkRun 两路状态机经 Blend Poses by bool 汇合，通过 DodgeSlot 插槽预留闪避动画叠加位，最终经 LocalMotion 输出给骨骼网格体。*
 
 ---
 
@@ -164,6 +172,10 @@ Final Animation Pose
 - `Blend Poses by Enum` — 按 `EWeaponAnimType` 枚举切换手枪/步枪动画集
 - 每个武器分支内部再用 `BlendSpace (AimOffset)` 处理 9 方向瞄准
 
+![武器瞄准偏移与上半身分层混合](https://cd-cd.top/images/tps-aim-offset-pistol.jpg)
+
+*武器瞄准偏移系统：AO_Aim_Pistol 接收 Yaw/Pitch 输入对基础持枪动画做 AimOffset 旋转；通过 Layered Blend Per Bone（Branch Filter = Spine_01）将瞄准层叠加到 LocalMotion 下半身上，实现"上半身瞄准 + 下半身移动"的分离。*
+
 ### 八向移动中遇到过的问题
 
 | 问题 | 原因 | 解决 |
@@ -178,6 +190,10 @@ Final Animation Pose
 ## 三、Animation Montage 的搭建步骤
 
 Montage 用于"一次性动作"——开火、换弹、闪避、近战。它是插播式的，播完自动退出，不会影响 Locomotion 状态机。
+
+![Montage 插槽集成](https://cd-cd.top/images/tps-ao-unaim-punchslot.jpg)
+
+*AO_UnAim + PunchSlot 链路：基础 LocalMotion 经 AO_UnAim 做非瞄准态偏移修正后，通过 PunchSlot 插槽预留近战动画叠加位——当 PlaySlotAnimationAsDynamicMontage("PunchSlot") 触发时，拳击 Montage 会在此位置插入播放。*
 
 ### Step 1：创建 Montage 资产
 
