@@ -1,6 +1,6 @@
 ---
 title: "【技术探索】Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表"
-date: 2026-08-10 13:00:00
+date: 2026-08-06 16:30:00
 tags:
   - Lyra
   - Unreal

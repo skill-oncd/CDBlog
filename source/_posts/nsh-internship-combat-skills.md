@@ -1,6 +1,6 @@
 ---
 title: "【DEMO展示】实习期间制作的部分技能展示（可外放）"
-date: 2026-08-17 12:00:00
+date: 2026-08-10 18:00:00
 tags:
   - Portfolio
   - CombatDesign
@@ -17,15 +17,15 @@ description: 实习期间参与设计的两个战斗技能实机片段，已随�
 
 ---
 
-## 技能一：反击·双刀
+## 反击·双刀（1分08秒）
 
-<iframe src="//player.bilibili.com/player.html?bvid=BV1oLjA62Egf&t=67&high_quality=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" width="100%" height="480" style="border-radius:8px"></iframe>
+<iframe src="//player.bilibili.com/player.html?bvid=BV1oLjA62Egf&t=68&high_quality=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" width="100%" height="480" style="border-radius:8px"></iframe>
 
 ---
 
-## 技能二：承影追击·双刀
+## 承影追击·双刀（1分22秒）
 
-<iframe src="//player.bilibili.com/player.html?bvid=BV1oLjA62Egf&t=83&high_quality=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" width="100%" height="480" style="border-radius:8px"></iframe>
+<iframe src="//player.bilibili.com/player.html?bvid=BV1oLjA62Egf&t=82&high_quality=1&autoplay=0" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" width="100%" height="480" style="border-radius:8px"></iframe>
 
 ---
 

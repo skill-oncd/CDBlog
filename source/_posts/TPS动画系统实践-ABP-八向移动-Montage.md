@@ -1,6 +1,6 @@
 ---
 title: "【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤"
-date: 2026-08-16 12:00:00
+date: 2026-08-06 12:00:00
 tags:
   - Unreal
   - UE5

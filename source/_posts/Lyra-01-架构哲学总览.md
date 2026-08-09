@@ -1,6 +1,6 @@
 ---
 title: "【技术探索】Lyra 框架拆解（一）：架构哲学总览 —— 薄 Actor + 厚 Component + GameFeature 插件化"
-date: 2026-08-10 12:00:00
+date: 2026-08-06 16:00:00
 tags:
   - Lyra
   - Unreal
