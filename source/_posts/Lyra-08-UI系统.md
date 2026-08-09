@@ -1,6 +1,6 @@
 ---
-title: "Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入"
-date: 2026-08-06 19:30:00
+title: "【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入"
+date: 2026-08-10 19:00:00
 tags:
   - Lyra
   - Unreal
@@ -9,6 +9,7 @@ tags:
   - UIExtension
   - GameplayTag
 categories:
+  - Portfolio
   - Lyra 框架拆解
 description: 拆解 Lyra 的四层 UI 架构——CommonUI 输入路由→CommonGame 多层级 Stack→UIExtension 发布/订阅引擎→LyraGame 专属控件。重点剖析 GameplayTag 驱动的 UI 注入如何让 GameFeature 插件的 HUD 部件完全解耦，以及 CommonUI 为什么比纯 UMG 更适合多人分屏场景。
 ---

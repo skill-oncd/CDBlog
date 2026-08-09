@@ -1,6 +1,6 @@
 ---
-title: "Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学"
-date: 2026-08-06 17:30:00
+title: "【技术探索】Lyra 框架拆解（四）：GAS 集成层 —— 五大封装与 DataAsset 驱动哲学"
+date: 2026-08-10 15:00:00
 tags:
   - Lyra
   - Unreal
@@ -9,6 +9,7 @@ tags:
   - GameplayAbility
   - GameplayTag
 categories:
+  - Portfolio
   - Lyra 框架拆解
 description: Lyra 在 UE 原生 GAS 之上构建的五大封装层——AbilitySet 打包、InputTag 桥接、ActivationGroup 互斥、GlobalAbility 系统、Experience 注入管道——以及"DataAsset 驱动"如何替代"代码硬编码"。
 ---

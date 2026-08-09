@@ -21,7 +21,7 @@ menu:
   首页: / || fas fa-home
   关于: /about/ || fas fa-user
   游戏经历: /gaming/ || fas fa-gamepad
-  作品集: /categories/作品集/ || fas fa-briefcase
+  作品集: /portfolio/ || fas fa-briefcase
   归档: /archives/ || fas fa-archive
   分类: /categories/ || fas fa-folder
 
@@ -294,7 +294,7 @@ aside:
       link: https://github.com/skill-oncd
   card_announcement:
     enable: true
-    content: 📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>⚔️ Thinking in cooldowns, shipping on countdowns.
+    content: "📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns."
   card_recent_post:
     enable: true
     # If set 0 will show all

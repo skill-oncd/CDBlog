@@ -1,6 +1,6 @@
 ---
-title: "Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"
-date: 2026-08-06 18:30:00
+title: "【技术探索】Lyra 框架拆解（六）：Input 系统 —— GameplayTag 作为输入与能力的胶水层"
+date: 2026-08-10 17:00:00
 tags:
   - Lyra
   - Unreal
@@ -9,6 +9,7 @@ tags:
   - GAS
   - Input
 categories:
+  - Portfolio
   - Lyra 框架拆解
 description: Lyra 在 UE Enhanced Input 之上构建的三层抽象——物理输入→GameplayTag 路由→GAS 激活——拆解 InputConfig DataAsset 如何用 GameplayTag 彻底解耦按键绑定与能力激活，以及 GameFeatureAction 的两阶段输入注入机制。
 ---

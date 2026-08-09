@@ -1,7 +1,14 @@
 extends includes/layout.pug
 
 block content
-  if theme.category_ui == 'index'
+  - var catName = page.category && page.category.name ? page.category.name : page.category
+  if catName == 'Portfolio'
+    meta(http-equiv="refresh" content="0;url=/portfolio/")
+    script.
+      location.href = '/portfolio/'
+    p(style="text-align:center;padding:3rem")
+      a(href="/portfolio/") 作品集已迁移，点击前往新页面
+  else if theme.category_ui == 'index'
     include ./includes/mixins/indexPostUI.pug
     +indexPostUI
   else

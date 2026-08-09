@@ -1,6 +1,6 @@
 ---
-title: "Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机"
-date: 2026-08-06 17:00:00
+title: "【技术探索】Lyra 框架拆解（三）：Character 组件体系与 InitState 状态机"
+date: 2026-08-10 14:00:00
 tags:
   - Lyra
   - Unreal
@@ -9,6 +9,7 @@ tags:
   - ModularGameplay
   - Component
 categories:
+  - Portfolio
   - Lyra 框架拆解
 description: Lyra Character 的三位一体架构——薄 Actor（~500行）、厚 Component（按职责拆分）、InitState 状态机（GameplayTag 驱动）——拆解 ALyraCharacter 的设计意图、ExtensionHandler 动态注入、以及从 Spawn 到 Respawn 的 9 阶段生命周期。
 ---

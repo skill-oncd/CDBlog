@@ -1,6 +1,6 @@
 ---
-title: "聊聊 MMO 战斗设计——一些不太成熟的笔记"
-date: 2026-08-07 12:00:00
+title: "【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记"
+date: 2026-08-09 18:00:00
 tags:
   - GameDesign
   - MMO
@@ -8,6 +8,7 @@ tags:
   - 战斗系统
   - 游戏策划
 categories:
+  - Portfolio
   - GameDesign
 description: 关于 MMO 战斗系统中反馈、规则、节奏、操作价值与受众适配几个方向上的零散思考，记录一些个人觉得有意思的观察。
 ---

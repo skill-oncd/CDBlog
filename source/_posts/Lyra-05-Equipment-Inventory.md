@@ -1,6 +1,6 @@
 ---
-title: "Lyra 框架拆解（五）：Equipment & Inventory —— Fragment 模式与三段式装备架构"
-date: 2026-08-06 18:00:00
+title: "【技术探索】Lyra 框架拆解（五）：Equipment & Inventory —— Fragment 模式与三段式装备架构"
+date: 2026-08-10 16:00:00
 tags:
   - Lyra
   - Unreal
@@ -10,6 +10,7 @@ tags:
   - Fragment
   - Data-Driven
 categories:
+  - Portfolio
   - Lyra 框架拆解
 description: 拆解 Lyra 的三段式装备/物品架构——Inventory（数据容器）、QuickBar（策略桥接）、Equipment（能力授予）——以及 Definition/Instance 分离、Fragment 组合模式、SourceObject 反向引用链的优雅设计。
 ---

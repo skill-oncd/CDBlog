@@ -1,0 +1,53 @@
+// Portfolio page header banner
+body.type-portfolio
+  #page-header.not-home-page
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1a3350 100%) !important
+
+    #page-site-info
+      #site-title
+        font-size: 2.5rem
+        letter-spacing: .06em
+
+  #rightside
+    opacity: .8
+    transform: translate(-58px, 0)
+
+// Portfolio — per-group timeline colors
+$demo = #6366f1
+$design = #0ea5e9
+$analysis = #f59e0b
+$tech = #10b981
+
+.portfolio-group
+  .article-sort-title:before
+    border-color: currentColor !important
+
+  .article-sort-title:after
+    background: currentColor !important
+
+  .article-sort
+    border-left-color: currentColor !important
+
+  .article-sort-item:before
+    border-color: currentColor !important
+
+  &.demo-group
+    color: $demo
+
+  &.design-group
+    color: $design
+
+  &.analysis-group
+    color: $analysis
+
+  &.tech-group
+    color: $tech
+
++maxWidth768()
+  body.type-portfolio
+    #page-header.not-home-page #site-title
+      font-size: 1.8rem
+
+    #rightside
+      right: 0
+      transform: translate(-52px, 0)

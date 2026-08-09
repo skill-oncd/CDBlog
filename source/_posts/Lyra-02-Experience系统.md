@@ -1,6 +1,6 @@
 ---
-title: "Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表"
-date: 2026-08-06 16:30:00
+title: "【技术探索】Lyra 框架拆解（二）：Experience 系统 —— 玩法配方表"
+date: 2026-08-10 13:00:00
 tags:
   - Lyra
   - Unreal
@@ -9,6 +9,7 @@ tags:
   - DataAsset
   - ModularGameplay
 categories:
+  - Portfolio
   - Lyra 框架拆解
 description: 深度拆解 Lyra Experience 系统的三层结构（配方-原料-料理步骤）、7 阶段加载状态机、三级委托优先级、PIE 多会话 FILO 引用计数仲裁，以及为什么一张 DataAsset 能替代所有 GameMode 子类。
 ---

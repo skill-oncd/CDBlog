@@ -1,0 +1,55 @@
+- var demos = []
+- var design = []
+- var analysis = []
+- var tech = []
+
+each post in site.posts.sort('date', -1).toArray()
+  - var inPortfolio = false
+  if post.categories && post.categories.length
+    each cat in post.categories.toArray()
+      if cat.name === 'Portfolio'
+        - inPortfolio = true
+  if inPortfolio
+    - var t = post.title || ''
+    if t.indexOf('【DEMO展示】') === 0
+      - demos.push(post)
+    else if t.indexOf('【设计思路】') === 0
+      - design.push(post)
+    else if t.indexOf('【分析反拆】') === 0
+      - analysis.push(post)
+    else if t.indexOf('【技术探索】') === 0
+      - tech.push(post)
+
+mixin renderGroup(posts, groupTitle, colorClass)
+  if posts.length
+    .portfolio-group(class=colorClass)
+      .article-sort-title= groupTitle
+      .article-sort
+        - let year
+        each article in posts
+          - const tempYear = date(article.date, 'YYYY')
+          if tempYear !== year
+            - year = tempYear
+            .article-sort-item.year= year
+          - var noCoverClass = (article.cover === false || !theme.cover.archives_enable) ? 'no-article-cover' : ''
+          .article-sort-item(class=noCoverClass)
+            if article.cover && theme.cover.archives_enable
+              a.article-sort-item-img(href=url_for(article.path) title=article.title)
+                if article.cover_type === 'img'
+                  img(src=url_for(article.cover) alt=article.title onerror="this.onerror=null;this.src='" + url_for(theme.error_img.post_page) + "'")
+                else
+                  div(style="background: " + article.cover)
+            .article-sort-item-info
+              .article-sort-item-time
+                i.far.fa-calendar-alt
+                time.post-meta-date-created(datetime=date_xml(article.date) title=_p('post.created') + ' ' + full_date(article.date))= date(article.date, config.date_format)
+              a.article-sort-item-title(href=url_for(article.path) title=article.title)= article.title
+
+#archive
+  +renderGroup(demos, 'DEMO展示', 'demo-group')
+  +renderGroup(design, '设计思路', 'design-group')
+  +renderGroup(analysis, '分析反拆', 'analysis-group')
+  +renderGroup(tech, '技术探索', 'tech-group')
+
+  if !demos.length && !design.length && !analysis.length && !tech.length
+    p.empty-hint(style="text-align:center;padding:3rem 0;color:var(--card-meta)") 暂无作品集文章。

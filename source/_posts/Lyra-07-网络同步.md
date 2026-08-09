@@ -1,6 +1,6 @@
 ---
-title: "Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径"
-date: 2026-08-06 19:00:00
+title: "【技术探索】Lyra 框架拆解（七）：网络同步框架 —— Iris + ReplicationGraph + FastShared 路径"
+date: 2026-08-10 18:00:00
 tags:
   - Lyra
   - Unreal
@@ -9,6 +9,7 @@ tags:
   - Iris
   - FFastArraySerializer
 categories:
+  - Portfolio
   - Lyra 框架拆解
 description: 拆解 Lyra 的四层网络同步体系——Iris 传输层、ReplicationGraph 六节点路由、SharedRepMovement 压缩、VerbMessage 消息系统——以及"分层解耦 + 默认禁用"的设计哲学。
 ---
