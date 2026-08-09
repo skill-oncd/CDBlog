@@ -7,13 +7,14 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://cd-cd.top/img/avatar.jpg">
 <meta property="article:published_time" content="2026-08-11T04:00:00.000Z">
-<meta property="article:modified_time" content="2026-08-09T17:24:51.584Z">
+<meta property="article:modified_time" content="2026-08-09T17:33:22.169Z">
 <meta property="article:author" content="CD">
 <meta property="article:tag" content="BOTW">
 <meta property="article:tag" content="CombatDesign">
 <meta property="article:tag" content="EmergentGameplay">
 <meta property="article:tag" content="GameDesign">
 <meta property="article:tag" content="Nintendo">
+<meta property="article:tag" content="Portfolio">
 <meta property="article:tag" content="Zelda">
 <meta property="article:tag" content="元素反应">
 <meta property="article:tag" content="物理引擎">
@@ -25,7 +26,7 @@
   "url": "https://cd-cd.top/2026/08/11/combat-design-botw-emergent-combat/",
   "image": "https://cd-cd.top/img/avatar.jpg",
   "datePublished": "2026-08-11T04:00:00.000Z",
-  "dateModified": "2026-08-09T17:24:51.584Z",
+  "dateModified": "2026-08-09T17:33:22.169Z",
   "author": [
     {
       "@type": "Person",
@@ -208,125 +209,321 @@
   isHighlightShrink: false,
   isToc: true,
   pageType: 'post'
-}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-11T04:00:00.000Z" title="Created 2026-08-11 12:00:00">2026-08-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T17:24:51.584Z" title="Updated 2026-08-10 01:24:51">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1/">GameDesign</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="一部没有”战斗系统”的战斗系统"><a href="#一部没有”战斗系统”的战斗系统" class="headerlink" title="一部没有”战斗系统”的战斗系统"></a>一部没有”战斗系统”的战斗系统</h2><p>传统动作游戏的战斗系统，更像是一套<strong>预设的行为树</strong>——设计师提前想好玩家能做什么、敌人会怎么响应，然后把这些规则写成代码。</p>
-<p>《旷野之息》走了完全相反的路。</p>
-<p>它没有给战斗单独设计一套系统。它只是搭建了一个物理引擎和一个化学引擎，然后把环境、怪物、道具全部暴露在这两个引擎的规则之下。<strong>战斗玩法是涌现出来的——它来自玩家利用引擎规则的创造性组合，而非设计师的预设编排。</strong></p>
-<p>这篇文章试图拆解这个涌现式沙盒在战斗场景下究竟是怎么运作的，以及它给战斗设计带来了怎样不同的思考方式。</p>
-<hr>
-<h2 id="一、双引擎驱动的涌现式交互"><a href="#一、双引擎驱动的涌现式交互" class="headerlink" title="一、双引擎驱动的涌现式交互"></a>一、双引擎驱动的涌现式交互</h2><p>旷野之息战斗的”无限解法”，建立在一个基础的架构决策之上：<strong>物理引擎和化学引擎被放在了战斗系统的核心位置——所有的战斗交互都建立在这两个引擎的规则之上</strong>。</p>
-<h3 id="1-1-物理引擎：静止器作为动能储存装置"><a href="#1-1-物理引擎：静止器作为动能储存装置" class="headerlink" title="1.1 物理引擎：静止器作为动能储存装置"></a>1.1 物理引擎：静止器作为动能储存装置</h3><p>希卡之石的”静止器（Stasis）”是最典型的例子。</p>
-<p>从玩家视角看，Stasis 是一个”让敌人不能动”的控制技能。但从底层逻辑来看，它是一个<strong>动能储存与矢量释放装置</strong>：</p>
-<ol>
-<li>对目标使用 Stasis → 目标冻结，期间所有施加的力被累积</li>
-<li>Stasis 解除 → 累积的动能瞬间释放，目标沿合力方向飞出</li>
-<li>如果释放方向的终点是深水或岩浆 → <strong>触发”即死判定”，完全绕过血量</strong></li>
-</ol>
-<p>一个高血量、高护甲的怪物——正常打可能要五分钟——可以被玩家在一个巧妙的 Stasis 操作之后，直接飞出悬崖或溺死在深水里。</p>
-<p>Stasis 在这里扮演的角色是<strong>用物理规则改写战斗结果</strong>——它绕开了传统的数值对抗，直接触及即死判定。</p>
-<p>设计启示：<strong>当一个技能直接操作底层物理参数时，它的策略深度就脱离了设计师的预设，进入了玩家的创造力领域。这比单纯的数值改变更有延展性。</strong></p>
-<h3 id="1-2-化学引擎：材质接口-元素状态机"><a href="#1-2-化学引擎：材质接口-元素状态机" class="headerlink" title="1.2 化学引擎：材质接口 + 元素状态机"></a>1.2 化学引擎：材质接口 + 元素状态机</h3><p>旷野之息的化学引擎基于一个简单的面向对象设计：<strong>为环境中的每个材质赋予属性标签（可燃、导电、可冻结等），然后让元素伤害去匹配这些标签</strong>。</p>
-<p>举几个实际战斗中的应用：</p>
-<ul>
-<li><strong>火焰点燃草地 → 产生上升热气流 → 打开滑翔伞 → 升空进入”林克时间”</strong>。一次点火动作，直接带来了一个<strong>战术维度的跃迁</strong>（从地面战变成了空对地）——这远远超出了”造成 N 点伤害”的意义</li>
-<li><strong>冰冻元素命中怪物 → 怪物材质属性改变 → 碎冰提供 3 倍伤害乘子</strong>。冰冻不只是硬控，它在底层重写了目标的物理抗性</li>
-<li><strong>雷元素攻击 → +20 伤害 + 缴械（武器掉落）</strong>。雷电的”额外效果”来自雷元素标签与”金属武器”材质标签的底层交互——这是引擎规则的自然产物，区别于手写技能表的硬编码逻辑</li>
-</ul>
-<p>设计启示：<strong>当你把”技能效果”从硬编码改为”元素标签 × 材质标签”的交互矩阵时，内容量会随标签数量呈组合式增长——但你不需要为每个组合单独写逻辑。</strong></p>
-<hr>
-<h2 id="二、战斗经济学：乘子叠加与耐久度博弈"><a href="#二、战斗经济学：乘子叠加与耐久度博弈" class="headerlink" title="二、战斗经济学：乘子叠加与耐久度博弈"></a>二、战斗经济学：乘子叠加与耐久度博弈</h2><p>如果说物理&#x2F;化学引擎是旷野之息战斗的”广度”来源，那它的数值模型就是”深度”来源。</p>
-<h3 id="2-1-极高收益的伤害乘子——鼓励寻找最优解"><a href="#2-1-极高收益的伤害乘子——鼓励寻找最优解" class="headerlink" title="2.1 极高收益的伤害乘子——鼓励寻找最优解"></a>2.1 极高收益的伤害乘子——鼓励寻找最优解</h3><p>旷野之息的平 A 伤害非常克制。但它的伤害乘子设置得非常高：</p>
-<table>
-<thead>
-<tr>
-<th>攻击方式</th>
-<th>伤害乘子</th>
-<th>适用场景</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>潜行偷袭（Sneakstrike）</td>
-<td><strong>8 倍</strong></td>
-<td>资源匮乏环境（剑之试炼）的越级击杀核心</td>
-</tr>
-<tr>
-<td>碎冰</td>
-<td><strong>3 倍</strong></td>
-<td>冰元素战斗体系</td>
-</tr>
-<tr>
-<td>爆头</td>
-<td><strong>2 倍</strong></td>
-<td>远程精准射击</td>
-</tr>
-<tr>
-<td>武器碎裂投掷</td>
-<td><strong>2 倍</strong></td>
-<td>耐久耗尽的最后利用</td>
-</tr>
-<tr>
-<td>元素伤害（冰&#x2F;火&#x2F;雷）</td>
-<td><strong>+10 &#x2F; +10 &#x2F; +20 固定值</strong></td>
-<td>无视护甲的真伤</td>
-</tr>
-</tbody></table>
-<p>重点看这个 8 倍潜行偷袭。在剑之试炼这种剥夺了所有装备积累的极限环境下，它就是<strong>设计师给玩家预留的核心解法</strong>。玩家被逼着去思考：如何利用地形、AI 巡逻路线、食物的潜行 Buff，来实现一次 8 倍的越级击杀。</p>
-<p>这是一种精确定向的引导：设计师用极高的乘子将玩家引向特定行为，让他们在极限环境中主动挖掘系统的可能性。</p>
-<h3 id="2-2-武器耐久度经济学：DPS-vs-总理论伤害"><a href="#2-2-武器耐久度经济学：DPS-vs-总理论伤害" class="headerlink" title="2.2 武器耐久度经济学：DPS vs 总理论伤害"></a>2.2 武器耐久度经济学：DPS vs 总理论伤害</h3><p>旷野之息的武器会坏。这个设计争议很大，但从系统设计的角度来看，它引入了一个值得关注的博弈维度：</p>
-<p><strong>每一把武器同时有两个属性在博弈——DPS（面板 × 攻速）和总理论伤害（面板 × 耐久度）。</strong></p>
-<table>
-<thead>
-<tr>
-<th>武器类型</th>
-<th>攻速（秒&#x2F;击）</th>
-<th>DPS 特征</th>
-<th>总伤害特征</th>
-<th>最佳使用策略</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>单手剑</td>
-<td>~2.13</td>
-<td>中等</td>
-<td>中等</td>
-<td>可持盾，容错最高</td>
-</tr>
-<tr>
-<td>双手武器</td>
-<td>~0.83</td>
-<td>单发高，范围持续强</td>
-<td>较高</td>
-<td>蓄力大风车群怪</td>
-</tr>
-<tr>
-<td>长矛</td>
-<td>~2.50</td>
-<td>单发低但连击快</td>
-<td><strong>最低</strong>（耐久消耗大）</td>
-<td>长距离安全锁定，无限硬直压制</td>
-</tr>
-</tbody></table>
-<p>有趣的是长矛。它是全游戏 DPS 最低、总伤害最低的武器类型，但它的攻击距离和控制能力让它成了<strong>某些特定敌人的最优解</strong>——你可以把对手锁在受击硬直中无限连，它根本没机会还手。</p>
-<p>这就是武器经济学的核心逻辑：<strong>没有一把武器能在所有场景下占据绝对优势。耐久度系统强迫你在”用最好的武器打这场硬仗”和”留着它打更难的仗”之间不断做选择。</strong> 而这种选择本身就是策略深度。</p>
-<hr>
-<h2 id="三、高阶操作：状态机溢出与动画取消"><a href="#三、高阶操作：状态机溢出与动画取消" class="headerlink" title="三、高阶操作：状态机溢出与动画取消"></a>三、高阶操作：状态机溢出与动画取消</h2><p>旷野之息的战斗系统还有一个隐藏层——它同时满足普通玩家的宽容度（林克时间判定窗口非常宽松），和硬核玩家的操作上限（有大量非预期的”漏洞利用”）。</p>
-<h3 id="3-1-SBR（盾挡重置）——平地二段跳"><a href="#3-1-SBR（盾挡重置）——平地二段跳" class="headerlink" title="3.1 SBR（盾挡重置）——平地二段跳"></a>3.1 SBR（盾挡重置）——平地二段跳</h3><p>盾挡重置的核心机制是<strong>利用系统在处理动作优先级时的滞留现象</strong>：在爆炸发生的瞬间举盾，引擎判定”你在空中格挡了爆炸”，于是给你一帧的”向上动量补偿”——本来只是为了避免穿模的物理修正，却意外实现了平地二段跳。</p>
-<h3 id="3-2-TCR（雷霆突击）——跨空间位移"><a href="#3-2-TCR（雷霆突击）——跨空间位移" class="headerlink" title="3.2 TCR（雷霆突击）——跨空间位移"></a>3.2 TCR（雷霆突击）——跨空间位移</h3><p>雷霆突击利用的是内存中短暂残留的”闪避判定标记”——在闪避的特定帧内输入空中攻击指令，系统会将”闪避位移”和”空中突击位移”的矢量叠加，实现远超常规的跨空间位移。</p>
-<h3 id="3-3-为什么这些”漏洞”是好事"><a href="#3-3-为什么这些”漏洞”是好事" class="headerlink" title="3.3 为什么这些”漏洞”是好事"></a>3.3 为什么这些”漏洞”是好事</h3><p>通常我们会把”状态机溢出”理解为 Bug。但旷野之息的设计团队选择<strong>不修复</strong>它们——因为这些”漏洞”的存在，让硬核玩家有了持续挖掘的动力，也让 PvE 战斗不会因为解法穷尽而变得枯燥。</p>
-<p><strong>这是一种设计上的克制</strong>——知道什么时候该让规则松一点，给玩家的创造力和发现欲留空间。</p>
-<hr>
-<h2 id="四、极限验证：剑之试炼如何暴露系统的每一层深度"><a href="#四、极限验证：剑之试炼如何暴露系统的每一层深度" class="headerlink" title="四、极限验证：剑之试炼如何暴露系统的每一层深度"></a>四、极限验证：剑之试炼如何暴露系统的每一层深度</h2><p>剑之试炼（Trial of the Sword）DLC 是”用限制条件来展示系统深度”的一个优秀案例。</p>
-<p>它做了什么？<strong>剥夺了玩家所有的数值积累</strong>——零装备、零资源、零 Buff。把你扔进逐层递进的敌人房间，让你只能用”纯机制”杀出一条路。</p>
-<p>在这种极限环境下，旷野之息战斗系统的设计意图被充分展现出来：</p>
-<p><strong>AI 视线逻辑的”连续偷袭链”（Chain Sneakstrike）</strong>：<br>怪物从倒地爬起时，AI 寻敌脚本会强制其头部转向<strong>受击瞬间伤害传来的方向</strong>。精明的玩家可以在背刺击倒怪物后，立刻走到它正前方——怪物起身回头看原受击点时，玩家正好处于它的新后背视觉盲区，再次触发背刺。形成一个<strong>无限控杀闭环</strong>，实现零损伤跨级击杀。</p>
-<p><strong>“雷电陷阱”（判定框残留利用）</strong>：<br>在雷电大剑挥出（电荷活跃态）的瞬间丢弃武器 → 挥剑判定框未正常结束就被剥离 → 系统错误地将”带电状态”永久保留在武器上 → 配合金属武器形成闭环力场 → 制造永续的电击控制区 → 高阶怪物在毫无反抗中被麻痹至死。</p>
-<p>这两个案例说明了一点：胜利来自对系统底层规则的深刻理解。当你理解了规则，规则就会为你工作。</p>
-<hr>
-<h2 id="五、涌现式设计的三条核心原则"><a href="#五、涌现式设计的三条核心原则" class="headerlink" title="五、涌现式设计的三条核心原则"></a>五、涌现式设计的三条核心原则</h2><p>旷野之息的战斗设计给战斗策划的三条可迁移原则：</p>
-<p><strong>原则一：暴露规则，让玩家自己发明解法。</strong><br>设计”这个怪在物理和化学规则下会如何表现”，而非预设”玩家应该怎么打这个怪”。解法由玩家自己发现。</p>
-<p><strong>原则二：用底层标签替代硬编码效果。</strong><br>将”火焰”定义为”对可燃材质施加燃烧状态”的标签规则。效果的丰富度来自标签组合的矩阵匹配，不再依赖逐一手写的 case 分支。</p>
-<p><strong>原则三：给非预期交互留一些呼吸空间。</strong><br>有些状态机溢出可以不急着修掉——那些”意料之外”的交互，往往是硬核社区持续活跃的深层燃料。</p>
-<hr>
-<blockquote>
-<p>下一篇文章将从具体游戏拆解切换到设计方法论——<strong>打击感的五层模型</strong>：如何把”这手感真好”翻译成引擎里的帧级参数和工业化管线？FTG &#x2F; ACT &#x2F; ARPG &#x2F; FPS 的打击感设计重心有何不同？</p>
-</blockquote>
-</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/11/combat-design-botw-emergent-combat/">https://cd-cd.top/2026/08/11/combat-design-botw-emergent-combat/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GameDesign/">GameDesign</a><a class="post-meta__tags" href="/tags/CombatDesign/">CombatDesign</a><a class="post-meta__tags" href="/tags/Zelda/">Zelda</a><a class="post-meta__tags" href="/tags/BOTW/">BOTW</a><a class="post-meta__tags" href="/tags/EmergentGameplay/">EmergentGameplay</a><a class="post-meta__tags" href="/tags/%E7%89%A9%E7%90%86%E5%BC%95%E6%93%8E/">物理引擎</a><a class="post-meta__tags" href="/tags/%E5%85%83%E7%B4%A0%E5%8F%8D%E5%BA%94/">元素反应</a><a class="post-meta__tags" href="/tags/Nintendo/">Nintendo</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/08/12/combat-design-endfield-analysis/" title="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</div></div><div class="info-2"><div class="info-item-1">先扬后抑：为什么终末地值得写一篇文章《明日方舟：终末地》是一款设计上有许多值得讨论之处的游戏。 它在二游赛道中做了一件少见的事：把《异星工厂》式的自动化物流网络，嫁接到一个以”排轴爆发”为核心的 ARPG 战斗系统上。这两个系统的底层逻辑几乎是相反的——一个是”慢节奏、重规划”，一个是”快节奏、重反应”。将二者耦合在一起，本身就是一个值得分析的设计命题。 同时，它的一些底层数值设计和商业化路径，与核心玩法的融合之间存在可见的摩擦。 这是一篇”策划视角”的反拆，从三个层面展开分析：体验层 → 机制层 → 数值与商业化层。  一、核心玩法双引擎：基建物流 × 排轴战斗1.1 基建端：真正的自动化物流网很多二游都有”家园”——摆摆家具、种种菜。但终末地的基建是另一回事。 它的核心是管线铺设 + 物流节点优化。原料从矿场 → 传送带 → 加工车间 → 中转仓库 → 最终组装线，玩家需要像玩 Factorio 一样规划物流拓扑。这个系统的深度体现在：  空间约束：地形起伏、障碍物决定了管线的路由，不是随便拉一条直线 效率博弈：一个供应节点可以同时服务于多条产线，但产出效率会分摊 基建产物反...</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统（本文 · 终篇）    一句话Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 AHUD 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（UUIExtensionSubsystem）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。  一，为什么不直接用 UMG HUD？在传统 UE 项目中，最自然的 UI 做法是： 1234AHUD::BeginPlay() &#123;    MainWidget = CreateWidget&lt;U...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/08/12/combat-design-endfield-analysis/" title="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-12</div><div class="info-item-2">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</div></div><div class="info-2"><div class="info-item-1">先扬后抑：为什么终末地值得写一篇文章《明日方舟：终末地》是一款设计上有许多值得讨论之处的游戏。 它在二游赛道中做了一件少见的事：把《异星工厂》式的自动化物流网络，嫁接到一个以”排轴爆发”为核心的 ARPG 战斗系统上。这两个系统的底层逻辑几乎是相反的——一个是”慢节奏、重规划”，一个是”快节奏、重反应”。将二者耦合在一起，本身就是一个值得分析的设计命题。 同时，它的一些底层数值设计和商业化路径，与核心玩法的融合之间存在可见的摩擦。 这是一篇”策划视角”的反拆，从三个层面展开分析：体验层 → 机制层 → 数值与商业化层。  一、核心玩法双引擎：基建物流 × 排轴战斗1.1 基建端：真正的自动化物流网很多二游都有”家园”——摆摆家具、种种菜。但终末地的基建是另一回事。 它的核心是管线铺设 + 物流节点优化。原料从矿场 → 传送带 → 加工车间 → 中转仓库 → 最终组装线，玩家需要像玩 Factorio 一样规划物流拓扑。这个系统的深度体现在：  空间约束：地形起伏、障碍物决定了管线的路由，不是随便拉一条直线 效率博弈：一个供应节点可以同时服务于多条产线，但产出效率会分摊 基建产物反...</div></div></div></a><a class="pagination-related" href="/2026/08/09/MMO-Combat-Design-Methodology/" title="【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记</div></div><div class="info-2"><div class="info-item-1">缘起MMO 战斗设计是一个挺有意思的领域。它不像单机动作游戏那样有相对成熟的范式可以参考——精确的打击帧、客户端级停顿、逐帧调校的受击动画，这些在单机里理所当然的东西，放到网络同步、服务器校验、同屏几十人的环境下，往往就走不通了。 但也正是这些限制，让 MMO 的战斗设计有了自己的味道。下面整理了一些平时思考这个方向时觉得比较有趣的观察角度，写下来算是给自己存档，也希望能抛砖引玉。  一、反馈的诚实性：看到的和发生的是同一件事吗？MMO 战斗中有一个容易被低估的问题，我习惯叫它「反馈的诚实性」。 想象这样一个场景：你放了一个控制技能，目标怪物播放了浮空或眩晕动画，但它的攻击其实没有被打断——于是你继续站桩输出，然后莫名其妙掉了半管血。事后复盘才发现，动画归动画，逻辑归逻辑，两者从来没对齐过。 对体验的伤害，可能比”怪物太难了”要大。难，玩家可以练。但被骗，玩家会觉得这游戏不讲道理。 一个可以尝试的方向是：让画面表现跟逻辑判定保持一致。怪物看起来被控了，逻辑上就应该被控；看起来没被控，逻辑上也别硬来。这里面需要排查的边界 case 不少——不同等级的怪物、不同类型的控制效果、不同网...</div></div></div></a><a class="pagination-related" href="/2026/08/09/combat-design-three-layer-framework/" title="【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流</div></div><div class="info-2"><div class="info-item-1">一份战斗系统 GDD 的内在逻辑写战斗系统文档时，不同经验的策划写出来的文档往往存在显著差异。 经验较浅的策划可能会写：”这个技能是一记猛烈的上挑，命中后敌人浮空，手感要爽。” 有经验的策划会写：”前摇 12 帧，判定窗口 3 帧（AnimNotify_Start → AnimNotify_End），命中后播放 Montage_Launched，同时施加 GE_Float（Duration 1.2s, Gravity Scale 0.3），允许在浮空期间接入 GA_AerialCombo。” 核心差异在于：后者写的每一条，都可以直接映射到引擎里的数据或调用。前者写的是”感觉”，后者写的是”规则”。 这种从”感觉”到”规则”的转化能力，是战斗系统设计中的重要技能。而支撑这种转化的，是一套从微观到宏观的三层递进逻辑框架。  层一：微观操作循环——输入、执行与反馈这是战斗系统的”神经末梢”，决定了玩家最直接的”手感”。三个环节缺一不可： 1.1 输入响应层——爽感的起点是”可控”玩家按下攻击键 → 角色开始动作。这个链条延迟超过 66ms（约 4 帧 in 60fps），玩家大脑会感知...</div></div></div></a><a class="pagination-related" href="/2026/08/09/combat-design-supply-war-rts/" title="【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度</div></div><div class="info-2"><div class="info-item-1">RTS 的困局：一个被自己门槛杀死的品类RTS 品类有一个广为人知的矛盾：它的核心魅力（多线并发的系统调度与宏观资源博弈）和它的核心痛点（APM 门槛过高）是同源的。 星际争霸的职业选手 APM 在 300-400，相当于每秒 5-7 次有效操作。普通玩家可能在 80-120。这种情况下，RTS 的部分核心体验对普通玩家来说是”关闭的”——原因通常在于操作门槛而非策略深度。 这个问题在面试中被反复问到：”如果在今天让你做一款 RTS，你会怎么改？” 本文分享的是《补给战争》——一份把”物流网络”作为核心机制的原创 RTS 策划案。拆解它的三个核心设计：动态难度双轨系统、物流闭环经济、以及支撑千单位同屏的 ECS 架构选型。  一、核心设计哲学：把 RTS 的门槛从”手速”降回”策略”《补给战争》最根本的设计决策是：弱化微操，深化物流与宏观指令。 传统 RTS 的操作负担来自：  每个小兵需要手动控制走位 多线作战需要频繁切屏 农民的生产分配需要实时手动调整  《补给战争》的处理方式：  玩家不直接控制每个单位的走位和攻击——通过全局”指挥官面板”下达宏观指令，如”区域清剿””据点...</div></div></div></a><a class="pagination-related" href="/2026/08/12/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-12</div><div class="info-item-2">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</div></div><div class="info-2"><div class="info-item-1">一个反直觉的事实《艾尔登法环》卖出了 2800 万份。 对于一个以”难”为核心卖点、BOSS 可以三刀带走你、地图上没有任务指引、死亡还会掉光所有经验值的游戏来说——这个数字是惊人的。 按照常规的产品逻辑，”难”天然等于”小众”。法环证明了这个等式的荒谬。而荒谬的背后，藏着一套精密的战斗系统设计哲学。 本文尝试把这套哲学拆成四层来理解：底层基调 → 新增机制 → 系统深度 → 玩家心流。  一、魂系战斗的底层基调：为什么是”低主动 + 高被动”？在分析法环的新东西之前，需要先理解它继承了黑魂的什么。 魂系战斗区别于传统动作游戏（如《忍者龙剑传》《鬼泣》）的核心特征，可以从两个维度来观察：反应频率和操作精度。 1.1 战斗交互频率的两极低主动反应频率（玩家进攻端）：  动作系统高度简化——没有复杂连招表，轻击重击就是全部 动作硬直大且无法随意取消——你按了攻击，就得等它播完 所有行为几乎都消耗精力（Stamina）——攻击、翻滚、防御，共用一个资源池 敌人受击空窗期短——砍一刀就得退，贪第二刀大概率被打  设计目的：限制玩家”贪刀”，强迫每次出手都是刻意决策。 高被动反应频率（玩家...</div></div></div></a><a class="pagination-related" href="/2026/08/09/combat-design-hit-feel-framework/" title="【设计思路】打击感设计全解析——从感官体验到工业化管线"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】打击感设计全解析——从感官体验到工业化管线</div></div><div class="info-2"><div class="info-item-1">一个问题“这游戏打击感真好。” “这游戏手感怪怪的。” 玩动作游戏的人几乎都说过这两句话。但如果追问一句——“打击感到底是什么？好和不好差在哪？”——大多数情况下讨论会停留在”特效好不好看”或者”音效够不够响”的表层描述。 打击感是一个系统工程。 本文尝试把这个系统工程拆成五层，从”玩家能直接感知的”到”玩家感知不到但底层在默默运转的”，并给出每一层在引擎里的具体实现路径。  一、什么是打击感？先给一个可操作的定义先给出一个可操作的定义。 打击感 &#x3D; 当角色命中目标时，系统通过视觉、听觉、触觉等多感官渠道，在同一逻辑帧内传递给玩家的即时、直观且可信的综合反馈。 这个定义里藏着三个关键词：  “同一逻辑帧” — 同步是打击感的生命线。特效慢了 2 帧？手感就碎了。 “多感官渠道” — 视觉、听觉、触觉并发执行，不能是”先看到火花，再听到声音” “可信” — 反馈需要符合物理逻辑（利器命中肉体 ≠ 钝器命中铠甲），不符合预期的反馈比没有反馈更糟   二、五层拆解：从感官到规则打击感的设计维度可以按照”从表层到深层”的逻辑拆解为五层： 层一：视觉反馈（最直接的信息通道）   ...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E9%83%A8%E6%B2%A1%E6%9C%89%E2%80%9D%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F%E2%80%9D%E7%9A%84%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F"><span class="toc-text">一部没有”战斗系统”的战斗系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%8F%8C%E5%BC%95%E6%93%8E%E9%A9%B1%E5%8A%A8%E7%9A%84%E6%B6%8C%E7%8E%B0%E5%BC%8F%E4%BA%A4%E4%BA%92"><span class="toc-text">一、双引擎驱动的涌现式交互</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E7%89%A9%E7%90%86%E5%BC%95%E6%93%8E%EF%BC%9A%E9%9D%99%E6%AD%A2%E5%99%A8%E4%BD%9C%E4%B8%BA%E5%8A%A8%E8%83%BD%E5%82%A8%E5%AD%98%E8%A3%85%E7%BD%AE"><span class="toc-text">1.1 物理引擎：静止器作为动能储存装置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%8C%96%E5%AD%A6%E5%BC%95%E6%93%8E%EF%BC%9A%E6%9D%90%E8%B4%A8%E6%8E%A5%E5%8F%A3-%E5%85%83%E7%B4%A0%E7%8A%B6%E6%80%81%E6%9C%BA"><span class="toc-text">1.2 化学引擎：材质接口 + 元素状态机</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%88%98%E6%96%97%E7%BB%8F%E6%B5%8E%E5%AD%A6%EF%BC%9A%E4%B9%98%E5%AD%90%E5%8F%A0%E5%8A%A0%E4%B8%8E%E8%80%90%E4%B9%85%E5%BA%A6%E5%8D%9A%E5%BC%88"><span class="toc-text">二、战斗经济学：乘子叠加与耐久度博弈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%9E%81%E9%AB%98%E6%94%B6%E7%9B%8A%E7%9A%84%E4%BC%A4%E5%AE%B3%E4%B9%98%E5%AD%90%E2%80%94%E2%80%94%E9%BC%93%E5%8A%B1%E5%AF%BB%E6%89%BE%E6%9C%80%E4%BC%98%E8%A7%A3"><span class="toc-text">2.1 极高收益的伤害乘子——鼓励寻找最优解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%AD%A6%E5%99%A8%E8%80%90%E4%B9%85%E5%BA%A6%E7%BB%8F%E6%B5%8E%E5%AD%A6%EF%BC%9ADPS-vs-%E6%80%BB%E7%90%86%E8%AE%BA%E4%BC%A4%E5%AE%B3"><span class="toc-text">2.2 武器耐久度经济学：DPS vs 总理论伤害</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E9%AB%98%E9%98%B6%E6%93%8D%E4%BD%9C%EF%BC%9A%E7%8A%B6%E6%80%81%E6%9C%BA%E6%BA%A2%E5%87%BA%E4%B8%8E%E5%8A%A8%E7%94%BB%E5%8F%96%E6%B6%88"><span class="toc-text">三、高阶操作：状态机溢出与动画取消</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-SBR%EF%BC%88%E7%9B%BE%E6%8C%A1%E9%87%8D%E7%BD%AE%EF%BC%89%E2%80%94%E2%80%94%E5%B9%B3%E5%9C%B0%E4%BA%8C%E6%AE%B5%E8%B7%B3"><span class="toc-text">3.1 SBR（盾挡重置）——平地二段跳</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-TCR%EF%BC%88%E9%9B%B7%E9%9C%86%E7%AA%81%E5%87%BB%EF%BC%89%E2%80%94%E2%80%94%E8%B7%A8%E7%A9%BA%E9%97%B4%E4%BD%8D%E7%A7%BB"><span class="toc-text">3.2 TCR（雷霆突击）——跨空间位移</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%BA%9B%E2%80%9D%E6%BC%8F%E6%B4%9E%E2%80%9D%E6%98%AF%E5%A5%BD%E4%BA%8B"><span class="toc-text">3.3 为什么这些”漏洞”是好事</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%9E%81%E9%99%90%E9%AA%8C%E8%AF%81%EF%BC%9A%E5%89%91%E4%B9%8B%E8%AF%95%E7%82%BC%E5%A6%82%E4%BD%95%E6%9A%B4%E9%9C%B2%E7%B3%BB%E7%BB%9F%E7%9A%84%E6%AF%8F%E4%B8%80%E5%B1%82%E6%B7%B1%E5%BA%A6"><span class="toc-text">四、极限验证：剑之试炼如何暴露系统的每一层深度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%B6%8C%E7%8E%B0%E5%BC%8F%E8%AE%BE%E8%AE%A1%E7%9A%84%E4%B8%89%E6%9D%A1%E6%A0%B8%E5%BF%83%E5%8E%9F%E5%88%99"><span class="toc-text">五、涌现式设计的三条核心原则</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/16/TPS动画系统实践-ABP-八向移动-Montage/" title="【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤">【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</a><time datetime="2026-08-16T04:00:00.000Z" title="Created 2026-08-16 12:00:00">2026-08-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/15/ArcaneRush-UE5-Blueprint-Portfolio/" title="【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战">【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</a><time datetime="2026-08-15T04:00:00.000Z" title="Created 2026-08-15 12:00:00">2026-08-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-框架/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</a><time datetime="2026-08-14T06:00:00.000Z" title="Created 2026-08-14 14:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</a><time datetime="2026-08-14T04:00:00.000Z" title="Created 2026-08-14 12:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-13T04:00:00.000Z" title="Created 2026-08-13 12:00:00">2026-08-13</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div></body></html>
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.2">
+<style id="hbe-custom-style">
+/* ============================================================
+ * 毛玻璃密码门禁 — 覆盖 hexo-blog-encrypt default 主题
+ * ============================================================ */
+
+/* --- 容器：毛玻璃卡片 --- */
+.hbe-container {
+  position: relative;
+  max-width: 420px;
+  margin: 2.5rem auto 1.2rem auto;
+  padding: 2rem 2rem 1rem 2rem;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.30);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+}
+
+/* --- 顶部标题 --- */
+.hbe-container::before {
+  content: "此内容访问受限";
+  display: block;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+/* --- 表单 --- */
+.hbe-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+/* ===== 彻底干掉 default 主题的动画 label ===== */
+.hbe-input-default {
+  overflow: visible !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+.hbe-input-label-default {
+  display: none !important;
+}
+.hbe-input-label-default::before,
+.hbe-input-label-default::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* --- 提示文字：隐藏（placeholder 已说明） --- */
+.hbe-input-label-content-default {
+  display: none !important;
+}
+
+/* --- 输入框 --- */
+.hbe-input-field-default {
+  display: block !important;
+  width: 100% !important;
+  float: none !important;
+  padding: 0.7rem 1rem !important;
+  margin: 0 !important;
+  background: rgba(245,245,245,0.85) !important;
+  color: #333 !important;
+  border: 1.5px solid rgba(0,0,0,0.10) !important;
+  border-radius: 10px !important;
+  font-size: 1rem !important;
+  opacity: 1 !important;
+  outline: none !important;
+  z-index: auto !important;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s !important;
+}
+.hbe-input-field-default::placeholder {
+  color: #bbb;
+  font-size: 0.95rem;
+}
+.hbe-input-field-default:focus {
+  border-color: #4d8df0 !important;
+  background: rgba(255,255,255,0.95) !important;
+  box-shadow: 0 0 0 3px rgba(77,141,240,0.15) !important;
+}
+.hbe-input-field-default:focus::placeholder {
+  color: #ccc;
+}
+
+/* --- 解密按钮 --- */
+.hbe-button {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  padding: 0.7rem 1.5rem !important;
+  background: #2a7ae2 !important;
+  color: #fff !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  text-align: center !important;
+  text-indent: 0 !important;
+  text-shadow: none !important;
+  box-shadow: 0 2px 8px rgba(42,122,226,0.30) !important;
+  cursor: pointer !important;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s !important;
+  margin: 0 auto !important;
+}
+.hbe-button:hover {
+  background: #1c5db8 !important;
+  box-shadow: 0 4px 14px rgba(42,122,226,0.40) !important;
+}
+.hbe-button:active {
+  transform: scale(0.98);
+}
+.hbe-button::after {
+  display: none !important;
+  content: none !important;
+}
+.hbe-button-hidden {
+  display: none !important;
+}
+
+/* --- 错误提示 --- */
+.hbe-error {
+  text-align: center;
+  color: #d93025 !important;
+  font-size: 0.88rem !important;
+  min-height: 1.2em;
+  margin-top: 0.2rem;
+}
+
+/* --- spinner --- */
+.hbe-button[aria-busy="true"]::after {
+  content: "";
+  display: inline-block;
+  margin-left: 0.5em;
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.15em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: hbe-spin 0.7s linear infinite;
+}
+@keyframes hbe-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+ * 暗色模式 — 匹配 Butterfly [data-theme="dark"]
+ * ============================================================ */
+[data-theme="dark"] .hbe-container,
+html[data-theme="dark"] .hbe-container {
+  background: rgba(20,22,36,0.35);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.40), 0 1px 3px rgba(0,0,0,0.15);
+}
+[data-theme="dark"] .hbe-container::before,
+html[data-theme="dark"] .hbe-container::before {
+  color: #c8ccd4;
+}
+[data-theme="dark"] .hbe-input-label-content-default,
+html[data-theme="dark"] .hbe-input-label-content-default {
+  color: #c8ccd4 !important;
+}
+[data-theme="dark"] .hbe-input-field-default,
+html[data-theme="dark"] .hbe-input-field-default {
+  background: rgba(40,42,54,0.85) !important;
+  color: #e6e6e6 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] .hbe-input-field-default:focus,
+html[data-theme="dark"] .hbe-input-field-default:focus {
+  border-color: #6ba1f5 !important;
+  background: rgba(40,42,54,0.95) !important;
+  box-shadow: 0 0 0 3px rgba(107,161,245,0.20) !important;
+}
+[data-theme="dark"] .hbe-button,
+html[data-theme="dark"] .hbe-button {
+  background: #4d8df0 !important;
+  box-shadow: 0 2px 8px rgba(77,141,240,0.35) !important;
+}
+[data-theme="dark"] .hbe-button:hover,
+html[data-theme="dark"] .hbe-button:hover {
+  background: #6ba1f5 !important;
+}
+[data-theme="dark"] .hbe-error,
+html[data-theme="dark"] .hbe-error {
+  color: #ff7a7a !important;
+}
+
+/* ============================================================
+ * 移动端
+ * ============================================================ */
+@media (max-width: 520px) {
+  .hbe-container {
+    margin: 1.2rem 0.6rem;
+    padding: 2rem 1.2rem;
+    border-radius: 14px;
+  }
+  .hbe-container::before {
+    font-size: 2rem;
+    margin-bottom: 0.7rem;
+  }
+  .hbe-input-label-content-default {
+    font-size: 0.98rem !important;
+  }
+}
+</style>
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/images/logo.svg" alt="Logo"></a><a class="nav-page-title" href="/"><span class="site-name">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> Search</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-user"></i><span> 关于</span></a></div><div class="menus_item"><a class="site-page" href="/gaming/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏经历</span></a></div><div class="menus_item"><a class="site-page" href="/portfolio/"><i class="fa-fw fas fa-briefcase"></i><span> 作品集</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder"></i><span> 分类</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">【分析反拆】《塞尔达传说：旷野之息》涌现式战斗——当物理引擎成为你的武器</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-08-11T04:00:00.000Z" title="Created 2026-08-11 12:00:00">2026-08-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-08-09T17:33:22.169Z" title="Updated 2026-08-10 01:33:22">2026-08-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/">Portfolio</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%BD%9C%E5%93%81%E9%9B%86/%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1/">GameDesign</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div class="hbe hbe-container" id="hexo-blog-encrypt"
+     data-hbe-format="4"
+     data-wpm="密码不正确，请重试"
+     data-whm="密码不正确，请重试"
+     data-salt="68d312b526754632b0e4e3b030668acf7dfbd803f75186705f9a6f01ecae43ed"
+     data-nonce="82284b527c24d4d9f752a440"
+     data-kdf-iterations="250000"
+     data-auto-save="true">
+  <script id="hbeData" type="hbeData">
+    a2860044eddf3fffd78bfaff7547bd71b43206b11deb9a1b2bfbf8252b266409f9a0c6a1a719184ef0cb0748a33c43e50d10f9967f28d306755acafa42226405e8927a4358993ff48b7a12ed6f166d8e6e62dac56da63d0bb7251b1f127560a3cce0edb674862aaac3add3e1a43965952ccd7658db37bff9bafda968a1f5ef95d03b6bd62c771d27847f2cedf00ee4c87085cc3dbc3a9eb2eb13015fd298951d04c8336f5936dcec1d7b15be05a72908df6f02119b65672eeeeab4d5f8248f2a0c6661c799079181d37d5b253662ad0dcdf591453f84c5bfd1a849d24fc8011ad418d2b87de1df50b36c4c46b74d053b4dcbf0e1e5005c9c38c03fb5bd52a69cd1142ccd0e1af06f18ac4efda3420c1c61e05722b8d0051c1b31debb0077d27ff42335fa7865b1565b3c8f89c08d5e1f7c305e0284a8023feb7907ea5eba50db5e957b47cc55ff3d158b50da847b977b992f7d494fbf7800da6580d9af2503e75bc7c6600dd1d0b423800acbd994cde9b0fdf58496c6ed2fd0dca5ab0359abd0f9d303401514449fe9360691b8ef1152b32cf75969e96ff4ef81ef357f245077cecc63658bd74d085e78820d4bb58a82d6dccc113ed04da64137c7397795ef1f473ba113f89c86016514c2e90a63bfd23622281f68c19641ef11078d9dbe9a25fe59054a00a7555d89f35f63381a0eb4b774de0ddef0b8abfa2c7719728d1de522dde91b93b7bbf9ecd03161c6a0cfda09a8346af42bd60d10e4c8a219ba418e95891c5f816beacd1e125be4f4df0133f443d19ddfbde544753ba544134c64d3c12a963dfea2f68cedee3bbaa51e71c55ef4ab69471ae9f3658bbdad4f2640d327429d9efb89e430815faff79f7493fb6c82bc432522fca436cd1094b7bf52d9f3543c221592b0384360b2352a16f958a59f5bdf319d3487fbc537ee0fe3993280c1a315ec96b880ab0cc9247f3bbc105714315178b31fb94f6aeb8ad8799bf5226293fb7fa4055a3e84fb473264a9087b547abd3fa7eeebc737a805ce896c3127bf90a8ca25d1b7fda56991ba3bf78b20ba8094d488ad6b5ad5bb8f329951fb4267a912bae90a42ef62cf4a0c5b75f4b27380a280d51341c36c33171c7c0dbdd792ac0076438889f20006091c7b7c29536337c31def67710afef69394160fe01c866bd5b8914655b5b13cd7776a5d3e7345023f1661e9e222aa76b5bd6d96854d1272af84a0a06d0aeda3579cfd8afeed0939b5bd3c3f8244f79dfa090d87577bdc3e4f2d12149589eedf9e96c1cdb33372ce896bc258caed5dec93f7b272aa6940fd2a9596ad9e75bddbcbc0fca289addbb4e94843f53deace9a94fdfb998a420a9b7dcda08cffdc6e086d1766183712436e631ca3ea9c3b0b34b1d3010974c60a6f2cce07886da81a2f06d87d3363a9b0e27fffd55f49175624dbd3b15e2c426decc957e964669797dd738c1799500f4dc4de2b0c8d213e645eb6a93528ef42ff261d09d37bd5a146cc29e35de78d3ba3ee736a7e42d9c049321bd8a64d645ff9f851c78fb8e78bfdfe860f4639f2563d9022675dc97f820ef5c2f6e0abb91921f7ccafcb3398cf17d67d7e71fe346f965d70409a6d733b9a5e10947128ef5d2812942fc3be988577415a41cf89759637c4a2ded0400cdd40d38c8d059e2e02b7877ccb1db8b92064956c30ccdf22e6e8ac3776f6314b2a8e9745d3b6a5749f4adaf5d5939c5c8cbaaab70dc22ed2656eb76c473026d4b5e3d690b31e1e75aae4de6b58155d97f82f15fdcf5d0f4954a6db94871f93b116eef27f5f6b6be8f00f18629e3ed524e94b86ffc9d83508456f8aa6270ecc304051b3ee3b3db9068f3fe2a0e7371906c2a3ec14aa3b1b5ca8d8dee187008049a3a925a7085719d7c9b35d9036b78441b9155b373e3e74deb0b3101378ad6d55dc1a6975b225a78dcaa03766570b171bf71b642d2622a67b728692a0a02fe401385a1e2bbf56fa4206b602b5c496e27c11ede5661b7bf8c17f23702243b9401a46ed3bdc1ceb5fb1f409788849465f385e65cfc530f1a835ac7ceaf3f59e7c7f8a013c3431c60aafd22bdb6fe84ca9be8d16f65b15b0b6c0926b5a5fa4421e5b1ab40456c9c32f76a46388ec9e3ab93091a415e207672b5736ce57a589fb0852a16e071347258d58473e21b5b8ba9260a34e0818f4bd66804d9cfc671001eef1b4b3067e607c504c6e62795e7155de5df89598d20e2954f74ea5457f95975a1615600a5ecc63c6cf99fce5a14633c8ae15357e88b2b2f62ea1f8096ba58b1c5791d13ba4314b631e38d375877c72c25b123f84842c604b7a56148d5fb798b48b6445c065f498af35e7f9ee5d20598709a545eb61e27b1c431a1884a348a0faa2e8bc5ceee866c902c7e9cd0fd06ae01b43de2fb9a59501d8a2e03383247cb8c3676d1972152f60c1aff8f195f9a7672a16a8f35c74d92c7bc0a9cad070a39c89923cb43aa93316eea6b7ccc5cc5cb5b47af05c2ad1213f3a5b4d8d0b5d83ecff94090e9b5c510f30beb7eab48801e3a25e4b1b4144868e1496010e1d641abb36ca7bda9e14ab8305355a9b8cead88f549eaf7240980470a4e380a912d72fcf5690acf3b076bb15c0324d3667c11d20e88fceb90b818c28842e29709640858242a20a3e28ac65fb61f855adb3098114bc5904e3a951eebc34ab9804a2ed0c215da5943ce3a9d4b31e6d66d1a0d000fdc2315e1b39433c02d3f6c0196bbb8b76c1cac04e5f9c24b39f72fae4e28195365f4873e322d3d2c8e62e1533e6c4926b05da480ba3a4e413c9dfeeb592c5da04fd6e10cf3918e4743dc29a23722099b0f119eb567e8c02f5b54bc2111ac96da6e80db95f928f3acdf6d6840a7822a2c33d930aaf3e6315b1ed17e182f52dff25fa7318c4d5621dd1540aabb52c3315b96b66ea1373d27c5167b7520e2e13fb5e810eb47b7338485e19569aa3df16312482bb516383ac41762e2702e30a8a65558f88910fbc923cec48753ce5216f011d51a41f4809eb6ab7c66495442d87c072c3fac9b373e2924a8f20f7197dbef3f3b51ee6d19372758e8b8bcbeee030067c333d5999227b4b367189a2e070e21f5311bdd54a18e309e161c4aec644aae36bc87a3d0655efba8c4e8cddbca6e303b34a66f3d42acca0243aaa96c9deffa7a21ebb0263c3cc7c6078eaae4fe36f3cd750eb53d43d3407ba6e914b03a3d2ada1b249063f95e0061e3ddac3ad79b137a6c5fbe60648d47b2485c83b909e28ae7c2df2847ec3767f16f02eff79f130c3be0502bf64faadc0d4f36b57236167096709df318941e1f37b2baae73bccae46a3f606e11f2764fa08a48aa5bdbff1196142fb7f4f643e95ea506ee9e0294ab8f86eb6b47abc718b2bf82086721413259ef187cd6787d7e8656f13c8e08bf6d50489a5e8ecbb302628d0ab073af9019640ea7fb30bb802972d9619abcc686c1fdc9bf874a9008e797a869934dff72a998c964a34ebd4ce8d591ff0ec177aaca02d5285bb0db5dcf5c15cd909cb55d2cda5561102cc794ce29beff92cb895d4bf59630cf07942417cc87a451949bef3f58c70251863a12c4e2cb4190049599cf66afe85cbfcbd64734a8f0eea187816af47f4cbc8159a60afe73405315c529149f67116ae095d4c3e06f9c05bb97271d45fe80be4cbc666dfcb045c6e97b3d29dcc0fb9d00adaf942a38a073df6b705ce30df31e6d25992731516da81382e2764086b5e1690cf8de79e9c69a4b18154397dea45e0e925d4142fc7a5a6ea9a786074799080cf47c1af6e6e2a74fda6049c5eed3206be996611dabe9b585fc0f3b1cb8fcd1a937f58c6b3582f18204328ac7741a37039927c5a0165f864abacdce47e39e344e3d6078c44a5d38069749160dce95d828bc59a3e940ccfb8fad45539cbe2c15f6a59230f85861badd61f9a4f78afa94a46a9539763f021e822a102f54769a34bd9c5925ff6a3fe5666bf53c454b83d40a3204b361777fa18f04dccd67a0e0cfdc43be243071f8c437aaa1ea11181be1bb26ded5da2fb6fc4808e17c973338bfa93696ac66e67aef2497b3fa335d4b4475a80265112c71651c87aabc9b62de7b0b7c5b3e1789935d122b6044fb17c971e96641d418849ff81af3a241195836453c77551966ed2218c53a50cb4c85d162edfc5c6e7b9749a1fb0d9fe5d559d93ce3fb2cb77cf31e5f5bcebcb552df3fd179fa91617c2b6b3fb74a2e8156bfde50d6ee004e457fc55ed7239f553a79dc5cce91fa0665f6981ee8cdac778b8fa940147b9f04bb2e9d36f3c606a1b018307b854f6581609b68d86c6306eb5dcf6763be0a485f085c3c759fc0178ff4fe6612172cea67f1448c50136c8c589bae155ad216e977bda1bbc2ea22f64e5d2eea74f9115d636c2c89cd7fdf0abca46a0aa49243b7a6d0f4627bbbae3a6db2431e360202a1fb4cb33c6aea4ce53ac7ae3504ed18084829f29fd5bc242520686a92c163b94c5fb8ebe24d8fe8243723d41a095c973b2e5b4513791c6a6351b32b6fc5b70ee835fe45bf583ffbeb274fd66011edd6a67aa039c24d5e79610f8ae49b2590df333ae3c96a5add1f57fed0837b9281a83ce5bd24d2dd875d94e46f489e2eb1d94ace82d27ce7a9c9fea2e8a8be799954fc637517ec6816c1d554fbb4faab0bcb4259a795eac8e7034cbf4383f812e8863d26db3cdeede583a916e79cdde69536c033b9cc553eede289983b5c18f59a322e667f9ca8e7dec655588098d1870f4bad2d81509cb134b3c276e61f90b523b2b48a52ecdcadbe745e7cb12fe4ae210eb5f2f7b513b28447802f80a798dc248dabc33cfc7107c550d36d023addcb1d653ce18804220f1843ccbe9621339220ac00bf27ba879fa50117973d50e2475cd0fce41b063f796573052e99e5b3f7ce035ace71ff3cdf677b5ce18d70dba503391b2c97e5e4d0572ae02ea3ba320e9e4ca25910f09877ac1994e007684a701c5ea5a4e23db3c0a183c7361e984e5045a757fbb72b39f745072cfe2ae1d83a232dffe22d48c7445ac92b36af4f2e3caa910d8c177ddce58c80c459de564bdac29dbda7a509849a06fdcd905403ecf3013494ca0b064906d11e809670cd5a93acbd50c0c990b674050428bf14ea9f2ba4fdae1fd28f5eb24b4320c479e9633280c0e89b4a7e8d5a4fbde9fda08a01070e888faf0314cd85e16d3270ec6128cfe1dadb1775c0dfdc6b5b96fccf97727a042657826a09ad690c5955d5eabb89470e1122f3f353f0bf8be04cbe6b87d6680c43876c5fc2a965e1932c5e63ac1312edaa99a29be6b64ccb77cd3d18fac050b42a5285e5be356821fe4b55eac125aec2eb60bbcde4c0be17082c26d7e56df4fde70fa256e5bc4491565b405e3bdd4a1aad08b2475a43e8aa6984338696f81df9100483205dbe900d0c7dd43b0e43bff556e79ae797884622ea6d0b53cdbca8447cc8bbce1dfccf604d4f1ecc13a5ea0a6b0311a447ee04105e3d159ef763863790237b957cf9e7893108dd6c09bcc3b6fa38456b9f1e34f7b7bb9d5da52a947680bc539c8ebb20f3dc37f33c85060630bb48a6f1d695d0a86b579e5f4e1682e6b3b6d23602596beb53901d12dfef849d78ba35283996ad33e48ee2838e8e9ede06dce728d80dc28eb293648c0508a9484b80571b9548cbeb89563465c81111b107e09c3bdcb6b670d21586f00fee91cebbae9c4242af15b78e464bb6c34f7f600f96a346f516c1d573cef3b527ae9ad2af829d6967c6574df3ff8c85d9ca5599de38bb3182bb207eee026042f14cb58efc3a87da1dc30e9581f1f15c8e530fa9e7b5c0b07584bd5bc54d223685befe8069b9e6d1b5ba0352c96fff1aff4d6a825a14829c7989cf40b0e0f21ff0d2716ae2a9a1a1e552e88adb137481eb83609cb78472f91c18752904fe61561eb5df6e9a671f916fae7fd8eb56c12559b4c5fc58b23e4175cb2facfc3fdcb19e1c59fd74adda68d9a5873e62502a99ca8321a3af9c16d93682cc5c4f8269194e8565d69ee73c2d90c308fd898eee6eb4536be423ee5b4db5f3badfb6e48fbb06997ff6dc1352c56f318616a96aae34bbeb3cfed2a8d082b9dc2ea43e240a06423b60aa12388ed1545aaa323d72ad3e91a679c052773a0b649524122e6a780890e250356cd724d3e4355b11030a11592f30e7af82b54278fbd6909ae3c9c587e24764469fb9765f273dc4420ad4e22225d249482ec52467fa446256970aa35dcd3f11a8c099f62a8896ee562e6d1840a25e510610728eb581de5bf254a69ed8907e5aaf84deafdd3adfbe3edc379b8068ca88557023e619e02f7f7c2a15f422d08175410849907a548e5649b4938ab6b75d76a6bd2cf4f3f0f660fd94a3c2df59d58be9aa4d7a2367c69e65556ed5e00c595929c6c6096c33898ec6b23d4f0795ab5ae86be7e9bef53c8c953c7aa0f4dc44478f0fec1bea622534d3e940401bd0d0c06bfd719c8c50cd4077c2b1d1dcb18cb59c3929ef8ee1960a9d5249437c5d9b33f7a9da04a1f9de19826169181b05efa983f0be0f74bc84be90309269bd220d9102c06a203b7b96a80e415ea4a554dd641403148888b5713b70b3514695afab1192d9c49b2703c56d41256a705cb589faff684092e4ad3195f821c668e3e158817abb26a3e34151ff813f7345261f85e4a2a68d16f55cbb24b1767f9f8e96c91dbe2912ff7b06f4c36f1171da29af1ae76dcc7adc0b9566c638548269c43dd7aced48ad80e9ce309a5bdb770272860db5e3bad7c273992a3fc48ef4ef2c70b0d5a834faa9fd8440c2280245717989e3ec7bcbce8da91e02d276e0459f01110c4c9750963fe8ac8df4aa656bb54087e48cdc4447b65f66966531ff5fc8ca5e1bffa8921578d4ba95f7de59e82fdf5723c87a012fe5a974961046052747fb289988ca2d0007fbbe6cb68248de74ce15a5110b8eb67e1cd1b62c55c3dc1a8d594f3a3488f408160047c4bdcaab8466f2571dba1a92416289beed1969c978c013ef167df4b12759ffbd668e0339e4cc7bc2d5b0caec66d57f2e01dc78baa97992a9c742351fdffbd309363f001e4cd878f4fa1a1473e3e6891fd1eefec10366be0cc7b3ed9b5cb744b85a62d08ba146f5ef5e508198e3bb6eabd4c191890b5fe2afd2be288d0f43df48d73f11ac1c14c8a4012e0ecee7ce0dd70a8caa2bed490013660bfbc3b12a192b613534140eac4df9375eace1e4e29d528fac936dc3e9ea22846d5a753a5608ae007d7803b2e8208cf60c8962926be005b49b8df8e6c802dbd32e3a5223b31b2662fc31090a2ed193e7ce9735dc4487f5c4b2af660912a199c13fe6efe6d667a11c30421825cd95cbcd6a9a12e0d62655e8093128bd49e056fadc839c4c2950867c3cb1c4829d327b18483fbbe332d3a69c602c1951f73608636bdd62119d9f6786826344e1e2d70f7e334608491a081b1a6280b5371516a362534932de9df3382b2758d8706ad89dc8031d5e36cba5d20d463aeb5f2f1efc5adf584d1ce32674fc0fb06c387fc5abfd71fc15cb2bfb303ad83463264bc69ff382cb9be92d4b63246cc41f7df79b217b9e3e9b430d0799b8da1b98b0d398f0853dccd3718816f1e5bed9c05b03746f8c06be2024ea55bc8eb39088d4d0d81a8470e37eff3f6e9064db0b9be0d2d30bdbedf5fbc30e11ee891c2ab818100ac6edeeffc88b71b01a4e90d20a8f319ca8481e9f791bf8015c8bd2e3136711cddaa1ba5b5f1ccf2bf500ebb919727df31d30338536b158426e070003b46a0641ce4c8d990775b7af5de8980d723a99484a80d1ee4d37b37e48abb9d14d03da30d9b2c0eb6b2b36dc21484f0770a3e674058c170927bac112eae071616b0487c5cbdfcfd163e2299452583443efb474438db125a1450d391a666d91620f50d121fdf25887058272c756c766aaad3b099076d2e702ec841189e714e25a4748c54077f96097d49b692414f26d5b700cdffb968c4d94c1f35751cc04fb0949d48122777d0a001abc495da5f7e76e0511d92f7d1d4996dadecaaa73ff9028334c2fb82d4c3be68769dc145a85a3b010ad83f5d19c07255983cd4590d34715b8cc2a136673712053bedadf17ca5388bf793865ea566991127eee3fed29cad208251af3ca297e6639bc82463736e7432c0b95427dcf15d86bace422b1df15aded4d38f811eae3b6b96b042cf7c1bded7225b4b21a326472ec4a2c76a3967bed5e89fdc2f67c88a237856160e1ce9919c59714a1bb0e1a6f5355338520d691f33b447014180b7760a961cdf81af2257e53cae3be9e7aab4e4767abc86bd024b4acb3bdb9712a89055f7b499a890a9c4d36f0e775aab7e8b0b4dce4efcc7902f24fc0bc61e00c343fefb227c52d15654b8b3f4dfb8c74bf4836833ebee5dad7d3c7da3956629d4f50af913f6653eca7e1e15830e3c5fa33a6c0e4e79e491d630b9b052990ee4fcac02ec3af473d8f264eef441a72336b26099ac73bc15e30122ab7c7cfb46e0c6403295c4913cedac804c82e7ee4f5af0bdff3a2aa520b7db6a42ec7bc698a00bd68438705d482eac6234503db15522f8068e3ccb25b84715f9e140c44ac5efb6e3cf1b79b64f3bd190b0ff15bb94531b80b94166c5fb1f9fda606c742a39fe93568b76138ef819638ce00a5e9603d0474170fbc9f0c3c729bce858d77ddbc2640fd6322bd53e8a768258f66b3361d98ae078ee7ac219b61554ba08f1b8067eca7fcd6c75ea552c2df3fc78d357187e31c2766772f98c75363f78684b1ee026e22746ab0294ef87c2caede9cf500a44930f258068b6b194ec401e9a5ccdea76f72cbd226ed20645e49bc784c346090e8849fac8c4ede22e14dbe046d2f99bada8a2a8ff3d546fb1617420466eefe4317226f0b8fda5f810a579e68843b8a34c9f0dfd0aba4f52358444b240ef14026166d07f91805e39c244f71efa1e52d4b5f9077f8670369ddc32b4081d36c8d8c8d22da9c564a99670c745b6310c9910e0896fb0d3aa13cf93fd373a0627e68dd95d92abb3318852ac519c512ee2c311c52f61cb50a906af207bf12a0334d73eb3687305ecc9c892183fc8e9507895ce1bbfea68c991afe4cc722d30d4befdaa187d0154c73d24089dafe0e63169d064e866c936123383b1efb12434903c92438b719dc1b574623909e3181241d145447a53f749e4e735c009636e3265a3f89642227b7241a24199b8cfd03cf6e9e8384ecb92391c714158f97818f35c5c842b1348a27266a316479317c3ef92a5cd925f5877fd07bee142d1a654354acc313dea067fadf0ba1288c83e6fea5883edab22fb8f12d19f5c07ca79ff3ae12f3434d24d9c50903f49bf2f5ef49edf1c8432a891471ed412c4f5c27bfd5702710c9f992f158eb838437b448a832376419b4bb286ecffb4ea4e557d5c5854af6d16b61a8dc0b90d3e6a4fb9f10444e6ed27bc9398b30ecdec633e69340469471bc946d5e4517b260c5c8fc68da9d524f37821e3a5d193e9346d8b4500419aead580c5204207b1b85083d1ca0359ab5b9dd6d4be94d9ed82bb7831782086c884eb806e930ca2b7f81472f6378d5a9e38ed9ead53466657cc4a1c238c5fd9057f0060650f292385dd48cb0ae14679cec77b5f579d71a87ff3765982c34d602b901a1b932adb44385da5418a7fde8f9b4dc0583329cebffae2fb125706ae09fdda63de31466bf3b82639ae5e7f12da59656d77c4504547ec544af6ab9ddde7880a861db0d034124aff28cbc7c71758db555a43433ad3072272d920ff39e871f92219630ae6abe04e0e986d5c4ffc10bdec86f3709e2e4df7c9ecb15a4a48531a4e1a6d29f76945c817524d45e35bf0e854990ca1b15c6e6c91189be091e4462b4a07a47d27dc2159d6173d1eea8904c6bca0c428d218b08f5936541649cafb69e8d4a04d8a0e476b49736c9aca5fd72e864269b42a791603e9a0f56088d73e83b3ec089f61a423742df25a5205e6378f612746dba5e5dbafc04904bf1ee0e90a0c8e099ec9a2d7cbff8eade220b685af2b63f8c276095af297ac81ee720b368c47c48b22d8f06a9401c52c72d0fcef2972d26ba665390148a017ec81c6fd798f2313b7a71b9770b23c0c4b505e5bef4aa21a17007d3ad5b7d76b63a98c1c1237e9f8680a0cdf7e11944ecaa18b93f62408765a2b627f86ae57db48d01681dd90d1a12fe1cdb34a4f200c86a1b77ae98c57f89b7e5028737b33f6d54f9afe428b3506584df8959bda6a459922e40a89c25a0db528336dcad30c07c0e1d4050b2d7fab7b916127415d46a228e099c0f79f8f7781e9fbd23bc06c8258e8be076ac721c354efe15536ffbd8fffdada0b10b4a02cf8691eb6914ca4445aa28655316346de01b0091b4ae54c30c696d56cc2c2c6412ca91a85d595f63a87adf58a28c87eff1a45af2cae6fd18cc99bf258ec0daad014744c1902c93383bbb3b0fc3d66050323cf0ccdeec22ec0d573c1c410d061c0cc3f749e48cade12ef0fa37db91f286b351b80f47a02b7800c99a35fc98cb342cabd540f1d4ec20b5bebe9db17eebf834ce19b300cd88e4e2475566a3b9f7063a73d4d866664853dd4e376e450c33b5758b5cef1164ff4ce710aaa91b71e79e3e8ebccf528eddee6e4570ad7ad29252d83dc1abc0801c213b56229b34dd16460a9af350876c96266746711c19cbcf0df44491cf7dafe464b67ba3269ca1868d037e20f1593d583aa529eddfab1fe22ec5aef127fc465a1290b57023ff5cd835e4dd2407e3cf70abc272d9e91fdf73affa80a41378e15a97b0cd8e266ba91edca9898edca6298de6d213ac79d94e4ad63c4f31faaf242512d6745eeb3374bda0ddad58c629711e15888face010dd02d6c9bb36f240fe188e2ec4a442defcb0df8be5711496dc0308a3c8ccec9436aa750dcfe87e3be7763bda84c339aaa3b8807847edb389dcca8b0b03aa2cfba8f5d05f78805e23041863bf5ac766330f82f12ebffd6bae3a07294e55c5beaf2ff6a6e8ec7f320aa4a52ffc780168207ff172110a32164d365318f65ed75a1e95bf8a9f0cc61b32d575d5871b2b180eb093e1355cbfb4145a509ceb508d3f44dbac27ed48f58927c80d4243a5397be09b310aca6f861c469983eb271eca200daa762748fc86ef3c5f2b0738a54ccff3c7a6612f4b847092e0099cd41f1781a6f2b19d8006cfdaedc7e99e9cae2e6c396ef422600c4bd4918ee6bca1ae36f1552fdea804257cae5b9f5b03c21310436d5e07528f5419c00f6838d3eaf6843744ec2aaafdb32ca358e298af60e68a019c8eb6b43c05a3474a8d0e6a792ce66f99b7b2cb05aaedb8bdf6a36dccb0a1df3090fbe0e23261bd31e6ef4033fbff875887985b96012e231bc10f51337e33ad3cf3f6e7cdd9e88b0e6493704bc975ff11d726ba065718db665512fcd6bc5b3f53775a5dbd8f21371fd38027134e53ca023f7278d0125fc3a4f98e5307a8a595040500dab5b52df96f57ae127b3e724b01c5d51dea867715bf0ec25f772022590799f38981ee3df3d332c525f7ceb4052863fb2f5f907115ae83821736ff7f7073ea6c48c6de4fad094f94e94ddb7e4477b934ae9244e8443b70eff4515db8789ae202a9e22f9ea4dd4683f8327a556d5a14b564a3225fad0684518e5188168af8ad7029c93f6e4b9208905dd0270360a6cdbbd2fcb025be77d0b5cca9adaab7cacea0e6b06fb12831866f0d9f6f34b0d408c30b151abb7fa87188c5aac84b66cccca4985c491636e90d7bcc7af538d54e8c272bdab37ecbeab0a2fe6276869d72f604e4fac3734da409eeb55a130993d90b52402522a0063423185d33b32cd5edea8a85dc68e64245ade9b54f8ee422895b3793c7b172103491ad806d6a6e2c10f7e0c41cb3eb8c6fdbbe769701f343d73bff1fe13eb8942a2dd1177740c5862fa2ea3ec2b364f088b1c73ed8ef281f2056395a19e4b3370a8bc1aec6997e91d4aa3351cfb9f571575b2284cff8a477a2b55f9f855b8636810b054a2771e861ab492b7a61587bf288fc0430caac583907d751bc4e52567f19aae203948ffc1a567b58a63a2e0c143f4e1a083d3b98d0b7eb48304c637d93424a577878d20955057641233e8faef76a30e5f3e537506c48549720ae80d2c2140302a9813aa6608dcec6a3bcad9c75f0fc0a7538e9e43a93174d774dda8c0f25b1c5317947255154904fb189fb1718afc3570533a0ce16fbeed6cffb2144d5f9371319b40b9c1de1767dc9a2a232dfe8eb44e837f7e46268a9d6e9c6ee2cde7c9b4f475ca903497a4c0f8887a37b47362a3fe86f554dcccc8a4a752503f2e1742746a9aac9b21766a06512918859181221fd86640842132cd1974ccd980b522959c88c882af6876124a38b9d0e8d6dff87e274a3596738c0306754249cc12a863d8dc7d8b60ec0d7a9aa8100b30bee35626173edbde28dfe1dd353aed98c7677de74ca22cda6fc63f8d51506fa6ec5475c859b81d04a536a870d64108c1ccb99f89cba4a48fbc6408e86c98aece9de8834dd24223bac511e337ab025ec8553854827e2edbccb0574229d73b6012892f95da0c0e1c0c813feac5ca4a3742fa3dd4f6022cd210a93ed0362d040a673562269a826dd4fb5b667bb299543f1cb39fd47c390d88921713ae42565ea52dfc4341e24fe2b90a1a19890fef38eb6bf60b19db88055252c26c9d7069d00aa70b53b33376998766e8c3e0b84c864a4ed93229d856759c0de666790aed4f7e06014b583c7ffce95d1b3125ca42dc45335db65da8fffa8c12c83b93d1b0b60f585433b7b20fec79d6b5a9f3acfbc2d5a84156b3672fa4fa4572e5e63150bf2d2d6ddbdc33992a4d33073a0a2a0368c6fb1b88304b9fa5bd0d7ad98dcc6cd7870cecc7e3081783bc7da7b9db3407dfe5ae41ebd561d6290da34b345c916812417c6e8dcabe83791aaf7e561ea798aa97bb4530ed3cdb5254569a93d65869f17cae6aae2e203ca5b9e11710c0aebb2217393403ef00f791e6b3d0a80d8e40fb3f9d29da58ae01ee44d8540889b76ce173b3d1b53a6197aa97185cb047522d1758ce25f77a6a56e532b9673a3cec4bec4f355b7b74e3d68c9f9a4322dcb7251dd80850458afea5c0712273620d976a77187e6b30f6228c1a7c6f8c100f7c74d222a36c7dc2e2e3b311c82fd0aa490f100d2ce7baeb0505c4dcd2963fc9f52cc036d7e3777b0abedc02b542e2e1b1992183b8a8cb54292d92d3c5c54177687783b078c799b120f49012f184a0ee1105ad71f71817916b115839727c970f0fe6a8c377b4449cbc25f8006b8e20d1550052480aa9d660a8a4ac27422876e555010acae0b39503c3246eea44d739536a7d70c20f5af1b3ed32b23f54a64f1c2284ffb80605fe1a94d56bf40c3d8a7336db947abea76fbb56ed9ba2fba26d71517c80dcaafcaa22c5a3bbbd7ff4cea1b8c60948818e3c767ae72d5dde54d1e490759479e24525280393f8ac41911c5bac55b6fe8e651352a8a2c2ea4f5136f4f74a108d499057c61043eb5796959bc4fdc19bb631561ea00c1c5edc4471d8f67d09c3968cb64cc94e4951dbbea402a00431a92b7ae2a1a14dcd088593f0c6204e0c6f20aeb5a6f5a165c73a8beb7f6b267ac65cd580cd26538648965edc872ea26356eaf3f73792cc4256e2e99b330b486c83c5d13c3b99579349ff3e0d59a9fe8778e2bf3c4fa6bc79473c7ce3fe0f401d306e9c1a1ae31d7e097aa1d64fde1a92430f729f679522120012d4749085f78395df4f6b57c383a3a67c0ba30b90087f734df8a814cb2ac60417c1529974d970f4ac781b706e9946c518c301a36e20107d678f3f8e854acb97f19615109cbebad7a2c7c2e97819e4d2bb7dc2377c966b5dda680e756bcfbebfe13bb0a96a78919328824c511060513ad9ce452f33476d134d882d637f29ab11754868c50e3b1baddf282c837bbacdd944204ed3fa9e0ad6d773d89d52198a315bb9d67cda2eeb5feed2922b308352ae692f92cdfbc3a26d43888f4badb22e2865a37c38744411cd384981181b28c812e1090a177a4502e9afd856a04554593646f7f9be1f2ac6cd98ed03bda6c145853e6ff670c812365252c411656aae54384d81d54c4e7ed3fd957ae602ce0df01dd99e35e823f33e96e507fcc5328a869e5d914447e6a01b9061c5966d1c4cd7aad43e8d0e1ee89a7e4664a833173794df5199d0e88152bedbf9283d0df1b7f6e5e50e489f3f3b130ddea80adc24af68557902bb13a9a14647c295ce7e920367c7fffc77a1a1915e69ee7b44c80986964c72b811dfd5de2bca61d618ccd0bddc82c5d88876b094275d589755dab494f8e9a1afb7a46460d85b713f32d9d18227b2bbb09e7df045cc724b63f9ff6dc1ad358722bd07628060572e1eec06eb96aa43a628e4315d8cb25614a9c291a100ceead99c6b8775adb07f8e10a2db4e1a0b32cf41c73c949be6b2d784656d4d06e2098461fc6be6e6d7cb526a245fb311dd20ab049dcbde37c4b06ec1598d8b7b06623f11f3c4ba28daa90fad687730eddfb73dc95061dc2cc331db56cd98088578a219905e0741130d747a995d16d0cf7dc1da989f5a8d86425bab8a3427465a3ce567e6f350517bfca488310bfea068d2eb216b1101ecbbae98a62f92ed7051d64e45fde753d47dba61255c6de44837e109335bb0c894cb3b9e026382809504571a9e91e614fa2a92e88f70704ea66c53b7f34cfaae4fe33d24b3b582f9bcd6e289f2475fca23cb776aa37ae1c3cea6a173389e5e75028e30e663bac1ead55d93c426e241169c8867f55ecf19c43a38369b830147199e30baf460fab6468304c0284a1031ee319dd633e5c4cb68c0095e58bbbf3bebb942703fab97e5d3c74d579925b1a876c3862cc7844d666b751335879be16fb04df331b80892521f74d00226a785b60bc03fc04cabdc09127efabacfd71f01689b774912303578133d64e671f321d77a4ce9825391172dcc8bfd518524128361bc2fc30d65cde113909bde04bb28c9e6611206dfca3d7f117ad7689741daabc1c937c3f5869b51dfbe60fac64b85faf2e5b05b306376f6fc175e751ad6d6419adaa283f03804ba874f0bec91c093fcc70a02db9f3c2d1b79ab6b4c6db8f3f9566d07f224802ff94286a15a632a01bdbf6d37dee4ba4279d51764d78eb25e98c5f48a60297ad6894e66ea1f61c4b2ba0f600aa88a7c88b304363366e337d9f0858e4a0b27f9b5021bb3c3e22e7f8113d0e3e94a0936140915f993e1e115872cfba1771ca5915087d7053909ae9699775bfaa56bca229a1107dbef90dab3d4e5e96ebce5202c53cbeaaeeb88442e95ddfe8c514b8e60d22a7e8057e20a29dd7c2d300f9ea6bf379fe8027ed4edf82e16cdeaede75f1465df9ff4073f295bb6197e665e47e8b4a181b1b2984008e38d45a1cadd8fe5393e064ecab7ad8947ff8fe80980e4d016a16e9a0aeb7562a84908cf0d2e4a478f87457a12b0bbd9958576a5d8adfecf7daf3f5a974ab051300a78c5bbacafda5a63b7dabb0812fd0c5cacb3712f7f5cf97c8cdd9499bd18e6316ca9800147fd8ea0e101d947fc25af5b28ebc2ede0154513b1ae63ca0008c2dde85c235474d8812013740311f48d4df85ce0eb21fca936df8e49c72925aea15b379b4521e14cb96962e9bbf0ebd9295367bd5185907137de3e08bd4f25c364b7c78e224820cad2817b1805e970d8b7c4ce1e622252bf169c7ee59b1d05bdcc817614241869f68b03e111fbef0eedfa0bee13739d900e9f1013b97af7c2771ccbd5482939b645ec39810eb0260990b4b08866ace8128ff2f7cfa4339c88f298abb5636c18849711145996f770035d8e619a73d640fbbb3b6f247bba4dc2bc55d8bf775a50f862538bc554b3682c5973d3faa16161a8c7b309b8ce16bf7e8a4c81d5c108eb82ef79d1f856e628a6fb64bbf7f798ab1beee0003d592e582b154d991f1a6f368153305a31975df584a603e1a839db79660cf8eec6b702c6214fcf155cd4ee9a4dc88400ec9c9f9d0d611a9b359b7ac588407d37ec6a5bcc347fa8247025a6a24f93731001c1edaa6ac92535347961af1b705253c79a59c772ef2c49f31d5e86d235bfe6ec7ce5a1a7c7b4cf7357013916ee7c42b0f8774e0d6c1bba06ce3faa18207942382f543cb523228e22798398728918a11d445870d45aa5f7c7964679c3f49d2d8f81ec75ea881abb863e4333971431cbb30530a394371e229bc4c7275ba21df7faf6b6ab17721b30d0dc554cb8157eff0f11e2501a54e03895bbee6f8338d2a1fc8a5f68536b270d7495372117da880a4e0b905843de671f1646b76a020a5e9cfc5c5dd6b2d8ce26eeb218abda1095aaacc4155d767a5fb7201cd1ea7349307183d58462bfbef0cff3ff86648d2fc8f81fc524cdb79211487a350fb967150fbbb0db6f47a4e9b0d4cbfd1e9ec4ad4fd74162266ad6d6497e5bc6f41e980dc794d7dd1d25300b42c62196e5842df9081e690cc1948507d028812b95b82dc514b760c7c082af0cad29f4722bbadd60556b1e439744d363de37a6ceb92b2d2218a1703e857af35002352996d9f53cab316bac537ea573ba6b4734d4bc9e11d30ee19acf9db6fb1162db05ba033a1198189d6cd32422436593e01303d2c9958921819f8e6869c66fbe6b2403d7ac64cb4a9f624cd4876745ddaa8204973dfffc9b9638704604a69776f73efc94c2bf21ea8d55a1ab7b9c2f5f5ebd24e0100e94e0dd28127f5222001f31c3e038eebf2430989dc894fd27393e1f2bfccbff8023663a36d2970b6b169d2339f1d1fc5eca7714c56098f8da3f1c21abe5f62f76f768f276870f90355f4321aade9eba480191a7e43233672ba3b1a67ebe1d13d604111584565401594e3edb731a3b960f5f1db4387a492de07165fd159c88d0467f12336a84383812bddbe417860f4c324e2c164ee7e6b35b1535cf5dcef849dd75d24b1fdf79d26d4f5f977c7fbe276a60370a203c8fdf3b9abec85dddcf21a0b7a65a15837e9dc6411d43030ba41f800230093f64778bd79909cb8b698c59a7fed049e1eb598d1b143e5644b081e6d240a957e3e6f6dda64b7d944f9dc97eb7d425b1b3aa6aa082ceaffcc4cbf77b411e9e8206e11e36e26b10ddb53c7ce1ce7aac7ca4e9501dec23020a61970f473b36e09ff38770a5e96ee1dd2ffd5068a33b38652d1d84f4b68751a064bd027664b5a8ba0bb90c50a8ae13dffec284ad2c5e34e32b67f961cc176ec7a135195144ceff78b0d9463de11a7de1a383b9f8ce4c79090f0ea70305cbdac06d1942251cb98965af5ee6ab7cac9feef8a126b7c9370c558d0135427de033568a54324e695d810b7f8689e4d318529135124eb666737023d5ffd2558d8a3d5a55dd93aed8bfb81683dbf46681c5250d5afa27c51737e80ac7c5f45e3a18b29b1c814ddb2f54b9fe2ff9061406898ae4ee4494c2c32040025acea93cc1fe4827ff9166a9acdda6091523e8cc5296c2987cd4f55c5c041404fa3368ae5b0300aa999bcbd199f1380fbafbf5b3960429b1ae229c9799240f356a18ed3f891448c405a7b1f215d9be7ab7f88662c3be0b7a10c81820bb35f33bcb9b2fff6dfdd9e891e2826ece09664e6ffb688f2b6515a27d3c55bbeaed9590f9c09743664b1a2fc5a86b0c89236aee353b2a421adbfa34b31c12460ae5d2c5f0c2464702e0ebd686ad151bfab72641bb9326ecd5d5169402b6ce4eb443d87d738db2a5a43fff3ec3e583e6faa60e4b7d7313f12c3620953ff2542fc78f87b3d67764e95b28f39c2757a45f6c9f75a8b8f69c7be3ad089ad71534c7da619785a4d516e571d50b9f6f88acf672305235f05e11c7ab966eb71e58bf9b7e6b30000e55eb6486aaa2ee90349f37d3c8464704b56b349c583814dfed763e5c44323c9aa7c13c272d02713814adc93c42f292718b99cb0c61375b0339468b0bf35b13dddf99044f2138a43c1b245934576f5d64e4cbeeef1a7253623fb1d3c3e41ac4d49f97a9a5f169e00a969abd7afe97e146e874a12f6fe34c9dc64c47158959e09eae10a4611b7f0e274e1d6408fef1d9e2875141534d40e762a94fd9d9fa04375b4d4c88416a8e3c5a1e63cf896e2fe82a54940e87899686e7759920c436bea07653daae445dbe1144091ac9d755c0339459dc2bc3405e2bd161cc515b170bd927facd1d23584dd3c59fd054238ab3695ddf74476b2ee173a63409d2927d0a067597822134a1052b20e36a4ed437612401ab4c8e4e72955a865608adecb79ae1bec4c1aea88529ac8f56215a7a2e412e9bebd2a3a19ba64999535c41c6fa8c1187abdb8613d859b1f6dd41f3f99a2c5d52896dc0e54397342aa67e48ac24aa7589a9072a61890da4468922917645b492e696a2ae823f80012df16d18358bff82ba9323aacbc09d7a85a71f8613ebbe1f9e511d0d60dccdcbf4b580132a80dc9b8ed169a60c39e1fa1a9f9e793970cf210cc97f52a6cbc671aee26dc3988141a997f17053ae0e0033617b28f81a3efa65125fa18350cbf662a9a9cb1c9a8aa3e2dc1b651742255b7af3503d4ac5d64f118cb60189049e967572747e3594ae562cf075211838af253ba86c511c31ed0ec9e0a2b4a9d66f1709501a33e554e5b3d1a053f558270d1eb30cf52a1ef9602380100b686185deedcf0ad6321769858d142400ff4554aa76d0eb09b889db5a31dc8f42e93f9f71a4a60b094f238abbd80dfe3729e59e4b69486513793a0c5a208d16ba5b7c00fc5f529419265dae9bea13140e42f5f9747547c7cade484bfed38362095656c92882318e7e0d7355a1fadbe75af595bdafa8775751f446efc7f46b332ef7e9931695ef1eeab7e8e338f5cba87973c8236f9c07e2203cada58b434905aa55d9323c9f08f7ff0441f5811eb93607c3e410
+  </script>
+  <div class="hbe hbe-content">
+    <form id="hbeForm" class="hbe hbe-form" onsubmit="return false">
+      <div class="hbe hbe-input hbe-input-default">
+      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
+      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
+        <span class="hbe hbe-input-label-content hbe-input-label-content-default">请输入密码</span>
+      </label>
+    </div>
+      <button class="hbe hbe-button" type="submit">确认</button>
+      <div class="hbe hbe-error" role="alert" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function() {
+  var T = 'hbeTimestamp';
+  var DAYS = 7;
+  var now = Date.now();
+  var ts = localStorage.getItem(T);
+  if (ts && (now - parseInt(ts,10) > DAYS * 86400000)) {
+    var rm = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('hbe') === 0) rm.push(k);
+    }
+    for (var r = 0; r < rm.length; r++) localStorage.removeItem(rm[r]);
+    localStorage.removeItem(T);
+    localStorage.removeItem('hbeSharedPwd');
+  }
+})();
+</script>
+<script data-pjax src="/lib/hbe.9e70f1e1d2.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css"></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://cd-cd.top">CD</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://cd-cd.top/2026/08/11/combat-design-botw-emergent-combat/">https://cd-cd.top/2026/08/11/combat-design-botw-emergent-combat/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Portfolio/">Portfolio</a><a class="post-meta__tags" href="/tags/GameDesign/">GameDesign</a><a class="post-meta__tags" href="/tags/CombatDesign/">CombatDesign</a><a class="post-meta__tags" href="/tags/Zelda/">Zelda</a><a class="post-meta__tags" href="/tags/BOTW/">BOTW</a><a class="post-meta__tags" href="/tags/EmergentGameplay/">EmergentGameplay</a><a class="post-meta__tags" href="/tags/%E7%89%A9%E7%90%86%E5%BC%95%E6%93%8E/">物理引擎</a><a class="post-meta__tags" href="/tags/%E5%85%83%E7%B4%A0%E5%8F%8D%E5%BA%94/">元素反应</a><a class="post-meta__tags" href="/tags/Nintendo/">Nintendo</a></div><div class="post-share"><div class="social-share" data-image="/img/avatar.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related  no-desc" href="/2026/08/12/combat-design-endfield-analysis/" title="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">Previous</div><div class="info-item-2">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</div></div></div></a><a class="pagination-related" href="/2026/08/10/Lyra-08-UI%E7%B3%BB%E7%BB%9F/" title="【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">【技术探索】Lyra 框架拆解（八·终篇）：UI 系统 —— GameplayTag 驱动的发布/订阅式 UI 注入</div></div><div class="info-2"><div class="info-item-1">系列导航   篇 主题    一 架构哲学总览   二 Experience 系统   三 Character 组件体系   四 GAS 集成层   五 Equipment &amp; Inventory   六 Input 系统   七 网络同步框架   八 UI 系统（本文 · 终篇）    一句话Lyra 的 UI 系统是一个四层可组合架构——其核心不是一个 AHUD 子类，而是一个 GameplayTag 驱动的发布&#x2F;订阅引擎（UUIExtensionSubsystem）。GameFeature 插件通过 GameplayTag 约定向 HUD 发布 Widget，HUD Layout 通过 ExtensionPoint 接收 Widget——双方互不知道对方存在。这套架构也是 CommonUI 在”多人分屏 + 跨平台输入”场景下的一个值得参考的实践。  一，为什么不直接用 UMG HUD？在传统 UE 项目中，最自然的 UI 做法是： 1234AHUD::BeginPlay() &#123;    MainWidget = CreateWidget&lt;U...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>Related Articles</span></div><div class="relatedPosts-list"><a class="pagination-related no-desc" href="/2026/08/09/MMO-Combat-Design-Methodology/" title="【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】聊聊 MMO 战斗设计——一些不太成熟的笔记</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/09/combat-design-three-layer-framework/" title="【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】战斗系统设计的逻辑框架——从帧级判定到长线心流</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/12/combat-design-endfield-analysis/" title="【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-12</div><div class="info-item-2">【分析反拆】《明日方舟：终末地》系统反拆——当物流模拟遇上二游排轴战斗</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/09/combat-design-hit-feel-framework/" title="【设计思路】打击感设计全解析——从感官体验到工业化管线"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】打击感设计全解析——从感官体验到工业化管线</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/09/combat-design-supply-war-rts/" title="【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-09</div><div class="info-item-2">【设计思路】《补给战争》RTS 设计——动态难度双轨系统与大规模 AI 调度</div></div></div></a><a class="pagination-related no-desc" href="/2026/08/12/combat-design-elden-ring-analysis/" title="【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-08-12</div><div class="info-item-2">【分析反拆】《艾尔登法环》战斗系统深度拆解——失衡机制与流派构建的艺术</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">CD</div><div class="author-info-description">Combat Designer<br>ARPG · Unreal & Unity</div><div class="site-data"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">22</div></a><a href="/tags/"><div class="headline">Tags</div><div class="length-num">87</div></a><a href="/categories/"><div class="headline">Categories</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/skill-oncd"><i class="fab fa-github"></i><span>GitHub</span></a><div class="card-info-social-icons"><a class="social-icon" href="mailto:thoroughthinker@outlook.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #1a1a1a;"></i></a><a class="social-icon" href="tel:+8616621602880" target="_blank" title="Phone"><i class="fas fa-phone" style="color: #1a1a1a;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">📧 thoroughthinker@outlook.com<br>📱 +86 16621602880<br>💬 WeChat：heboyuhairuo<br>🐧 QQ：1105844579<br>⚔️ Thinking in cooldowns, shipping on countdowns.</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content toc-div-class" style="display:none"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E9%83%A8%E6%B2%A1%E6%9C%89%E2%80%9D%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F%E2%80%9D%E7%9A%84%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F"><span class="toc-text">一部没有”战斗系统”的战斗系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%8F%8C%E5%BC%95%E6%93%8E%E9%A9%B1%E5%8A%A8%E7%9A%84%E6%B6%8C%E7%8E%B0%E5%BC%8F%E4%BA%A4%E4%BA%92"><span class="toc-text">一、双引擎驱动的涌现式交互</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E7%89%A9%E7%90%86%E5%BC%95%E6%93%8E%EF%BC%9A%E9%9D%99%E6%AD%A2%E5%99%A8%E4%BD%9C%E4%B8%BA%E5%8A%A8%E8%83%BD%E5%82%A8%E5%AD%98%E8%A3%85%E7%BD%AE"><span class="toc-text">1.1 物理引擎：静止器作为动能储存装置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%8C%96%E5%AD%A6%E5%BC%95%E6%93%8E%EF%BC%9A%E6%9D%90%E8%B4%A8%E6%8E%A5%E5%8F%A3-%E5%85%83%E7%B4%A0%E7%8A%B6%E6%80%81%E6%9C%BA"><span class="toc-text">1.2 化学引擎：材质接口 + 元素状态机</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%88%98%E6%96%97%E7%BB%8F%E6%B5%8E%E5%AD%A6%EF%BC%9A%E4%B9%98%E5%AD%90%E5%8F%A0%E5%8A%A0%E4%B8%8E%E8%80%90%E4%B9%85%E5%BA%A6%E5%8D%9A%E5%BC%88"><span class="toc-text">二、战斗经济学：乘子叠加与耐久度博弈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%9E%81%E9%AB%98%E6%94%B6%E7%9B%8A%E7%9A%84%E4%BC%A4%E5%AE%B3%E4%B9%98%E5%AD%90%E2%80%94%E2%80%94%E9%BC%93%E5%8A%B1%E5%AF%BB%E6%89%BE%E6%9C%80%E4%BC%98%E8%A7%A3"><span class="toc-text">2.1 极高收益的伤害乘子——鼓励寻找最优解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%AD%A6%E5%99%A8%E8%80%90%E4%B9%85%E5%BA%A6%E7%BB%8F%E6%B5%8E%E5%AD%A6%EF%BC%9ADPS-vs-%E6%80%BB%E7%90%86%E8%AE%BA%E4%BC%A4%E5%AE%B3"><span class="toc-text">2.2 武器耐久度经济学：DPS vs 总理论伤害</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E9%AB%98%E9%98%B6%E6%93%8D%E4%BD%9C%EF%BC%9A%E7%8A%B6%E6%80%81%E6%9C%BA%E6%BA%A2%E5%87%BA%E4%B8%8E%E5%8A%A8%E7%94%BB%E5%8F%96%E6%B6%88"><span class="toc-text">三、高阶操作：状态机溢出与动画取消</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-SBR%EF%BC%88%E7%9B%BE%E6%8C%A1%E9%87%8D%E7%BD%AE%EF%BC%89%E2%80%94%E2%80%94%E5%B9%B3%E5%9C%B0%E4%BA%8C%E6%AE%B5%E8%B7%B3"><span class="toc-text">3.1 SBR（盾挡重置）——平地二段跳</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-TCR%EF%BC%88%E9%9B%B7%E9%9C%86%E7%AA%81%E5%87%BB%EF%BC%89%E2%80%94%E2%80%94%E8%B7%A8%E7%A9%BA%E9%97%B4%E4%BD%8D%E7%A7%BB"><span class="toc-text">3.2 TCR（雷霆突击）——跨空间位移</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E4%BA%9B%E2%80%9D%E6%BC%8F%E6%B4%9E%E2%80%9D%E6%98%AF%E5%A5%BD%E4%BA%8B"><span class="toc-text">3.3 为什么这些”漏洞”是好事</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%9E%81%E9%99%90%E9%AA%8C%E8%AF%81%EF%BC%9A%E5%89%91%E4%B9%8B%E8%AF%95%E7%82%BC%E5%A6%82%E4%BD%95%E6%9A%B4%E9%9C%B2%E7%B3%BB%E7%BB%9F%E7%9A%84%E6%AF%8F%E4%B8%80%E5%B1%82%E6%B7%B1%E5%BA%A6"><span class="toc-text">四、极限验证：剑之试炼如何暴露系统的每一层深度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%B6%8C%E7%8E%B0%E5%BC%8F%E8%AE%BE%E8%AE%A1%E7%9A%84%E4%B8%89%E6%9D%A1%E6%A0%B8%E5%BF%83%E5%8E%9F%E5%88%99"><span class="toc-text">五、涌现式设计的三条核心原则</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-folder-open"></i><span>同分类文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/16/TPS动画系统实践-ABP-八向移动-Montage/" title="【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤">【DEMO展示】TPS动画系统实践：Animation Blueprint + 八向移动 + Montage 的实现步骤</a><time datetime="2026-08-16T04:00:00.000Z" title="Created 2026-08-16 12:00:00">2026-08-16</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/15/ArcaneRush-UE5-Blueprint-Portfolio/" title="【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战">【DEMO展示】ArcaneRush：从 C++ 基类到蓝图逻辑的 UE5 塔防实战</a><time datetime="2026-08-15T04:00:00.000Z" title="Created 2026-08-15 12:00:00">2026-08-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/Lyra-WarTower-Vibe-Coding-框架/" title="【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络">【DEMO展示】Lyra-WarTower：为 Vibe Coding 设计的 UE5 多智能体开发框架 —— GameFeature + MCP + 21-Agent 网络</a><time datetime="2026-08-14T06:00:00.000Z" title="Created 2026-08-14 14:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/14/crunch-ue-gamplay-ability-system-and-network-sync/" title="【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步">【DEMO展示】Crunch：基于 UE5 GAS 的第三人称动作 RPG Demo —— GAS 架构与网络同步</a><time datetime="2026-08-14T04:00:00.000Z" title="Created 2026-08-14 12:00:00">2026-08-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/08/13/combat-design-gas-moba-demo/" title="【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘">【DEMO展示】GAS 框架与数据驱动设计——一个 MOBA Demo 的技术复盘</a><time datetime="2026-08-13T04:00:00.000Z" title="Created 2026-08-13 12:00:00">2026-08-13</time></div></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By CD</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.6.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.6.2"></script><script src="/js/main.js?v=5.6.2"></script><div class="js-pjax"></div><script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script><script src="/js/gaming-charts.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">Search</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  Loading Database</span></div><div class="local-search-input"><input placeholder="Search" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.6.2"></script></div></div>
+<script>
+(function() {
+  var T = 'hbeTimestamp';
+  var S = 'hbeSharedPwd';
+
+  function ts() { localStorage.setItem(T, String(Date.now())); }
+
+  function setup() {
+    var container = document.getElementById('hexo-blog-encrypt');
+    if (!container) return;
+
+    var pass = document.getElementById('hbePass');
+    var form = document.getElementById('hbeForm');
+    if (!pass || !form) return;
+
+    // 0. Placeholder
+    pass.placeholder = '请输入密码';
+
+    // 1. Cross-page auto-fill: if we have a shared password from another post, use it
+    var shared = localStorage.getItem(S);
+    if (shared) {
+      pass.value = shared;
+      // Use requestSubmit for proper event handling, fallback to submit()
+      setTimeout(function() {
+        if (form.requestSubmit) form.requestSubmit();
+        else form.submit();
+      }, 100);
+      return;
+    }
+
+    // 2. On manual submit: save password for cross-page sharing + refresh timestamp
+    form.addEventListener('submit', function() {
+      if (pass.value) localStorage.setItem(S, pass.value);
+      ts();
+    });
+
+    // 3. If already auto-decrypted (cached key valid), refresh timestamp
+    if (pass.style.display === 'none') ts();
+
+    // 4. Watch for container removal (successful manual decrypt)
+    var obs = new MutationObserver(function(ms) {
+      for (var m = 0; m < ms.length; m++) {
+        for (var n = 0; n < ms[m].removedNodes.length; n++) {
+          if (ms[m].removedNodes[n].id === 'hexo-blog-encrypt') { ts(); obs.disconnect(); return; }
+        }
+      }
+    });
+    if (container.parentNode) obs.observe(container.parentNode, { childList: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();
+</script>
+</body></html>
